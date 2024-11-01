@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:untitled/home_screen.dart';
-import 'home_screen.dart';
+import 'package:untitled/ui/onboarding_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -11,8 +10,9 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp( // Added const for performance
-      home: LoginPage(),
+    return const MaterialApp(
+      title: 'Onboarding Screen',// Added const for performance
+      home: OnboardingScreen(),
       debugShowCheckedModeBanner: false,
     );
   }
