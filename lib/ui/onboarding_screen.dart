@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import '../signup_screen.dart'; // Import the signup screen
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -7,6 +7,7 @@ class OnboardingScreen extends StatefulWidget {
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
 }
+
 class _OnboardingScreenState extends State<OnboardingScreen> {
   int currentIndex = 0;
   final PageController _pageController = PageController();
@@ -22,7 +23,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           Padding(
             padding: const EdgeInsets.only(right: 20, top: 20),
             child: InkWell(
-              onTap: () {},
+              onTap: () {
+                // Navigate to SignUp screen on Skip tap
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const SignUp()),
+                );
+              },
               child: const Text(
                 'Skip',
                 style: TextStyle(
@@ -52,8 +59,32 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   child: Text('Onboarding Content Here'), // Placeholder content
                 ),
               ),
-              // Additional onboarding pages can be added here
+              // Add other onboarding pages here
             ],
+          ),
+          Positioned(
+            bottom: 20,
+            child: Visibility(
+              visible: currentIndex == 0, // Only show button on the last page
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const SignUp()),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                ),
+                child: const Text(
+                  'Get Started',
+                  style: TextStyle(fontSize: 18),
+                ),
+              ),
+            ),
           ),
         ],
       ),
