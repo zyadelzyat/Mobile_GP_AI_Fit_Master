@@ -24,10 +24,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             padding: const EdgeInsets.only(right: 20, top: 20),
             child: InkWell(
               onTap: () {
-                // Navigate to SignUp screen on Skip tap
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const SignUp()),
+                  MaterialPageRoute(builder: (context) => const SignUpScreen()),
                 );
               },
               child: const Text(
@@ -56,7 +55,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               Container(
                 padding: const EdgeInsets.only(left: 50, right: 50, bottom: 80),
                 child: const Center(
-                  child: Text('Onboarding Content Here'), // Placeholder content
+                  child: Text('Onboarding Content Here'),
                 ),
               ),
               // Add other onboarding pages here
@@ -65,12 +64,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           Positioned(
             bottom: 20,
             child: Visibility(
-              visible: currentIndex == 0, // Only show button on the last page
+              visible: currentIndex == 0,
               child: ElevatedButton(
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const SignUp()),
+                    MaterialPageRoute(builder: (context) => const SignUpScreen()),
                   );
                 },
                 style: ElevatedButton.styleFrom(
