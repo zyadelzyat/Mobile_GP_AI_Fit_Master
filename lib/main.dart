@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:untitled/ui/onboarding_screen.dart';
+import 'signin_screen.dart';  // Import the SignIn screen
 
 void main() {
   runApp(const MyApp());
@@ -11,11 +11,9 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const MaterialApp(
-      title: 'Onboarding Screen',// Added const for performance
-      home: OnboardingScreen(),
+      title: 'Onboarding Screen',
+      home: SignInScreen(),  // Set SignInScreen as the initial screen
       debugShowCheckedModeBanner: false,
     );
   }
 }
-
-// every page own class
