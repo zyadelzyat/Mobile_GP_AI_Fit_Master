@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'signin_screen.dart'; // Import the SignIn screen
 import 'package:intl/intl.dart'; // Import for DateFormat
+// For phone number input formatting
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -38,6 +39,19 @@ class _SignUpScreenState extends State<SignUpScreen> {
         _dobController.text = DateFormat('yyyy-MM-dd').format(pickedDate);
       });
     }
+  }
+
+  bool _isValidEmail(String email) {
+    // Regular expression for validating email format
+    final regex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+    return regex.hasMatch(email);
+  }
+
+  bool _isOldEnough(String dob) {
+    // Convert the input to DateTime and check the age (minimum 12 years)
+    final birthDate = DateTime.parse(dob);
+    final age = DateTime.now().year - birthDate.year;
+    return age >= 12;
   }
 
   @override
@@ -187,6 +201,21 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   borderSide: BorderSide.none,
                 ),
                 onPressed: () {
+                  String email = _emailController.text;
+                  String dob = _dobController.text;
+                  if (!_isValidEmail(email)) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      content: Text("Please enter a valid email address."),
+                    ));
+                    return;
+                  }
+                  if (!_isOldEnough(dob)) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      content: Text("You must be at least 12 years old."),
+                    ));
+                    return;
+                  }
+
                   // Handle sign-up logic
                   Navigator.pushReplacement(
                     context,
@@ -283,65 +312,55 @@ class _SignUpScreenState extends State<SignUpScreen> {
     required String? value,
     required List<String> items,
     required IconData icon,
-    required void Function(String?) onChanged,
+    required Function(String?) onChanged,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
       ),
       child: DropdownButtonFormField<String>(
         value: value,
-        decoration: InputDecoration(
-          labelText: label,
-          prefixIcon: Icon(icon),
-          border: InputBorder.none,
-        ),
-        items: items.map((item) {
+        items: items.map((String item) {
           return DropdownMenuItem<String>(
             value: item,
             child: Text(item),
           );
         }).toList(),
         onChanged: onChanged,
+        decoration: InputDecoration(
+          labelText: label,
+          prefixIcon: Icon(icon),
+          border: InputBorder.none,
+        ),
       ),
     );
   }
 
   Widget _buildDiseasesMultiSelectBox() {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            "Select Diseases (if any)",
-            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 10),
-          ..._diseases.map((disease) {
-            return CheckboxListTile(
-              title: Text(disease),
-              value: _selectedDiseases.contains(disease),
-              onChanged: (isSelected) {
-                setState(() {
-                  if (isSelected!) {
-                    _selectedDiseases.add(disease);
-                  } else {
-                    _selectedDiseases.remove(disease);
-                  }
-                });
-              },
-              controlAffinity: ListTileControlAffinity.leading,
-            );
-          }),
-        ],
+        children: _diseases.map((disease) {
+          return CheckboxListTile(
+            title: Text(disease),
+            value: _selectedDiseases.contains(disease),
+            onChanged: (bool? selected) {
+              setState(() {
+                if (selected == true) {
+                  _selectedDiseases.add(disease);
+                } else {
+                  _selectedDiseases.remove(disease);
+                }
+              });
+            },
+          );
+        }).toList(),
       ),
     );
   }

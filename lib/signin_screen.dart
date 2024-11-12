@@ -1,8 +1,22 @@
 import 'package:flutter/material.dart';
 import 'signup_screen.dart'; // Import the SignUp screen
 
-class SignInScreen extends StatelessWidget {
+class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
+
+  @override
+  _SignInScreenState createState() => _SignInScreenState();
+}
+
+class _SignInScreenState extends State<SignInScreen> {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  bool _isValidEmail(String email) {
+    // Regular expression for validating email format
+    final regex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+    return regex.hasMatch(email);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,12 +61,12 @@ class SignInScreen extends StatelessWidget {
                 ),
                 child: Column(
                   children: [
-                    // Email input
-                    _buildTextField('Email', Icons.email),
+                    // Email input with validation
+                    _buildTextField('Email', Icons.email, _emailController),
                     const SizedBox(height: 20),
 
                     // Password input
-                    _buildTextField('Password', Icons.lock, obscureText: true),
+                    _buildTextField('Password', Icons.lock, _passwordController, obscureText: true),
                   ],
                 ),
               ),
@@ -80,7 +94,15 @@ class SignInScreen extends StatelessWidget {
                   borderSide: BorderSide.none,
                 ),
                 onPressed: () {
-                  // Handle login logic
+                  String email = _emailController.text;
+                  if (!_isValidEmail(email)) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content: const Text("Please enter a valid email address."),
+                    ));
+                    return;
+                  }
+
+                  // Handle login logic here
                 },
                 child: const Text(
                   'Log In',
@@ -126,13 +148,14 @@ class SignInScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTextField(String hintText, IconData icon, {bool obscureText = false}) {
+  Widget _buildTextField(String hintText, IconData icon, TextEditingController controller, {bool obscureText = false}) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
       ),
       child: TextField(
+        controller: controller,
         obscureText: obscureText,
         decoration: InputDecoration(
           hintText: hintText,
