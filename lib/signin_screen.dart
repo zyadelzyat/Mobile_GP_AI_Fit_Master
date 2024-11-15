@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'signup_screen.dart'; // Import the SignUp screen
+import 'signup_screen.dart'; // تأكد من استيراد شاشة التسجيل (SignUp)
+import 'reset_password.dart'; // تأكد من استيراد شاشة استعادة كلمة المرور (ResetPasswordScreen)
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -13,7 +14,6 @@ class _SignInScreenState extends State<SignInScreen> {
   final TextEditingController _passwordController = TextEditingController();
 
   bool _isValidEmail(String email) {
-    // Regular expression for validating email format
     final regex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
     return regex.hasMatch(email);
   }
@@ -75,7 +75,10 @@ class _SignInScreenState extends State<SignInScreen> {
               // Forgot password
               TextButton(
                 onPressed: () {
-                  // Handle forgot password logic
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ResetPasswordScreen()),
+                  );
                 },
                 child: const Text(
                   'Forgot Password?',
@@ -96,9 +99,11 @@ class _SignInScreenState extends State<SignInScreen> {
                 onPressed: () {
                   String email = _emailController.text;
                   if (!_isValidEmail(email)) {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                      content: const Text("Please enter a valid email address."),
-                    ));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text("Please enter a valid email address."),
+                      ),
+                    );
                     return;
                   }
 
