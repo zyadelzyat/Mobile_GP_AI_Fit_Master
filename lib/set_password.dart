@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'signin_screen.dart'; // تأكد من استيراد الصفحة بشكل صحيح
-
+import 'signin_screen.dart'; // Ensure this import is correct.
 
 class SetPasswordScreen extends StatefulWidget {
   const SetPasswordScreen({super.key});
@@ -14,8 +13,14 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
   final TextEditingController _confirmPasswordController = TextEditingController();
 
   bool _isPasswordValid(String password) {
-    // يمكنك تخصيص التحقق من كلمة المرور هنا حسب الحاجة
-    return password.length >= 6;
+    // Regular expression for password validation:
+    // - At least one uppercase letter
+    // - At least one lowercase letter
+    // - At least one digit
+    // - At least one special character
+    // - Minimum of 6 characters
+    final passwordRegEx = RegExp(r'^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@#$%^&+=!]).{6,}$');
+    return passwordRegEx.hasMatch(password);
   }
 
   @override
@@ -88,7 +93,8 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
                   if (!_isPasswordValid(newPassword)) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text("Password must be at least 6 characters."),
+                        content: Text(
+                            "Password must be at least 6 characters, include an uppercase letter, a symbol, and a number."),
                       ),
                     );
                     return;
