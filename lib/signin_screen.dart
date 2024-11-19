@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'signup_screen.dart'; // تأكد من استيراد شاشة التسجيل (SignUp)
 import 'reset_password.dart'; // تأكد من استيراد شاشة استعادة كلمة المرور (ResetPasswordScreen)
+import 'fitness_screen.dart'; // تأكد من استيراد شاشة اللياقة البدنية (FitnessScreen)
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -107,7 +108,11 @@ class _SignInScreenState extends State<SignInScreen> {
                     return;
                   }
 
-                  // Handle login logic here
+                  // بعد التحقق من صحة البريد الإلكتروني وكلمة المرور، اذهب إلى شاشة FitnessScreen
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => FitnessScreen()),
+                  );
                 },
                 child: const Text(
                   'Log In',

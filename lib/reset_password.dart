@@ -21,12 +21,12 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFF232323),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF232323), // نفس اللون الخلفي
-        elevation: 0, // لإزالة الظل أسفل الـ AppBar
+        backgroundColor: const Color(0xFF232323), // Same as background color
+        elevation: 0, // Remove AppBar shadow
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white), // أيقونة الرجوع
+          icon: const Icon(Icons.arrow_back, color: Colors.white), // Back icon
           onPressed: () {
-            Navigator.pop(context); // هذا يعودك للصفحة السابقة
+            Navigator.pop(context); // Go back to the previous page
           },
         ),
       ),
@@ -77,15 +77,14 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     return;
                   }
 
-                  // افتراضياً، سنرسل الكود (لا داعي لفعل شيء هنا للتجربة)
+                  // Simulate sending a code and navigate to EnterCodeScreen
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text("6-digit code has been sent to your email."),
                     ),
                   );
 
-                  // بمجرد الضغط على Send Code، انتقل مباشرة لصفحة EnterCodeScreen
-                  Navigator.pushReplacement(
+                  Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => const EnterCodeScreen(),
