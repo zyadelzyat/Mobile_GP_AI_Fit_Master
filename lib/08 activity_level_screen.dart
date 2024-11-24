@@ -1,18 +1,24 @@
 import 'package:flutter/material.dart';
-import 'activity_level_screen.dart'; // تأكد من استيراد شاشة Activity Level
 
-class GoalSelectionScreen extends StatelessWidget {
+class ActivityLevelScreen extends StatefulWidget {
+  @override
+  _ActivityLevelScreenState createState() => _ActivityLevelScreenState();
+}
+
+class _ActivityLevelScreenState extends State<ActivityLevelScreen> {
+  String? _selectedActivityLevel; // Stores the selected activity level
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: const Color(0xFF232323), // Set background to #232323
       appBar: AppBar(
-        backgroundColor: Colors.black,
-        elevation: 0,
+        backgroundColor: const Color(0xFF232323), // Same as background color
+        elevation: 0, // Remove AppBar shadow
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.yellow),
+          icon: const Icon(Icons.arrow_back, color: Colors.white), // Back icon
           onPressed: () {
-            Navigator.pop(context);
+            Navigator.pop(context); // Go back to the previous screen
           },
         ),
       ),
@@ -22,7 +28,7 @@ class GoalSelectionScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              "What Is Your Goal?",
+              "Physical Activity Level",
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 24,
@@ -38,11 +44,33 @@ class GoalSelectionScreen extends StatelessWidget {
             Expanded(
               child: ListView(
                 children: [
-                  GoalOption(title: "Lose Weight"),
-                  GoalOption(title: "Gain Weight"),
-                  GoalOption(title: "Muscle Mass Gain"),
-                  GoalOption(title: "Shape Body"),
-                  GoalOption(title: "Others"),
+                  ActivityOption(
+                    title: "Beginner",
+                    isSelected: _selectedActivityLevel == "Beginner",
+                    onTap: () {
+                      setState(() {
+                        _selectedActivityLevel = "Beginner";
+                      });
+                    },
+                  ),
+                  ActivityOption(
+                    title: "Intermediate",
+                    isSelected: _selectedActivityLevel == "Intermediate",
+                    onTap: () {
+                      setState(() {
+                        _selectedActivityLevel = "Intermediate";
+                      });
+                    },
+                  ),
+                  ActivityOption(
+                    title: "Advance",
+                    isSelected: _selectedActivityLevel == "Advance",
+                    onTap: () {
+                      setState(() {
+                        _selectedActivityLevel = "Advance";
+                      });
+                    },
+                  ),
                 ],
               ),
             ),
@@ -50,10 +78,7 @@ class GoalSelectionScreen extends StatelessWidget {
             Center(
               child: ElevatedButton(
                 onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => ActivityLevelScreen()),
-                  );
+                  // Navigate to the next screen or handle the selected activity level
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.yellow,
@@ -75,30 +100,34 @@ class GoalSelectionScreen extends StatelessWidget {
   }
 }
 
-class GoalOption extends StatelessWidget {
+class ActivityOption extends StatelessWidget {
   final String title;
+  final bool isSelected;
+  final VoidCallback onTap;
 
-  const GoalOption({required this.title});
+  const ActivityOption({
+    required this.title,
+    required this.isSelected,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10.0),
       child: GestureDetector(
-        onTap: () {
-          // يمكنك إضافة أي إجراء عند اختيار الهدف
-        },
+        onTap: onTap,
         child: Container(
           height: 60,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: isSelected ? const Color(0xFFE2F163) : Colors.white,
             borderRadius: BorderRadius.circular(20),
           ),
           child: Center(
             child: Text(
               title,
               style: TextStyle(
-                color: Colors.black,
+                color: isSelected ? Colors.black : Colors.black,
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
