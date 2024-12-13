@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'Login___Signup/set_password.dart'; // Import SetPasswordScreen
+import 'set_password.dart'; // Import SetPasswordScreen
 
 class EnterCodeScreen extends StatefulWidget {
   const EnterCodeScreen({super.key});

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../enter_code_screen.dart'; // Import EnterCodeScreen
+import 'enter_code_OTP__screen.dart'; // Import EnterCodeScreen
 
 class ResetPasswordScreen extends StatefulWidget {
   const ResetPasswordScreen({super.key});
