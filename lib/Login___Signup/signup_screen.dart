@@ -18,11 +18,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final TextEditingController _dobController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _otherDiseaseController = TextEditingController();
 
   String? _selectedRole;
   String? _selectedCoach;
+  String? _selectedDisease;
   final List<String> _diseases = ['No Diseases', 'Heart Diseases', 'Diabetes', 'Blood Pressure', 'Other'];
-  final List<String> _selectedDiseases = [];
 
   // Date of Birth Picker
   Future<void> _selectDateOfBirth(BuildContext context) async {
@@ -95,7 +96,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF232323),
+      backgroundColor: const Color(0xFF232323), // Dark background color
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 50),
         child: SingleChildScrollView(
@@ -114,7 +115,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               const Text(
                 'Create Account',
                 style: TextStyle(
-                  color: Colors.lime,
+                  color: Colors.lime, // Lime color for title
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
                 ),
@@ -123,7 +124,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               const Text(
                 "Let's Start!",
                 style: TextStyle(
-                  color: Colors.white,
+                  color: Colors.white, // White color for subtitle
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
@@ -132,7 +133,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 20),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFB39DDB),
+                  color: const Color(0xFFB39DDB), // Light purple for container
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Column(
@@ -155,18 +156,31 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       value: _selectedRole,
                       items: ["Trainer", "Trainee", "Self-Trainee"],
                       icon: Icons.work,
-                      onChanged: (value) => setState(() => _selectedRole = value),
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedRole = value;
+                          // عند تغيير الدور، نعيد تعيين المدرب ليكون فارغًا إذا كان الدور "Self-Trainee"
+                          if (_selectedRole == 'Self-Trainee') {
+                            _selectedCoach = null;
+                          }
+                        });
+                      },
                     ),
                     const SizedBox(height: 20),
-                    _buildDropdownField(
-                      label: "Select Coach Name",
-                      value: _selectedCoach,
-                      items: ["Coach A", "Coach B", "Coach C"],
-                      icon: Icons.sports,
-                      onChanged: (value) => setState(() => _selectedCoach = value),
-                    ),
+                    if (_selectedRole != 'Self-Trainee')
+                      _buildDropdownField(
+                        label: "Select Coach Name",
+                        value: _selectedCoach,
+                        items: ["Coach A", "Coach B", "Coach C"],
+                        icon: Icons.sports,
+                        onChanged: (value) => setState(() => _selectedCoach = value),
+                      ),
                     const SizedBox(height: 20),
-                    _buildDiseasesMultiSelectBox(),
+                    _buildDiseasesDropdown(),
+                    if (_selectedDisease == 'Other') ...[
+                      const SizedBox(height: 20),
+                      _buildTextField(_otherDiseaseController, 'Please specify the disease', Icons.text_fields),
+                    ],
                     const SizedBox(height: 20),
                     _buildTextField(_phoneController, 'Phone Number', Icons.phone),
                     const SizedBox(height: 20),
@@ -183,13 +197,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 "By continuing, you agree to Terms of Use and Privacy Policy.",
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: Colors.white,
+                  color: Colors.white, // White color for small text
                   fontSize: 12,
                 ),
               ),
               const SizedBox(height: 30),
               MaterialButton(
-                color: Colors.white,
+                color: Colors.white, // White button
                 elevation: 5.0,
                 padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 80),
                 shape: OutlineInputBorder(
@@ -207,7 +221,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 child: const Text(
                   'Sign Up',
                   style: TextStyle(
-                    color: Color(0xFF232323),
+                    color: Color(0xFF232323), // Dark text color for the button
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
@@ -238,7 +252,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ),
                     child: const Text(
                       'Log in',
-                      style: TextStyle(color: Colors.lime, fontWeight: FontWeight.bold),
+                      style: TextStyle(color: Colors.lime, fontWeight: FontWeight.bold), // Lime color for link
                     ),
                   ),
                 ],
@@ -250,17 +264,23 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String hintText, IconData icon, {bool obscureText = false}) {
+  Widget _buildTextField(
+      TextEditingController controller,
+      String label,
+      IconData icon, {
+        bool obscureText = false,
+      }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.white, // White background for text fields
         borderRadius: BorderRadius.circular(20),
       ),
-      child: TextField(
+      child: TextFormField(
         controller: controller,
         obscureText: obscureText,
+        style: const TextStyle(color: Colors.black), // Text color inside text field
         decoration: InputDecoration(
-          hintText: hintText,
+          hintText: label,
           prefixIcon: Icon(icon),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(vertical: 15),
@@ -278,7 +298,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.white, // White background for dropdown
         borderRadius: BorderRadius.circular(20),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 15),
@@ -297,23 +317,28 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
   }
 
-  Widget _buildDiseasesMultiSelectBox() {
-    return Column(
-      children: _diseases.map((disease) {
-        return CheckboxListTile(
-          title: Text(disease),
-          value: _selectedDiseases.contains(disease),
-          onChanged: (bool? value) {
-            setState(() {
-              if (value == true) {
-                _selectedDiseases.add(disease);
-              } else {
-                _selectedDiseases.remove(disease);
-              }
-            });
-          },
+  Widget _buildDiseasesDropdown() {
+    return Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 15),
+        child: DropdownButtonFormField<String>(
+            decoration: const InputDecoration(
+              hintText: 'Select Disease',
+              border: InputBorder.none,
+            ),
+            value: _selectedDisease,
+            items: _diseases.map((disease) {
+              return DropdownMenuItem(value: disease, child: Text(disease));
+            }).toList(),
+            onChanged: (value) {
+              setState(() {
+                _selectedDisease = value;
+              });
+            },
+           ),
         );
-      }).toList(),
-    );
-  }
+    }
 }

@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
+import '08 activity_level_screen.dart'; // تأكد من استيراد شاشة Activity Level
 
-class ActivityLevelScreen extends StatefulWidget {
+class GoalSelectionScreen extends StatefulWidget {
   @override
-  _ActivityLevelScreenState createState() => _ActivityLevelScreenState();
+  _GoalSelectionScreenState createState() => _GoalSelectionScreenState();
 }
 
-class _ActivityLevelScreenState extends State<ActivityLevelScreen> {
-  String? _selectedActivityLevel; // Stores the selected activity level
+class _GoalSelectionScreenState extends State<GoalSelectionScreen> {
+  String? _selectedGoal; // Store the selected goal
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +29,7 @@ class _ActivityLevelScreenState extends State<ActivityLevelScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              "Physical Activity Level",
+              "What Is Your Goal?",
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 24,
@@ -44,30 +45,48 @@ class _ActivityLevelScreenState extends State<ActivityLevelScreen> {
             Expanded(
               child: ListView(
                 children: [
-                  ActivityOption(
-                    title: "Beginner",
-                    isSelected: _selectedActivityLevel == "Beginner",
+                  GoalOption(
+                    title: "Lose Weight",
+                    isSelected: _selectedGoal == "Lose Weight",
                     onTap: () {
                       setState(() {
-                        _selectedActivityLevel = "Beginner";
+                        _selectedGoal = "Lose Weight";
                       });
                     },
                   ),
-                  ActivityOption(
-                    title: "Intermediate",
-                    isSelected: _selectedActivityLevel == "Intermediate",
+                  GoalOption(
+                    title: "Gain Weight",
+                    isSelected: _selectedGoal == "Gain Weight",
                     onTap: () {
                       setState(() {
-                        _selectedActivityLevel = "Intermediate";
+                        _selectedGoal = "Gain Weight";
                       });
                     },
                   ),
-                  ActivityOption(
-                    title: "Advance",
-                    isSelected: _selectedActivityLevel == "Advance",
+                  GoalOption(
+                    title: "Muscle Mass Gain",
+                    isSelected: _selectedGoal == "Muscle Mass Gain",
                     onTap: () {
                       setState(() {
-                        _selectedActivityLevel = "Advance";
+                        _selectedGoal = "Muscle Mass Gain";
+                      });
+                    },
+                  ),
+                  GoalOption(
+                    title: "Shape Body",
+                    isSelected: _selectedGoal == "Shape Body",
+                    onTap: () {
+                      setState(() {
+                        _selectedGoal = "Shape Body";
+                      });
+                    },
+                  ),
+                  GoalOption(
+                    title: "Others",
+                    isSelected: _selectedGoal == "Others",
+                    onTap: () {
+                      setState(() {
+                        _selectedGoal = "Others";
                       });
                     },
                   ),
@@ -78,18 +97,21 @@ class _ActivityLevelScreenState extends State<ActivityLevelScreen> {
             Center(
               child: ElevatedButton(
                 onPressed: () {
-                  // Navigate to the next screen or handle the selected activity level
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => ActivityLevelScreen()),
+                  );
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.yellow,
-                  shape: RoundedRectangleBorder(
+                  backgroundColor: Color(0xFF232323),
+                    shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
                   padding: EdgeInsets.symmetric(vertical: 15, horizontal: 100),
                 ),
                 child: Text(
                   "Continue",
-                  style: TextStyle(color: Colors.black, fontSize: 16),
+                  style: TextStyle(color: Colors.white, fontSize: 16),
                 ),
               ),
             ),
@@ -100,12 +122,12 @@ class _ActivityLevelScreenState extends State<ActivityLevelScreen> {
   }
 }
 
-class ActivityOption extends StatelessWidget {
+class GoalOption extends StatelessWidget {
   final String title;
   final bool isSelected;
   final VoidCallback onTap;
 
-  const ActivityOption({
+  const GoalOption({
     required this.title,
     required this.isSelected,
     required this.onTap,

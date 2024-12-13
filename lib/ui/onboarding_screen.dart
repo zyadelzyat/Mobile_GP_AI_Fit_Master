@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../signup_screen.dart'; // Import the signup screen
+import '../Login___Signup/signup_screen.dart'; // Import the signup screen
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});

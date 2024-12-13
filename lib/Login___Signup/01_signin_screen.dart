@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'signup_screen.dart'; // تأكد من استيراد شاشة التسجيل (SignUp)
-import 'reset_password.dart'; // تأكد من استيراد شاشة استعادة كلمة المرور (ResetPasswordScreen)
-import 'fitness_screen.dart'; // تأكد من استيراد شاشة اللياقة البدنية (FitnessScreen)
+import 'forgotton_password.dart'; // تأكد من استيراد شاشة استعادة كلمة المرور (ResetPasswordScreen)
+import '../fitness_screen.dart'; // تأكد من استيراد شاشة اللياقة البدنية (FitnessScreen)
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
