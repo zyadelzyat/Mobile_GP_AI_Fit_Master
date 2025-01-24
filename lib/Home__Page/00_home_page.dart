@@ -162,7 +162,7 @@ class _HomePageState extends State<HomePage> {
         if (index == 3) {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => ChatBotPage()),
+            MaterialPageRoute(builder: (context) => ChatPage()),
           );
         }
       },

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import 'signup_screen.dart'; // تأكد من استيراد شاشة التسجيل (SignUp)
-import 'forgotton_password.dart'; // تأكد من استيراد شاشة استعادة كلمة المرور (ResetPasswordScreen)
-import '../fitness_screen.dart'; // تأكد من استيراد شاشة اللياقة البدنية (FitnessScreen)
+import 'package:provider/provider.dart'; // Import Provider for state management
+import 'signup_screen.dart'; // Import SignUp screen
+import 'forgotton_password.dart'; // Import ResetPasswordScreen
+import '../fitness_screen.dart'; // Import FitnessScreen
+import 'package:untitled/theme_provider.dart'; // Import ThemeProvider for theme management
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -21,8 +23,10 @@ class _SignInScreenState extends State<SignInScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context); // Access ThemeProvider
+
     return Scaffold(
-      backgroundColor: const Color(0xFF232323),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor, // Use theme background color
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 50),
         child: SingleChildScrollView(
@@ -31,11 +35,27 @@ class _SignInScreenState extends State<SignInScreen> {
             children: <Widget>[
               const SizedBox(height: 50),
 
+              // Theme Toggle Button
+              Align(
+                alignment: Alignment.topRight,
+                child: IconButton(
+                  icon: Icon(
+                    themeProvider.themeMode == ThemeMode.light
+                        ? Icons.dark_mode // Dark mode icon
+                        : Icons.light_mode, // Light mode icon
+                    color: Theme.of(context).iconTheme.color, // Use theme icon color
+                  ),
+                  onPressed: () {
+                    themeProvider.toggleTheme(); // Toggle between light and dark mode
+                  },
+                ),
+              ),
+
               // Title
-              const Text(
+              Text(
                 'Login',
                 style: TextStyle(
-                  color: Color(0xFFE2F163), // Lime color for 'Login' text
+                  color: Theme.of(context).primaryColor, // Use theme primary color
                   fontSize: 35,
                   fontWeight: FontWeight.bold,
                 ),
@@ -43,10 +63,10 @@ class _SignInScreenState extends State<SignInScreen> {
               const SizedBox(height: 10),
 
               // Welcome text
-              const Text(
+              Text(
                 'Welcome!',
                 style: TextStyle(
-                  color: Colors.white, // White color for 'Welcome'
+                  color: Theme.of(context).textTheme.bodyLarge?.color, // Use theme text color
                   fontSize: 25,
                   fontWeight: FontWeight.bold,
                 ),
@@ -58,7 +78,7 @@ class _SignInScreenState extends State<SignInScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 20),
                 decoration: BoxDecoration(
                   color: const Color(0xFFB39DDB), // Light purple background color
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(20), // Rounded corners
                 ),
                 child: Column(
                   children: [
@@ -81,21 +101,22 @@ class _SignInScreenState extends State<SignInScreen> {
                     MaterialPageRoute(builder: (context) => const ResetPasswordScreen()),
                   );
                 },
-                child: const Text(
+                child: Text(
                   'Forgot Password?',
-                  style: TextStyle(color: Colors.white),
+                  style: TextStyle(
+                    color: Theme.of(context).textTheme.bodyLarge?.color, // Use theme text color
+                  ),
                 ),
               ),
               const SizedBox(height: 40),
 
               // Log In Button
               MaterialButton(
-                color: Colors.white,
+                color: Colors.white, // White background for the button
                 elevation: 5.0,
                 padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 80),
-                shape: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(50),
-                  borderSide: BorderSide.none,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30), // Rounded corners
                 ),
                 onPressed: () {
                   String email = _emailController.text;
@@ -108,16 +129,16 @@ class _SignInScreenState extends State<SignInScreen> {
                     return;
                   }
 
-                  // بعد التحقق من صحة البريد الإلكتروني وكلمة المرور، اذهب إلى شاشة FitnessScreen
+                  // Navigate to FitnessScreen after validation
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => FitnessScreen()),
                   );
                 },
-                child: const Text(
+                child: Text(
                   'Log In',
                   style: TextStyle(
-                    color: Color(0xFF232323),
+                    color: Color(0xFF232323), // Black text for the button
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
@@ -129,9 +150,11 @@ class _SignInScreenState extends State<SignInScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text(
+                  Text(
                     'Don’t have an account? ',
-                    style: TextStyle(color: Colors.white),
+                    style: TextStyle(
+                      color: Theme.of(context).textTheme.bodyLarge?.color, // Use theme text color
+                    ),
                   ),
                   GestureDetector(
                     onTap: () {
@@ -141,10 +164,10 @@ class _SignInScreenState extends State<SignInScreen> {
                         MaterialPageRoute(builder: (context) => const SignUpScreen()),
                       );
                     },
-                    child: const Text(
+                    child: Text(
                       'Sign Up',
                       style: TextStyle(
-                        color: Colors.lime,
+                        color: Theme.of(context).primaryColor, // Use theme primary color
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -161,17 +184,26 @@ class _SignInScreenState extends State<SignInScreen> {
   Widget _buildTextField(String hintText, IconData icon, TextEditingController controller, {bool obscureText = false}) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        color: Colors.white, // White background for text fields
+        borderRadius: BorderRadius.circular(15), // Rounded corners (15px radius)
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1), // Optional: Add a subtle shadow
+            blurRadius: 5,
+            offset: Offset(0, 2),
+          ),
+        ],
       ),
       child: TextField(
         controller: controller,
         obscureText: obscureText,
+        style: TextStyle(color: Colors.black), // Black text color for input
         decoration: InputDecoration(
           hintText: hintText,
-          prefixIcon: Icon(icon),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(vertical: 15),
+          hintStyle: TextStyle(color: Colors.grey), // Grey hint text
+          prefixIcon: Icon(icon, color: Colors.grey), // Grey icon
+          border: InputBorder.none, // Remove default border
+          contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 10),
         ),
       ),
     );

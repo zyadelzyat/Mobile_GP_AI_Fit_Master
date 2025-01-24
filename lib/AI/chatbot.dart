@@ -2,158 +2,87 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
-void main() {
-  runApp(ChatBotApp());
-}
-
-class ChatBotApp extends StatelessWidget {
+class ChatPage extends StatefulWidget {
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'ChatGPT Flutter Bot',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: ChatBotPage(),
-    );
-  }
+  _ChatPageState createState() => _ChatPageState();
 }
 
-class ChatBotPage extends StatefulWidget {
-  @override
-  _ChatBotPageState createState() => _ChatBotPageState();
-}
-
-class _ChatBotPageState extends State<ChatBotPage> {
-  final TextEditingController _messageController = TextEditingController();
-  final List<Map<String, String>> _chatMessages = [];
-  final ScrollController _scrollController = ScrollController();
+class _ChatPageState extends State<ChatPage> {
+  final List<Map<String, String>> _messages = [];
+  final TextEditingController _controller = TextEditingController();
   bool _isLoading = false;
 
-  final String apiKey = "your-openai-api-key"; // Replace with your API key
-
-  Future<String> _getChatGPTResponse(String message) async {
-    const apiUrl = "https://api.openai.com/v1/chat/completions";
-
-    final response = await http.post(
-      Uri.parse(apiUrl),
-      headers: {
-        "Authorization": "Bearer $apiKey",
-        "Content-Type": "application/json",
-      },
-      body: jsonEncode({
-        "model": "gpt-3.5-turbo",
-        "messages": [
-          {"role": "user", "content": message},
-        ],
-      }),
-    );
-
-    if (response.statusCode == 200) {
-      final responseData = jsonDecode(response.body);
-      return responseData['choices'][0]['message']['content'];
-    } else {
-      throw Exception("Failed to fetch response: ${response.body}");
-    }
-  }
-
-  void _sendMessage() async {
-    final userMessage = _messageController.text.trim();
-    if (userMessage.isEmpty || _isLoading) return;
-
+  void _sendMessage(String text) async {
     setState(() {
-      _chatMessages.add({"role": "user", "content": userMessage});
-      _messageController.clear();
+      _messages.add({"role": "user", "message": text});
       _isLoading = true;
     });
+    _controller.clear();
 
     try {
-      final botResponse = await _getChatGPTResponse(userMessage);
+      final response = await GeminiAPI.sendMessage(text);
       setState(() {
-        _chatMessages.add({"role": "bot", "content": botResponse});
+        _messages.add({"role": "bot", "message": response});
       });
-    } catch (error) {
+    } catch (e) {
       setState(() {
-        _chatMessages.add({"role": "bot", "content": "Error: $error"});
+        _messages.add({"role": "bot", "message": "Error: ${e.toString()}"});
       });
     } finally {
       setState(() {
         _isLoading = false;
       });
-      _scrollToBottom();
     }
-  }
-
-  void _scrollToBottom() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
-    });
-  }
-
-  @override
-  void dispose() {
-    _messageController.dispose();
-    _scrollController.dispose();
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("ChatGPT Flutter Bot"),
+        title: Text("Gemini Chatbot"),
       ),
       body: Column(
         children: [
           Expanded(
             child: ListView.builder(
-              controller: _scrollController,
-              itemCount: _chatMessages.length,
+              itemCount: _messages.length,
               itemBuilder: (context, index) {
-                final message = _chatMessages[index];
-                final isUser = message['role'] == 'user';
-
-                return Container(
-                  margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
-                  alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
-                  child: Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: isUser ? Colors.blue[200] : Colors.grey[300],
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      message['content']!,
-                      style: TextStyle(fontSize: 16),
-                    ),
-                  ),
+                final message = _messages[index];
+                return ChatBubble(
+                  message: message["message"]!,
+                  isUser: message["role"] == "user",
                 );
               },
             ),
           ),
-          if (_isLoading) ...[
+          if (_isLoading)
             Padding(
-              padding: const EdgeInsets.all(10.0),
+              padding: const EdgeInsets.all(8.0),
               child: CircularProgressIndicator(),
             ),
-          ],
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Row(
               children: [
                 Expanded(
                   child: TextField(
-                    controller: _messageController,
+                    controller: _controller,
                     decoration: InputDecoration(
                       hintText: "Type a message...",
-                      border: OutlineInputBorder(),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 10),
-                ElevatedButton(
-                  onPressed: _isLoading ? null : _sendMessage,
-                  child: Text("Send"),
+                SizedBox(width: 8),
+                IconButton(
+                  icon: Icon(Icons.send),
+                  onPressed: () {
+                    if (_controller.text.isNotEmpty) {
+                      _sendMessage(_controller.text);
+                    }
+                  },
                 ),
               ],
             ),
@@ -161,5 +90,67 @@ class _ChatBotPageState extends State<ChatBotPage> {
         ],
       ),
     );
+  }
+}
+
+class ChatBubble extends StatelessWidget {
+  final String message;
+  final bool isUser;
+
+  const ChatBubble({
+    required this.message,
+    required this.isUser,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        margin: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+        padding: EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isUser ? Colors.blue : Colors.grey[300],
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Text(
+          message,
+          style: TextStyle(
+            color: isUser ? Colors.white : Colors.black,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class GeminiAPI {
+  static const String apiKey = "AIzaSyBhl0gqDkDL1FOmAMuW1RQBmla6W6JpVMY";
+  static const String apiUrl =
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=$apiKey";
+
+  static Future<String> sendMessage(String message) async {
+    final response = await http.post(
+      Uri.parse(apiUrl),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: jsonEncode({
+        "contents": [
+          {
+            "parts": [
+              {"text": message}
+            ]
+          }
+        ]
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return data["candidates"][0]["content"]["parts"][0]["text"];
+    } else {
+      throw Exception("Failed to fetch response from Gemini API: ${response.body}");
+    }
   }
 }
