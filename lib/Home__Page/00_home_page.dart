@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:untitled/AI/chatbot.dart';
 import 'package:untitled/profile.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
-// import 'profile.dart'; // Import the profile page
+import 'package:untitled/theme_provider.dart'; // Import your ThemeProvider
+import 'package:untitled/videos_page.dart'; // Import the new VideosPage
 
 class HomePage extends StatefulWidget {
+  const HomePage({super.key});
+
   @override
   _HomePageState createState() => _HomePageState();
 }
@@ -22,7 +26,7 @@ class _HomePageState extends State<HomePage> {
       initialVideoId: YoutubePlayer.convertUrlToId(
         "https://www.youtube.com/shorts/ijkt_wsg_Jo",
       )!,
-      flags: YoutubePlayerFlags(
+      flags: const YoutubePlayerFlags(
         autoPlay: false,
         mute: false,
       ),
@@ -37,34 +41,45 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+
     return Scaffold(
-      backgroundColor: Color(0xFF232323),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Color(0xFF232323),
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0,
         title: Text(
           "Hi, User",
           style: TextStyle(
-            color: Color(0xFF896CFE),
+            color: Theme.of(context).primaryColor,
             fontSize: 22,
           ),
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.search, color: Color(0xFF896CFE)),
+            icon: Icon(Icons.search, color: Theme.of(context).primaryColor),
             onPressed: () {},
           ),
           IconButton(
-            icon: Icon(Icons.notifications, color: Color(0xFF896CFE)),
+            icon: Icon(Icons.notifications, color: Theme.of(context).primaryColor),
             onPressed: () {},
           ),
           IconButton(
-            icon: Icon(Icons.person, color: Color(0xFF896CFE)), // Profile Icon
+            icon: Icon(Icons.person, color: Theme.of(context).primaryColor), // Profile Icon
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => ProfilePage(userId: '',)),
+                MaterialPageRoute(builder: (context) => const ProfilePage(userId: '',)),
               );
+            },
+          ),
+          IconButton(
+            icon: Icon(
+              themeProvider.themeMode == ThemeMode.light ? Icons.dark_mode : Icons.light_mode,
+              color: Theme.of(context).primaryColor,
+            ),
+            onPressed: () {
+              themeProvider.toggleTheme();
             },
           ),
         ],
@@ -77,9 +92,9 @@ class _HomePageState extends State<HomePage> {
             children: [
               Text(
                 "It's time to challenge your limits.",
-                style: TextStyle(color: Colors.white, fontSize: 16),
+                style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color, fontSize: 16),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
@@ -89,15 +104,15 @@ class _HomePageState extends State<HomePage> {
                   _buildCategoryIcon(Icons.chat, "Chat Bot", 3),
                 ],
               ),
-              SizedBox(height: 30),
+              const SizedBox(height: 30),
               Text(
                 "Recommendations",
-                style: TextStyle(color: Colors.white, fontSize: 18),
+                style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color, fontSize: 18),
               ),
-              SizedBox(height: 10),
-              SizedBox(height: 20),
+              const SizedBox(height: 10),
+              const SizedBox(height: 20),
               _buildVideoRecommendationCard(),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
             ],
           ),
         ),
@@ -105,8 +120,8 @@ class _HomePageState extends State<HomePage> {
       bottomNavigationBar: SafeArea(
         child: Container(
           decoration: BoxDecoration(
-            color: Color(0xFF4E4E4E),
-            borderRadius: BorderRadius.only(
+            color: Theme.of(context).bottomAppBarTheme.color,
+            borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(30),
               topRight: Radius.circular(30),
             ),
@@ -114,34 +129,36 @@ class _HomePageState extends State<HomePage> {
           child: BottomNavigationBar(
             backgroundColor: Colors.transparent,
             elevation: 0,
-            currentIndex:
-            _selectedNavIndex, // This only tracks bottom nav state
+            currentIndex: _selectedNavIndex,
             onTap: (index) {
               setState(() {
                 _selectedNavIndex = index;
               });
+              // Navigate to the corresponding page
+              if (index == 1) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const VideosPage()),
+                );
+              }
             },
             type: BottomNavigationBarType.fixed,
-            selectedItemColor: Color(0xFFE2F163),
-            unselectedItemColor: Color(0xFFB3A0FF),
+            selectedItemColor: const Color(0xFFE2F163),
+            unselectedItemColor: const Color(0xFFB3A0FF),
             showSelectedLabels: true,
             showUnselectedLabels: true,
-            items: const [
+            items: [
               BottomNavigationBarItem(
-                icon: Icon(Icons.home),
+                icon: _buildAnimatedNavIcon(Icons.home, 0),
                 label: 'Home',
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.insert_chart),
+                icon: _buildAnimatedNavIcon(Icons.video_library, 1),
                 label: 'Videos',
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.star),
-                label: 'Favourite',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.chat),
-                label: 'Community',
+                icon: _buildAnimatedNavIcon(Icons.fitness_center, 2),
+                label: 'Workout',
               ),
             ],
           ),
@@ -162,39 +179,60 @@ class _HomePageState extends State<HomePage> {
         if (index == 3) {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => ChatPage()),
+            MaterialPageRoute(builder: (context) => const ChatPage()),
           );
         }
       },
       child: Column(
         children: [
           AnimatedContainer(
-            duration: Duration(milliseconds: 300),
+            duration: const Duration(milliseconds: 300),
             curve: Curves.easeInOut,
             width: isSelected ? 60 : 50,
             height: isSelected ? 60 : 50,
             decoration: BoxDecoration(
               color: isSelected
-                  ? Color(0xFFE2F163) // Selected state color
-                  : Color(0xFFB3A0FF), // Default state color
+                  ? const Color(0xFFE2F163) // Selected state color
+                  : const Color(0xFFB3A0FF), // Default state color
               shape: BoxShape.circle,
             ),
             child: Icon(icon, color: Colors.black),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
             label,
             style: TextStyle(
-              color: isSelected ? Color(0xFFE2F163) : Color(0xFFB3A0FF),
+              color: isSelected ? const Color(0xFFE2F163) : const Color(0xFFB3A0FF),
             ),
           ),
         ],
       ),
     );
   }
+
+  Widget _buildAnimatedNavIcon(IconData icon, int index) {
+    bool isSelected = _selectedNavIndex == index;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+      width: isSelected ? 30 : 24,
+      height: isSelected ? 30 : 24,
+      decoration: BoxDecoration(
+        color: isSelected ? const Color(0xFFE2F163) : Colors.transparent,
+        shape: BoxShape.circle,
+      ),
+      child: Icon(
+        icon,
+        color: isSelected ? Colors.black : const Color(0xFFB3A0FF),
+        size: isSelected ? 24 : 20,
+      ),
+    );
+  }
+
   Widget _buildVideoRecommendationCard() {
     return Card(
-      color: Color(0xFF4E4E4E),
+      color: Theme.of(context).cardColor,
       child: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Column(
@@ -202,9 +240,9 @@ class _HomePageState extends State<HomePage> {
           children: [
             Text(
               "Recommended Video",
-              style: TextStyle(color: Colors.white, fontSize: 16),
+              style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color, fontSize: 16),
             ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             YoutubePlayer(
               controller: _youtubeController,
               showVideoProgressIndicator: true,

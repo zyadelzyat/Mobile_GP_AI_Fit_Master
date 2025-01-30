@@ -3,13 +3,12 @@ import 'package:provider/provider.dart';
 import 'theme.dart';
 import 'theme_provider.dart';
 import 'Home__Page/00_home_page.dart'; // Import your home page
-import 'AI/chatbot.dart'; // Import your chatbot page
-import 'Login___Signup/01_signin_screen.dart';
+// Import your chatbot page
 void main() {
   runApp(
     ChangeNotifierProvider(
       create: (_) => ThemeProvider(),
-      child: MyApp(),
+      child: const MyApp(),
     ),
   );
 }
@@ -26,7 +25,7 @@ class MyApp extends StatelessWidget {
       theme: lightTheme, // Light theme
       darkTheme: darkTheme, // Dark theme
       themeMode: themeProvider.themeMode, // Use the theme mode from the provider
-      home: SignInScreen(), // Set your initial screen
+      home:  const HomePage(), // Set your initial screen
       debugShowCheckedModeBanner: false,
     );
   }

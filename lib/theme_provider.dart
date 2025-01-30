@@ -9,4 +9,5 @@ class ThemeProvider with ChangeNotifier {
     _themeMode = _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
     notifyListeners();
   }
+
 }

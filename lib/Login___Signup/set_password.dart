@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import '01_signin_screen.dart'; // Ensure this import is correct.
+import 'package:provider/provider.dart'; // Import Provider for state management
+import '01_signin_screen.dart'; // Import SignIn screen
+import 'package:untitled/theme_provider.dart'; // Import ThemeProvider for theme management
 
 class SetPasswordScreen extends StatefulWidget {
   const SetPasswordScreen({super.key});
@@ -13,20 +15,16 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
   final TextEditingController _confirmPasswordController = TextEditingController();
 
   bool _isPasswordValid(String password) {
-    // Regular expression for password validation:
-    // - At least one uppercase letter
-    // - At least one lowercase letter
-    // - At least one digit
-    // - At least one special character
-    // - Minimum of 6 characters
     final passwordRegEx = RegExp(r'^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@#$%^&+=!]).{6,}$');
     return passwordRegEx.hasMatch(password);
   }
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context); // Access ThemeProvider
+
     return Scaffold(
-      backgroundColor: const Color(0xFF232323),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor, // Use theme background color
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 50),
         child: SingleChildScrollView(
@@ -35,11 +33,27 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
             children: <Widget>[
               const SizedBox(height: 50),
 
+              // Theme Toggle Button
+              Align(
+                alignment: Alignment.topRight,
+                child: IconButton(
+                  icon: Icon(
+                    themeProvider.themeMode == ThemeMode.light
+                        ? Icons.dark_mode // Dark mode icon
+                        : Icons.light_mode, // Light mode icon
+                    color: Theme.of(context).iconTheme.color, // Use theme icon color
+                  ),
+                  onPressed: () {
+                    themeProvider.toggleTheme(); // Toggle between light and dark mode
+                  },
+                ),
+              ),
+
               // Title
-              const Text(
+              Text(
                 'Set New Password',
                 style: TextStyle(
-                  color: Color(0xFFE2F163), // Lime color for 'Set New Password' text
+                  color: Theme.of(context).primaryColor, // Use theme primary color
                   fontSize: 30,
                   fontWeight: FontWeight.bold,
                 ),
@@ -47,10 +61,10 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
               const SizedBox(height: 20),
 
               // Instruction text
-              const Text(
+              Text(
                 'Enter a new password to secure your account.',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: Theme.of(context).textTheme.bodyLarge?.color, // Use theme text color
                   fontSize: 18,
                   fontWeight: FontWeight.normal,
                 ),
@@ -68,12 +82,11 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
 
               // Submit Button
               MaterialButton(
-                color: Colors.white,
+                color: Colors.white, // White background for the button
                 elevation: 5.0,
                 padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 80),
-                shape: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(50),
-                  borderSide: BorderSide.none,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30), // Rounded corners
                 ),
                 onPressed: () {
                   String newPassword = _newPasswordController.text;
@@ -116,7 +129,7 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
                 child: const Text(
                   'Set Password',
                   style: TextStyle(
-                    color: Color(0xFF232323),
+                    color: Color(0xFF232323), // Black text for the button
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
@@ -132,17 +145,26 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
   Widget _buildTextField(String hintText, IconData icon, TextEditingController controller, {bool obscureText = false}) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        color: Colors.white, // White background for text fields
+        borderRadius: BorderRadius.circular(15), // Rounded corners (15px radius)
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1), // Optional: Add a subtle shadow
+            blurRadius: 5,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: TextField(
         controller: controller,
         obscureText: obscureText,
+        style: const TextStyle(color: Colors.black), // Black text color for input
         decoration: InputDecoration(
           hintText: hintText,
-          prefixIcon: Icon(icon),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(vertical: 15),
+          hintStyle: const TextStyle(color: Colors.grey), // Grey hint text
+          prefixIcon: Icon(icon, color: Colors.grey), // Grey icon
+          border: InputBorder.none, // Remove default border
+          contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 10),
         ),
       ),
     );

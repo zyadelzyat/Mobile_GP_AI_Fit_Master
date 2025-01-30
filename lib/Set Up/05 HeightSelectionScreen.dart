@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import '06 WeightSelectionScreen.dart'; // Import WeightSelectionScreen
-import '03 GenderSelectionScreen.dart';
 
 void main() {
-  runApp(HeightSelectionApp());
+  runApp(const HeightSelectionApp());
 }
 
 class HeightSelectionApp extends StatelessWidget {
+  const HeightSelectionApp({super.key});
+
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return const MaterialApp(
       home: HeightSelectionScreen(),
       debugShowCheckedModeBanner: false,
     );
@@ -17,6 +18,8 @@ class HeightSelectionApp extends StatelessWidget {
 }
 
 class HeightSelectionScreen extends StatefulWidget {
+  const HeightSelectionScreen({super.key});
+
   @override
   _HeightSelectionScreenState createState() => _HeightSelectionScreenState();
 }

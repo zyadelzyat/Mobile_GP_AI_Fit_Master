@@ -132,10 +132,10 @@ class _SignInScreenState extends State<SignInScreen> {
                   // Navigate to FitnessScreen after validation
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => FitnessScreen()),
+                    MaterialPageRoute(builder: (context) => const FitnessScreen()),
                   );
                 },
-                child: Text(
+                child: const Text(
                   'Log In',
                   style: TextStyle(
                     color: Color(0xFF232323), // Black text for the button
@@ -190,17 +190,17 @@ class _SignInScreenState extends State<SignInScreen> {
           BoxShadow(
             color: Colors.black.withOpacity(0.1), // Optional: Add a subtle shadow
             blurRadius: 5,
-            offset: Offset(0, 2),
+            offset: const Offset(0, 2),
           ),
         ],
       ),
       child: TextField(
         controller: controller,
         obscureText: obscureText,
-        style: TextStyle(color: Colors.black), // Black text color for input
+        style: const TextStyle(color: Colors.black), // Black text color for input
         decoration: InputDecoration(
           hintText: hintText,
-          hintStyle: TextStyle(color: Colors.grey), // Grey hint text
+          hintStyle: const TextStyle(color: Colors.grey), // Grey hint text
           prefixIcon: Icon(icon, color: Colors.grey), // Grey icon
           border: InputBorder.none, // Remove default border
           contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 10),

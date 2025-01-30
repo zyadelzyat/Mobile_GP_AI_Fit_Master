@@ -2,13 +2,15 @@ import 'package:flutter/material.dart';
 import 'Set Up/03 GenderSelectionScreen.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return const MaterialApp(
       home: FitnessScreen(),
       debugShowCheckedModeBanner: false,
     );
@@ -16,6 +18,8 @@ class MyApp extends StatelessWidget {
 }
 
 class FitnessScreen extends StatelessWidget {
+  const FitnessScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -27,7 +31,7 @@ class FitnessScreen extends StatelessWidget {
               Expanded(
                 flex: 2,
                 child: Container(
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                     image: DecorationImage(
                       image: AssetImage('assets/fitness_image.jpg'), // ضع هنا مسار الصورة
                       fit: BoxFit.cover,
@@ -40,8 +44,8 @@ class FitnessScreen extends StatelessWidget {
                 flex: 1,
                 child: Container(
                   color: Colors.black,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
+                  child: const Padding(
+                    padding: EdgeInsets.all(16.0),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -81,17 +85,17 @@ class FitnessScreen extends StatelessWidget {
                   // عند الضغط على الزر، الانتقال لصفحة تحديد الجنس
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => GenderSelectionScreen()),
+                    MaterialPageRoute(builder: (context) => const GenderSelectionScreen()),
                   );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.grey[800],
-                  padding: EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(24),
                   ),
                 ),
-                child: Text(
+                child: const Text(
                   'Next',
                   style: TextStyle(
                     color: Colors.white,

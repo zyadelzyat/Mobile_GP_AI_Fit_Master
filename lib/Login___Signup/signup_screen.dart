@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import '01_signin_screen.dart'; // Import the SignIn screen
+import 'package:provider/provider.dart'; // Import Provider for state management
+import '01_signin_screen.dart'; // Import SignIn screen
 import 'package:intl/intl.dart'; // Import for DateFormat
+import 'package:untitled/theme_provider.dart'; // Import ThemeProvider for theme management
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -95,8 +97,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context); // Access ThemeProvider
+
     return Scaffold(
-      backgroundColor: const Color(0xFF232323), // Dark background color
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor, // Use theme background color
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 50),
         child: SingleChildScrollView(
@@ -104,27 +108,37 @@ class _SignUpScreenState extends State<SignUpScreen> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
               const SizedBox(height: 20),
+
+              // Theme Toggle Button
               Align(
-                alignment: Alignment.topLeft,
+                alignment: Alignment.topRight,
                 child: IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.white),
-                  onPressed: () => Navigator.pop(context),
+                  icon: Icon(
+                    themeProvider.themeMode == ThemeMode.light
+                        ? Icons.dark_mode // Dark mode icon
+                        : Icons.light_mode, // Light mode icon
+                    color: Theme.of(context).iconTheme.color, // Use theme icon color
+                  ),
+                  onPressed: () {
+                    themeProvider.toggleTheme(); // Toggle between light and dark mode
+                  },
                 ),
               ),
+
               const SizedBox(height: 20),
-              const Text(
+              Text(
                 'Create Account',
                 style: TextStyle(
-                  color: Colors.lime, // Lime color for title
+                  color: Theme.of(context).primaryColor, // Use theme primary color
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(height: 10),
-              const Text(
+              Text(
                 "Let's Start!",
                 style: TextStyle(
-                  color: Colors.white, // White color for subtitle
+                  color: Theme.of(context).textTheme.bodyLarge?.color, // Use theme text color
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
@@ -133,8 +147,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 20),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFB39DDB), // Light purple for container
-                  borderRadius: BorderRadius.circular(20),
+                  color: const Color(0xFFB39DDB), // Light purple background color
+                  borderRadius: BorderRadius.circular(20), // Rounded corners
                 ),
                 child: Column(
                   children: [
@@ -159,7 +173,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       onChanged: (value) {
                         setState(() {
                           _selectedRole = value;
-                          // عند تغيير الدور، نعيد تعيين المدرب ليكون فارغًا إذا كان الدور "Self-Trainee"
                           if (_selectedRole == 'Self-Trainee') {
                             _selectedCoach = null;
                           }
@@ -193,22 +206,21 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
               ),
               const SizedBox(height: 30),
-              const Text(
+              Text(
                 "By continuing, you agree to Terms of Use and Privacy Policy.",
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: Colors.white, // White color for small text
+                  color: Theme.of(context).textTheme.bodyLarge?.color, // Use theme text color
                   fontSize: 12,
                 ),
               ),
               const SizedBox(height: 30),
               MaterialButton(
-                color: Colors.white, // White button
+                color: Colors.white, // White background for the button
                 elevation: 5.0,
                 padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 80),
-                shape: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(50),
-                  borderSide: BorderSide.none,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30), // Rounded corners
                 ),
                 onPressed: () {
                   if (_validateFields()) {
@@ -221,16 +233,19 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 child: const Text(
                   'Sign Up',
                   style: TextStyle(
-                    color: Color(0xFF232323), // Dark text color for the button
+                    color: Color(0xFF232323), // Black text for the button
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
               const SizedBox(height: 20),
-              const Text(
+              Text(
                 "Or sign up with",
-                style: TextStyle(color: Colors.white, fontSize: 14),
+                style: TextStyle(
+                  color: Theme.of(context).textTheme.bodyLarge?.color, // Use theme text color
+                  fontSize: 14,
+                ),
               ),
               const SizedBox(height: 10),
               Row(
@@ -244,15 +259,23 @@ class _SignUpScreenState extends State<SignUpScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text('Already have an account? ', style: TextStyle(color: Colors.white)),
+                  Text(
+                    'Already have an account? ',
+                    style: TextStyle(
+                      color: Theme.of(context).textTheme.bodyLarge?.color, // Use theme text color
+                    ),
+                  ),
                   GestureDetector(
                     onTap: () => Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(builder: (context) => const SignInScreen()),
                     ),
-                    child: const Text(
+                    child: Text(
                       'Log in',
-                      style: TextStyle(color: Colors.lime, fontWeight: FontWeight.bold), // Lime color for link
+                      style: TextStyle(
+                        color: Theme.of(context).primaryColor, // Use theme primary color
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ],
@@ -273,17 +296,25 @@ class _SignUpScreenState extends State<SignUpScreen> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white, // White background for text fields
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(15), // Rounded corners (15px radius)
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1), // Optional: Add a subtle shadow
+            blurRadius: 5,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: TextFormField(
         controller: controller,
         obscureText: obscureText,
-        style: const TextStyle(color: Colors.black), // Text color inside text field
+        style: const TextStyle(color: Colors.black), // Black text color for input
         decoration: InputDecoration(
           hintText: label,
-          prefixIcon: Icon(icon),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(vertical: 15),
+          hintStyle: const TextStyle(color: Colors.grey), // Grey hint text
+          prefixIcon: Icon(icon, color: Colors.grey), // Grey icon
+          border: InputBorder.none, // Remove default border
+          contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 10),
         ),
       ),
     );
@@ -299,14 +330,22 @@ class _SignUpScreenState extends State<SignUpScreen> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white, // White background for dropdown
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(15), // Rounded corners (15px radius)
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1), // Optional: Add a subtle shadow
+            blurRadius: 5,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       padding: const EdgeInsets.symmetric(horizontal: 15),
       child: DropdownButtonFormField<String>(
         decoration: InputDecoration(
           hintText: label,
-          prefixIcon: Icon(icon),
-          border: InputBorder.none,
+          hintStyle: const TextStyle(color: Colors.grey), // Grey hint text
+          prefixIcon: Icon(icon, color: Colors.grey), // Grey icon
+          border: InputBorder.none, // Remove default border
         ),
         value: value,
         items: items.map((item) {
@@ -319,26 +358,37 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   Widget _buildDiseasesDropdown() {
     return Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
+      decoration: BoxDecoration(
+        color: Colors.white, // White background for dropdown
+        borderRadius: BorderRadius.circular(15), // Rounded corners (15px radius)
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1), // Optional: Add a subtle shadow
+            blurRadius: 5,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 15),
+      child: DropdownButtonFormField<String>(
+        decoration: const InputDecoration(
+          hintText: 'Select Disease',
+          hintStyle: TextStyle(color: Colors.grey), // Grey hint text
+          border: InputBorder.none, // Remove default border
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 15),
-        child: DropdownButtonFormField<String>(
-            decoration: const InputDecoration(
-              hintText: 'Select Disease',
-              border: InputBorder.none,
-            ),
-            value: _selectedDisease,
-            items: _diseases.map((disease) {
-              return DropdownMenuItem(value: disease, child: Text(disease));
-            }).toList(),
-            onChanged: (value) {
-              setState(() {
-                _selectedDisease = value;
-              });
-            },
-           ),
-        );
-    }
+        value: _selectedDisease,
+        items: _diseases.map((disease) {
+          return DropdownMenuItem(
+            value: disease,
+            child: Text(disease),
+          );
+        }).toList(),
+        onChanged: (value) {
+          setState(() {
+            _selectedDisease = value;
+          });
+        },
+      ),
+    );
+  }
 }

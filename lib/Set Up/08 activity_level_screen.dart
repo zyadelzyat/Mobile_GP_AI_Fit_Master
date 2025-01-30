@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 class ActivityLevelScreen extends StatefulWidget {
+  const ActivityLevelScreen({super.key});
+
   @override
   _ActivityLevelScreenState createState() => _ActivityLevelScreenState();
 }
@@ -27,7 +29,7 @@ class _ActivityLevelScreenState extends State<ActivityLevelScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            const Text(
               "Physical Activity Level",
               style: TextStyle(
                 color: Colors.white,
@@ -35,12 +37,12 @@ class _ActivityLevelScreenState extends State<ActivityLevelScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 10),
-            Text(
+            const SizedBox(height: 10),
+            const Text(
               "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
               style: TextStyle(color: Colors.grey, fontSize: 14),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             Expanded(
               child: ListView(
                 children: [
@@ -74,20 +76,20 @@ class _ActivityLevelScreenState extends State<ActivityLevelScreen> {
                 ],
               ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             Center(
               child: ElevatedButton(
                 onPressed: () {
                   // Navigate to the next screen or handle the selected activity level
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF232323),
+                  backgroundColor: const Color(0xFF232323),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  padding: EdgeInsets.symmetric(vertical: 15, horizontal: 100),
+                  padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 100),
                 ),
-                child: Text(
+                child: const Text(
                   "Continue",
                   style: TextStyle(color: Colors.white, fontSize: 16),
                 ),
@@ -105,7 +107,7 @@ class ActivityOption extends StatelessWidget {
   final bool isSelected;
   final VoidCallback onTap;
 
-  const ActivityOption({
+  const ActivityOption({super.key, 
     required this.title,
     required this.isSelected,
     required this.onTap,

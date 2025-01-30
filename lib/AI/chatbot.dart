@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ChatPage extends StatefulWidget {
+  const ChatPage({super.key});
+
   @override
   _ChatPageState createState() => _ChatPageState();
 }
@@ -39,7 +41,7 @@ class _ChatPageState extends State<ChatPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Gemini Chatbot"),
+        title: const Text("Gemini Chatbot"),
       ),
       body: Column(
         children: [
@@ -56,8 +58,8 @@ class _ChatPageState extends State<ChatPage> {
             ),
           ),
           if (_isLoading)
-            Padding(
-              padding: const EdgeInsets.all(8.0),
+            const Padding(
+              padding: EdgeInsets.all(8.0),
               child: CircularProgressIndicator(),
             ),
           Padding(
@@ -75,9 +77,9 @@ class _ChatPageState extends State<ChatPage> {
                     ),
                   ),
                 ),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 IconButton(
-                  icon: Icon(Icons.send),
+                  icon: const Icon(Icons.send),
                   onPressed: () {
                     if (_controller.text.isNotEmpty) {
                       _sendMessage(_controller.text);
@@ -97,7 +99,7 @@ class ChatBubble extends StatelessWidget {
   final String message;
   final bool isUser;
 
-  const ChatBubble({
+  const ChatBubble({super.key, 
     required this.message,
     required this.isUser,
   });
@@ -107,8 +109,8 @@ class ChatBubble extends StatelessWidget {
     return Align(
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
-        margin: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-        padding: EdgeInsets.all(12),
+        margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: isUser ? Colors.blue : Colors.grey[300],
           borderRadius: BorderRadius.circular(12),

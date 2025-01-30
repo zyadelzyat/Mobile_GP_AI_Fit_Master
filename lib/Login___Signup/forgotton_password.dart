@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart'; // Import Provider for state management
 import 'enter_code_OTP__screen.dart'; // Import EnterCodeScreen
+import 'package:untitled/theme_provider.dart'; // Import ThemeProvider for theme management
 
 class ResetPasswordScreen extends StatefulWidget {
   const ResetPasswordScreen({super.key});
@@ -18,10 +20,12 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context); // Access ThemeProvider
+
     return Scaffold(
-      backgroundColor: const Color(0xFF232323),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor, // Use theme background color
       appBar: AppBar(
-        backgroundColor: const Color(0xFF232323), // Same as background color
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor, // Use theme app bar color
         elevation: 0, // Remove AppBar shadow
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white), // Back icon
@@ -37,19 +41,19 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
               const SizedBox(height: 50),
-              const Text(
+              Text(
                 'Reset Password',
                 style: TextStyle(
-                  color: Color(0xFFE2F163),
+                  color: Theme.of(context).primaryColor, // Use theme primary color
                   fontSize: 30,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(height: 20),
-              const Text(
+              Text(
                 'Enter your email to receive a 6-digit reset code.',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: Theme.of(context).textTheme.bodyLarge?.color, // Use theme text color
                   fontSize: 18,
                   fontWeight: FontWeight.normal,
                 ),
@@ -59,12 +63,11 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
               _buildTextField('Email', Icons.email, _emailController),
               const SizedBox(height: 30),
               MaterialButton(
-                color: Colors.white,
+                color: Colors.white, // White background for the button
                 elevation: 5.0,
                 padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 80),
-                shape: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(50),
-                  borderSide: BorderSide.none,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30), // Rounded corners
                 ),
                 onPressed: () {
                   String email = _emailController.text;
@@ -94,7 +97,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 child: const Text(
                   'Send Code',
                   style: TextStyle(
-                    color: Color(0xFF232323),
+                    color: Color(0xFF232323), // Black text for the button
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
@@ -110,16 +113,18 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   Widget _buildTextField(String hintText, IconData icon, TextEditingController controller) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        color: Colors.white, // White background for text fields
+        borderRadius: BorderRadius.circular(15), // Rounded corners (15px radius)
       ),
       child: TextField(
         controller: controller,
+        style: const TextStyle(color: Colors.black), // Black text color for input
         decoration: InputDecoration(
           hintText: hintText,
-          prefixIcon: Icon(icon),
+          hintStyle: const TextStyle(color: Colors.grey), // Grey hint text
+          prefixIcon: Icon(icon, color: Colors.grey), // Grey icon
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(vertical: 15),
+          contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 10),
         ),
       ),
     );

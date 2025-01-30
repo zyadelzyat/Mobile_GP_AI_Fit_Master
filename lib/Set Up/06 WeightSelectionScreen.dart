@@ -5,7 +5,7 @@ import '05 HeightSelectionScreen.dart';
 class WeightSelectionScreen extends StatefulWidget {
   final String gender;
 
-  const WeightSelectionScreen({required this.gender});
+  const WeightSelectionScreen({super.key, required this.gender});
 
   @override
   _WeightSelectionScreenState createState() => _WeightSelectionScreenState();
@@ -75,7 +75,7 @@ class _WeightSelectionScreenState extends State<WeightSelectionScreen> {
             onPressed: () {
               Navigator.pushAndRemoveUntil(
                 context,
-                MaterialPageRoute(builder: (context) => HeightSelectionScreen()), // الصفحة التي تريد الانتقال إليها
+                MaterialPageRoute(builder: (context) => const HeightSelectionScreen()), // الصفحة التي تريد الانتقال إليها
                     (Route<dynamic> route) => false, // إزالة جميع الصفحات السابقة
               );
             },
@@ -187,7 +187,7 @@ class _WeightSelectionScreenState extends State<WeightSelectionScreen> {
                       ),
                     ),
                     // السهم في المنتصف مع حجمه الأصغر
-                    Positioned(
+                    const Positioned(
                       top: -10, // وضع السهم في أعلى المسطرة
                       child: Icon(
                         Icons.arrow_drop_down,
@@ -213,7 +213,7 @@ class _WeightSelectionScreenState extends State<WeightSelectionScreen> {
                     // يمكنك إضافة منطق هنا مثل الانتقال إلى شاشة أخرى
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => GoalSelectionScreen()),
+                      MaterialPageRoute(builder: (context) => const GoalSelectionScreen()),
                     );
                   },
                   style: ElevatedButton.styleFrom(
