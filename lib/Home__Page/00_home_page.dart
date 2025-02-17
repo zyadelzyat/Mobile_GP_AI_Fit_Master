@@ -3,8 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:untitled/AI/chatbot.dart';
 import 'package:untitled/profile.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
-import 'package:untitled/theme_provider.dart'; // Import your ThemeProvider
-import 'package:untitled/videos_page.dart'; // Import the new VideosPage
+import 'package:untitled/theme_provider.dart';
+import 'package:untitled/videos_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -49,7 +49,7 @@ class _HomePageState extends State<HomePage> {
         backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0,
         title: Text(
-          "Hi, User",
+          "Hi, asser",
           style: TextStyle(
             color: Theme.of(context).primaryColor,
             fontSize: 22,
@@ -69,7 +69,7 @@ class _HomePageState extends State<HomePage> {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const ProfilePage(userId: '',)),
+                MaterialPageRoute(builder: (context) => ProfilePage()),
               );
             },
           ),
@@ -138,7 +138,7 @@ class _HomePageState extends State<HomePage> {
               if (index == 1) {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const VideosPage()),
+                  MaterialPageRoute(builder: (context) => VideosPage()),
                 );
               }
             },

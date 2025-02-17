@@ -1,31 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:untitled/profile.dart';
+// import 'package:untitled/Login___Signup/01_signin_screen.dart';
+import 'Home__Page/00_home_page.dart';
 import 'theme.dart';
 import 'theme_provider.dart';
-import 'Home__Page/00_home_page.dart'; // Import your home page
-// Import your chatbot page
+import 'Set Up/03 GenderSelectionScreen.dart'; // Import your GenderSelectionScreen
+
 void main() {
   runApp(
     ChangeNotifierProvider(
       create: (_) => ThemeProvider(),
-      child: const MyApp(),
+      child: const GenderSelectionApp(),
     ),
   );
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class GenderSelectionApp extends StatelessWidget {
+  const GenderSelectionApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
 
     return MaterialApp(
-      title: 'Onboarding Screen',
-      theme: lightTheme, // Light theme
-      darkTheme: darkTheme, // Dark theme
-      themeMode: themeProvider.themeMode, // Use the theme mode from the provider
-      home:  const HomePage(), // Set your initial screen
+      theme: lightTheme, // Use your light theme
+      darkTheme: darkTheme, // Use your dark theme
+      themeMode: themeProvider.themeMode, // Use the selected theme mode
+      home:  HomePage(),
       debugShowCheckedModeBanner: false,
     );
   }

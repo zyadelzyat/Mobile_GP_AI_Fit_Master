@@ -20,7 +20,7 @@ class VideosPage extends StatelessWidget {
     // Add more videos here
   ];
 
-  const VideosPage({super.key});
+  VideosPage({super.key});
 
   @override
   Widget build(BuildContext context) {
