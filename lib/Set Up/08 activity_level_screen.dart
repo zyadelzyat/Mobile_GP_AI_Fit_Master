@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:untitled/theme_provider.dart'; // Import ThemeProvider
 
 class ActivityLevelScreen extends StatefulWidget {
   const ActivityLevelScreen({super.key});
@@ -12,35 +14,52 @@ class _ActivityLevelScreenState extends State<ActivityLevelScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDarkMode = themeProvider.themeMode == ThemeMode.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFF232323), // Set background to #232323
+      backgroundColor: isDarkMode ? const Color(0xFF232323) : Colors.white, // Dynamic background
       appBar: AppBar(
-        backgroundColor: const Color(0xFF232323), // Same as background color
+        backgroundColor: isDarkMode ? const Color(0xFF232323) : Colors.white, // Dynamic app bar
         elevation: 0, // Remove AppBar shadow
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white), // Back icon
+          icon: Icon(Icons.arrow_back, color: isDarkMode ? Colors.white : Colors.black), // Dynamic back icon
           onPressed: () {
             Navigator.pop(context); // Go back to the previous screen
           },
         ),
+        actions: [
+          IconButton(
+            icon: Icon(
+              isDarkMode ? Icons.light_mode : Icons.dark_mode,
+              color: isDarkMode ? Colors.white : Colors.black, // Dynamic theme toggle icon
+            ),
+            onPressed: () {
+              themeProvider.toggleTheme(); // Toggle theme
+            },
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               "Physical Activity Level",
               style: TextStyle(
-                color: Colors.white,
+                color: isDarkMode ? Colors.white : Colors.black, // Dynamic title color
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 10),
-            const Text(
+            Text(
               "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-              style: TextStyle(color: Colors.grey, fontSize: 14),
+              style: TextStyle(
+                color: isDarkMode ? Colors.grey : Colors.black54, // Dynamic subtitle color
+                fontSize: 14,
+              ),
             ),
             const SizedBox(height: 20),
             Expanded(
@@ -54,6 +73,7 @@ class _ActivityLevelScreenState extends State<ActivityLevelScreen> {
                         _selectedActivityLevel = "Beginner";
                       });
                     },
+                    isDarkMode: isDarkMode,
                   ),
                   ActivityOption(
                     title: "Intermediate",
@@ -63,6 +83,7 @@ class _ActivityLevelScreenState extends State<ActivityLevelScreen> {
                         _selectedActivityLevel = "Intermediate";
                       });
                     },
+                    isDarkMode: isDarkMode,
                   ),
                   ActivityOption(
                     title: "Advance",
@@ -72,6 +93,7 @@ class _ActivityLevelScreenState extends State<ActivityLevelScreen> {
                         _selectedActivityLevel = "Advance";
                       });
                     },
+                    isDarkMode: isDarkMode,
                   ),
                 ],
               ),
@@ -83,15 +105,18 @@ class _ActivityLevelScreenState extends State<ActivityLevelScreen> {
                   // Navigate to the next screen or handle the selected activity level
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF232323),
+                  backgroundColor: isDarkMode ? Colors.grey[800] : Colors.white, // White in light mode
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
                   padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 100),
                 ),
-                child: const Text(
+                child: Text(
                   "Continue",
-                  style: TextStyle(color: Colors.white, fontSize: 16),
+                  style: TextStyle(
+                    color: isDarkMode ? Colors.white : Colors.black, // Black in light mode
+                    fontSize: 16,
+                  ),
                 ),
               ),
             ),
@@ -106,11 +131,13 @@ class ActivityOption extends StatelessWidget {
   final String title;
   final bool isSelected;
   final VoidCallback onTap;
+  final bool isDarkMode;
 
-  const ActivityOption({super.key, 
+  const ActivityOption({super.key,
     required this.title,
     required this.isSelected,
     required this.onTap,
+    required this.isDarkMode,
   });
 
   @override
@@ -122,14 +149,14 @@ class ActivityOption extends StatelessWidget {
         child: Container(
           height: 60,
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFFE2F163) : Colors.white,
+            color: isSelected ? const Color(0xFFE2F163) : (isDarkMode ? Colors.grey[800] : Colors.grey[200]), // Dynamic background
             borderRadius: BorderRadius.circular(20),
           ),
           child: Center(
             child: Text(
               title,
               style: TextStyle(
-                color: isSelected ? Colors.black : Colors.black,
+                color: isSelected ? Colors.black : (isDarkMode ? Colors.white : Colors.black), // Dynamic text color
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),

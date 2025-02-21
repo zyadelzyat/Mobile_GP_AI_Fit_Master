@@ -1,21 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:untitled/theme_provider.dart';
+
 import '05 HeightSelectionScreen.dart';
-
-void main() {
-  runApp(const GenderSelectionApp());
-}
-
-class GenderSelectionApp extends StatelessWidget {
-  const GenderSelectionApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: GenderSelectionScreen(),
-      debugShowCheckedModeBanner: false,
-    );
-  }
-}
 
 class GenderSelectionScreen extends StatefulWidget {
   const GenderSelectionScreen({super.key});
@@ -29,54 +16,49 @@ class _GenderSelectionScreenState extends State<GenderSelectionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDarkMode = themeProvider.themeMode == ThemeMode.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFF232323), // Set background to #232323
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF232323), // Set AppBar background to #232323
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.yellow),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).iconTheme.color),
           onPressed: () {
             Navigator.pop(context);
           },
         ),
+        actions: [
+          IconButton(
+            icon: Icon(
+              isDarkMode ? Icons.light_mode : Icons.dark_mode,
+              color: Theme.of(context).iconTheme.color,
+            ),
+            onPressed: () {
+              themeProvider.toggleTheme();
+            },
+          ),
+        ],
       ),
       body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Title outside the box
-          const Text(
+          Text(
             "What's Your Gender",
             style: TextStyle(
-              color: Colors.white,
+              color: Theme.of(context).textTheme.bodyLarge?.color,
               fontSize: 24,
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 10),
-          // Purple background behind description
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 20),
-            margin: const EdgeInsets.symmetric(horizontal: 20), // Add some margin for spacing
-            decoration: BoxDecoration(
-              color: const Color(0xFFB39DDB), // Light purple background color
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: const Text(
-              "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.black54,
-                fontSize: 14,
-              ),
-            ),
-          ),
-          const SizedBox(height: 40),
           GenderOption(
             icon: Icons.male,
             label: "Male",
-            baseColor: Colors.white,
-            selectedColor: const Color(0xFFE2F163),
+            baseColor: Colors.blue, // Same color for both light and dark modes
+            selectedColor: Colors.blue, // Same color for both light and dark modes
             isSelected: selectedGender == 'Male',
             onTap: () {
               setState(() {
@@ -88,8 +70,8 @@ class _GenderSelectionScreenState extends State<GenderSelectionScreen> {
           GenderOption(
             icon: Icons.female,
             label: "Female",
-            baseColor: Colors.white,
-            selectedColor: const Color(0xFFE2F163),
+            baseColor: Colors.pink, // Same color for both light and dark modes
+            selectedColor: Colors.pink, // Same color for both light and dark modes
             isSelected: selectedGender == 'Female',
             onTap: () {
               setState(() {
@@ -104,7 +86,7 @@ class _GenderSelectionScreenState extends State<GenderSelectionScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const HeightSelectionScreen(), // Navigate to AgeSelectionScreen
+                    builder: (context) => const HeightSelectionScreen(),
                   ),
                 );
               } else {
@@ -116,15 +98,18 @@ class _GenderSelectionScreenState extends State<GenderSelectionScreen> {
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.grey[900],
+              backgroundColor: isDarkMode ? Theme.of(context).cardColor : Colors.white, // White only in light mode
               padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(30),
               ),
             ),
-            child: const Text(
+            child: Text(
               "Continue",
-              style: TextStyle(color: Colors.white, fontSize: 16),
+              style: TextStyle(
+                color: isDarkMode ? Colors.white : Colors.black, // Black text only in light mode
+                fontSize: 16,
+              ),
             ),
           ),
         ],
@@ -153,42 +138,40 @@ class GenderOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final currentColor = isSelected ? selectedColor : baseColor;
-
     return GestureDetector(
-        onTap: onTap,
-        child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 20),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  width: 100,
-                  height: 100,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: isSelected
-                        ? currentColor.withOpacity(0.2)
-                        : Colors.grey.withOpacity(0.1),
-                  ),
-                  child: Icon(
-                    icon,
-                    size: 50,
-                    color: currentColor,
-                  ),
-                ),
-                const SizedBox(width: 20),
-                Text(
-                  label,
-                  style: TextStyle(
-                    color: currentColor,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 20),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 100,
+              height: 100,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isSelected
+                    ? selectedColor.withOpacity(0.2)
+                    : Colors.grey.withOpacity(0.1),
+              ),
+              child: Icon(
+                icon,
+                size: 50,
+                color: selectedColor,
+              ),
             ),
-           ),
-        );
-    }
+            const SizedBox(width: 20),
+            Text(
+              label,
+              style: TextStyle(
+                color: selectedColor,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

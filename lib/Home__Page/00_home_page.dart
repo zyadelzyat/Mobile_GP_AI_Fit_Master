@@ -3,8 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:untitled/AI/chatbot.dart';
 import 'package:untitled/profile.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
-import 'package:untitled/theme_provider.dart'; // Import your ThemeProvider
-import 'package:untitled/videos_page.dart'; // Import the new VideosPage
+import 'package:untitled/theme_provider.dart';
+import 'package:untitled/videos_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -138,7 +138,7 @@ class _HomePageState extends State<HomePage> {
               if (index == 1) {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const VideosPage()),
+                  MaterialPageRoute(builder: (context) => VideosPage()),
                 );
               }
             },
