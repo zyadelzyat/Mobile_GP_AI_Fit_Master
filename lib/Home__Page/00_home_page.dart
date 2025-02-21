@@ -49,7 +49,7 @@ class _HomePageState extends State<HomePage> {
         backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0,
         title: Text(
-          "Hi, User",
+          "Hi, asser",
           style: TextStyle(
             color: Theme.of(context).primaryColor,
             fontSize: 22,
@@ -69,7 +69,7 @@ class _HomePageState extends State<HomePage> {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const ProfilePage(userId: '',)),
+                MaterialPageRoute(builder: (context) => ProfilePage()),
               );
             },
           ),

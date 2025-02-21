@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:untitled/profile.dart';
+// import 'package:untitled/Login___Signup/01_signin_screen.dart';
+import 'Home__Page/00_home_page.dart';
 import 'theme.dart';
 import 'theme_provider.dart';
 import 'Set Up/03 GenderSelectionScreen.dart'; // Import your GenderSelectionScreen
@@ -24,7 +27,11 @@ class GenderSelectionApp extends StatelessWidget {
       theme: lightTheme, // Use your light theme
       darkTheme: darkTheme, // Use your dark theme
       themeMode: themeProvider.themeMode, // Use the selected theme mode
+<<<<<<< HEAD
       home: const GenderSelectionScreen(),
+=======
+      home:  HomePage(),
+>>>>>>> 6145d7a8cf4ddb985c7ab80a501f95ebbe8dee6a
       debugShowCheckedModeBanner: false,
     );
   }

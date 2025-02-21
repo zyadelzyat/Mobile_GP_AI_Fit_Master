@@ -7,7 +7,12 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+<<<<<<< HEAD
 import 'package:untitled/FillProfileScreen.dart';
+=======
+import 'package:untitled/fitness_screen.dart';
+import 'package:untitled/main.dart';
+>>>>>>> 6145d7a8cf4ddb985c7ab80a501f95ebbe8dee6a
 
 void main() {
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
