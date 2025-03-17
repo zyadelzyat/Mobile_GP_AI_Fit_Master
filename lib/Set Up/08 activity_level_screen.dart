@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:untitled/Home__Page/00_home_page.dart';
 import 'package:untitled/theme_provider.dart'; // Import ThemeProvider
 
 class ActivityLevelScreen extends StatefulWidget {
@@ -102,7 +103,10 @@ class _ActivityLevelScreenState extends State<ActivityLevelScreen> {
             Center(
               child: ElevatedButton(
                 onPressed: () {
-                  // Navigate to the next screen or handle the selected activity level
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => HomePage()), // استبدل HomePage بالصفحة الفعلية
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: isDarkMode ? Colors.grey[800] : Colors.white, // White in light mode

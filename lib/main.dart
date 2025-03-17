@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:untitled/Home__Page/CalorieCalculator.dart';
 import 'package:untitled/profile.dart';
-// import 'package:untitled/Login___Signup/01_signin_screen.dart';
+import 'package:untitled/Login___Signup/01_signin_screen.dart';
 import 'Home__Page/00_home_page.dart';
 import 'theme.dart';
 import 'theme_provider.dart';
-import 'Set Up/03 GenderSelectionScreen.dart'; // Import your GenderSelectionScreen
+import 'Set Up/03 GenderSelectionScreen.dart';
+import 'package:untitled/Home__Page/CalorieCalculator.dart'; // استيراد صفحة حساب السعرات
+import 'package:untitled/Home__Page/SupplementsStore.dart';
 
 void main() {
   runApp(
@@ -24,14 +27,10 @@ class GenderSelectionApp extends StatelessWidget {
     final themeProvider = Provider.of<ThemeProvider>(context);
 
     return MaterialApp(
-      theme: lightTheme, // Use your light theme
-      darkTheme: darkTheme, // Use your dark theme
-      themeMode: themeProvider.themeMode, // Use the selected theme mode
-<<<<<<< HEAD
-      home: const GenderSelectionScreen(),
-=======
-      home:  HomePage(),
->>>>>>> 6145d7a8cf4ddb985c7ab80a501f95ebbe8dee6a
+      theme: lightTheme, // استخدام الثيم الفاتح
+      darkTheme: darkTheme, // استخدام الثيم الداكن
+      themeMode: themeProvider.themeMode, // اختيار الثيم حسب الإعداد
+      home: SupplementsStorePage(), // إزالة const هنا
       debugShowCheckedModeBanner: false,
     );
   }

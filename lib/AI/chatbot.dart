@@ -127,9 +127,9 @@ class ChatBubble extends StatelessWidget {
 }
 
 class GeminiAPI {
-  static const String apiKey = "AIzaSyBhl0gqDkDL1FOmAMuW1RQBmla6W6JpVMY";
+  static const String apiKey = "AIzaSyA2sxJAf5ATKUNyf31y1ZNqaIF5jYHMPfI";
   static const String apiUrl =
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=$apiKey";
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$apiKey";
 
   static Future<String> sendMessage(String message) async {
     final response = await http.post(

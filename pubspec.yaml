@@ -57,17 +57,10 @@ dependencies:
   flutter_native_splash: ^2.3.10
 flutter_native_splash:
   color: "#000000" # Background color (black)
-<<<<<<< HEAD
-  image: assets/splash_image.png # Ensure the image exists in assets
-  fullscreen: true
-  android_12:
-    image: assets/splash_image.png
-=======
   image: assets/splash_image.svg # Ensure the image exists in assets
   fullscreen: true
   android_12:
     image: assets/splash_image.svg
->>>>>>> 6145d7a8cf4ddb985c7ab80a501f95ebbe8dee6a
     color: "#000000"
 dev_dependencies:
   flutter_test:
