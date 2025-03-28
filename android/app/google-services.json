@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "795865006842",
+    "project_id": "aimaster-4c201",
+    "storage_bucket": "aimaster-4c201.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:795865006842:android:d64f611128edeaf7f37f43",
+        "android_client_info": {
+          "package_name": "com.example.untitled"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAOZcZkW5gsinsM_O8myOfO9emMveZSeYA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart'; // Import Provider for state management
-import '01_signin_screen.dart'; // Import SignIn screen
-import 'package:intl/intl.dart'; // Import for DateFormat
-import 'package:untitled/theme_provider.dart'; // Import ThemeProvider for theme management
+import 'package:provider/provider.dart';
+import '01_signin_screen.dart';
+import 'package:intl/intl.dart';
+import 'package:untitled/theme_provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -26,8 +28,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
   String? _selectedCoach;
   String? _selectedDisease;
   final List<String> _diseases = ['No Diseases', 'Heart Diseases', 'Diabetes', 'Blood Pressure', 'Other'];
+  bool _isLoading = false;
 
-  // Date of Birth Picker
   Future<void> _selectDateOfBirth(BuildContext context) async {
     final DateTime? pickedDate = await showDatePicker(
       context: context,
@@ -92,15 +94,87 @@ class _SignUpScreenState extends State<SignUpScreen> {
       return false;
     }
 
+    if (_passwordController.text.length < 6) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text("Password must be at least 6 characters long."),
+      ));
+      return false;
+    }
+
     return true;
   }
 
+  Future<void> _createAccount() async {
+    if (!_validateFields()) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+
+      User? user = userCredential.user;
+      if (user != null) {
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+          'firstName': _firstNameController.text.trim(),
+          'middleName': _middleNameController.text.trim(),
+          'lastName': _lastNameController.text.trim(),
+          'email': _emailController.text.trim(),
+          'phone': _phoneController.text.trim(),
+          'dob': _dobController.text.trim(),
+          'role': _selectedRole,
+          'coach': _selectedCoach,
+          'disease': _selectedDisease,
+          'otherDisease': _otherDiseaseController.text.trim(),
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text("Account created successfully! Please sign in."),
+          backgroundColor: Colors.green,
+        ));
+
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const SignInScreen()),
+          );
+        }
+      }
+    } on FirebaseAuthException catch (e) {
+      String errorMessage = "An error occurred during sign up.";
+      if (e.code == 'weak-password') {
+        errorMessage = 'The password provided is too weak.';
+      } else if (e.code == 'email-already-in-use') {
+        errorMessage = 'An account already exists for that email.';
+      } else if (e.code == 'invalid-email') {
+        errorMessage = 'The email address is not valid.';
+      }
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(errorMessage),
+        backgroundColor: Colors.red,
+      ));
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text("Error: ${e.toString()}"),
+        backgroundColor: Colors.red,
+      ));
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+
   @override
   Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context); // Access ThemeProvider
+    final themeProvider = Provider.of<ThemeProvider>(context);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor, // Use theme background color
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 50),
         child: SingleChildScrollView(
@@ -108,28 +182,23 @@ class _SignUpScreenState extends State<SignUpScreen> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
               const SizedBox(height: 20),
-
-              // Theme Toggle Button
               Align(
                 alignment: Alignment.topRight,
                 child: IconButton(
                   icon: Icon(
                     themeProvider.themeMode == ThemeMode.light
-                        ? Icons.dark_mode // Dark mode icon
-                        : Icons.light_mode, // Light mode icon
-                    color: Theme.of(context).iconTheme.color, // Use theme icon color
+                        ? Icons.dark_mode
+                        : Icons.light_mode,
+                    color: Theme.of(context).iconTheme.color,
                   ),
-                  onPressed: () {
-                    themeProvider.toggleTheme(); // Toggle between light and dark mode
-                  },
+                  onPressed: () => themeProvider.toggleTheme(),
                 ),
               ),
-
               const SizedBox(height: 20),
               Text(
                 'Create Account',
                 style: TextStyle(
-                  color: Theme.of(context).primaryColor, // Use theme primary color
+                  color: Theme.of(context).primaryColor,
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
                 ),
@@ -138,7 +207,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               Text(
                 "Let's Start!",
                 style: TextStyle(
-                  color: Theme.of(context).textTheme.bodyLarge?.color, // Use theme text color
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
@@ -147,8 +216,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 20),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFB39DDB), // Light purple background color
-                  borderRadius: BorderRadius.circular(20), // Rounded corners
+                  color: const Color(0xFFB39DDB),
+                  borderRadius: BorderRadius.circular(20),
                 ),
                 child: Column(
                   children: [
@@ -170,14 +239,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       value: _selectedRole,
                       items: ["Trainer", "Trainee", "Self-Trainee"],
                       icon: Icons.work,
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedRole = value;
-                          if (_selectedRole == 'Self-Trainee') {
-                            _selectedCoach = null;
-                          }
-                        });
-                      },
+                      onChanged: (value) => setState(() {
+                        _selectedRole = value;
+                        if (_selectedRole == 'Self-Trainee') _selectedCoach = null;
+                      }),
                     ),
                     const SizedBox(height: 20),
                     if (_selectedRole != 'Self-Trainee')
@@ -210,30 +275,25 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 "By continuing, you agree to Terms of Use and Privacy Policy.",
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: Theme.of(context).textTheme.bodyLarge?.color, // Use theme text color
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
                   fontSize: 12,
                 ),
               ),
               const SizedBox(height: 30),
               MaterialButton(
-                color: Colors.white, // White background for the button
+                color: Colors.white,
                 elevation: 5.0,
                 padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 80),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30), // Rounded corners
+                  borderRadius: BorderRadius.circular(30),
                 ),
-                onPressed: () {
-                  if (_validateFields()) {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => const SignInScreen()),
-                    );
-                  }
-                },
-                child: const Text(
+                onPressed: _isLoading ? null : _createAccount,
+                child: _isLoading
+                    ? const CircularProgressIndicator()
+                    : const Text(
                   'Sign Up',
                   style: TextStyle(
-                    color: Color(0xFF232323), // Black text for the button
+                    color: Color(0xFF232323),
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
@@ -243,7 +303,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               Text(
                 "Or sign up with",
                 style: TextStyle(
-                  color: Theme.of(context).textTheme.bodyLarge?.color, // Use theme text color
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
                   fontSize: 14,
                 ),
               ),
@@ -262,7 +322,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   Text(
                     'Already have an account? ',
                     style: TextStyle(
-                      color: Theme.of(context).textTheme.bodyLarge?.color, // Use theme text color
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
                     ),
                   ),
                   GestureDetector(
@@ -273,7 +333,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     child: Text(
                       'Log in',
                       style: TextStyle(
-                        color: Theme.of(context).primaryColor, // Use theme primary color
+                        color: Theme.of(context).primaryColor,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -286,7 +346,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
       ),
     );
   }
-
   Widget _buildTextField(
       TextEditingController controller,
       String label,
