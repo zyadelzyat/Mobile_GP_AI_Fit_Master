@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:untitled/AI/chatbot.dart';
 import 'package:untitled/profile.dart';
-import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import 'package:untitled/theme_provider.dart';
 import 'package:untitled/videos_page.dart';
 
@@ -16,28 +15,6 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _selectedNavIndex = 0;
   int _selectedCategoryIndex = 0;
-
-  late YoutubePlayerController _youtubeController;
-
-  @override
-  void initState() {
-    super.initState();
-    _youtubeController = YoutubePlayerController(
-      initialVideoId: YoutubePlayer.convertUrlToId(
-        "https://www.youtube.com/shorts/ijkt_wsg_Jo",
-      )!,
-      flags: const YoutubePlayerFlags(
-        autoPlay: false,
-        mute: false,
-      ),
-    );
-  }
-
-  @override
-  void dispose() {
-    _youtubeController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -65,7 +42,7 @@ class _HomePageState extends State<HomePage> {
             onPressed: () {},
           ),
           IconButton(
-            icon: Icon(Icons.person, color: Theme.of(context).primaryColor), // Profile Icon
+            icon: Icon(Icons.person, color: Theme.of(context).primaryColor),
             onPressed: () {
               Navigator.push(
                 context,
@@ -104,15 +81,6 @@ class _HomePageState extends State<HomePage> {
                   _buildCategoryIcon(Icons.chat, "Chat Bot", 3),
                 ],
               ),
-              const SizedBox(height: 30),
-              Text(
-                "Recommendations",
-                style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color, fontSize: 18),
-              ),
-              const SizedBox(height: 10),
-              const SizedBox(height: 20),
-              _buildVideoRecommendationCard(),
-              const SizedBox(height: 20),
             ],
           ),
         ),
@@ -134,7 +102,6 @@ class _HomePageState extends State<HomePage> {
               setState(() {
                 _selectedNavIndex = index;
               });
-              // Navigate to the corresponding page
               if (index == 1) {
                 Navigator.push(
                   context,
@@ -175,7 +142,6 @@ class _HomePageState extends State<HomePage> {
         setState(() {
           _selectedCategoryIndex = index;
         });
-        // Navigate to ChatPage when the Chat Bot icon is pressed
         if (index == 3) {
           Navigator.push(
             context,
@@ -192,8 +158,8 @@ class _HomePageState extends State<HomePage> {
             height: isSelected ? 60 : 50,
             decoration: BoxDecoration(
               color: isSelected
-                  ? const Color(0xFFE2F163) // Selected state color
-                  : const Color(0xFFB3A0FF), // Default state color
+                  ? const Color(0xFFE2F163)
+                  : const Color(0xFFB3A0FF),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, color: Colors.black),
@@ -226,29 +192,6 @@ class _HomePageState extends State<HomePage> {
         icon,
         color: isSelected ? Colors.black : const Color(0xFFB3A0FF),
         size: isSelected ? 24 : 20,
-      ),
-    );
-  }
-
-  Widget _buildVideoRecommendationCard() {
-    return Card(
-      color: Theme.of(context).cardColor,
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "Recommended Video",
-              style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color, fontSize: 16),
-            ),
-            const SizedBox(height: 10),
-            YoutubePlayer(
-              controller: _youtubeController,
-              showVideoProgressIndicator: true,
-            ),
-          ],
-        ),
       ),
     );
   }
