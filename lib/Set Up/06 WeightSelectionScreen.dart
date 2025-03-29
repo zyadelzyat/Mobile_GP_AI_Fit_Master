@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:untitled/theme_provider.dart'; // Import ThemeProvider
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:untitled/theme_provider.dart';
 import '07 GoalSelectionScreen.dart';
 import '05 HeightSelectionScreen.dart';
 
@@ -19,6 +21,30 @@ class _WeightSelectionScreenState extends State<WeightSelectionScreen> {
   double minWeight = 50;
   double maxWeight = 300;
   late ScrollController _scrollController;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  Future<void> _saveWeight() async {
+    try {
+      User? user = _auth.currentUser;
+      if (user == null) throw Exception('User not authenticated');
+
+      await _firestore.collection('users').doc(user.uid).set({
+        'weight': selectedWeight,
+        'weightUnit': isKg ? 'kg' : 'lb',
+        'lastUpdated': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const GoalSelectionScreen()),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error saving weight: ${e.toString()}')),
+      );
+    }
+  }
 
   @override
   void initState() {
@@ -61,29 +87,25 @@ class _WeightSelectionScreenState extends State<WeightSelectionScreen> {
     final isDarkMode = themeProvider.themeMode == ThemeMode.dark;
 
     return Scaffold(
-      backgroundColor: isDarkMode ? const Color(0xFF232323) : Colors.white, // Dynamic background
+      backgroundColor: isDarkMode ? const Color(0xFF232323) : Colors.white,
       appBar: AppBar(
-        backgroundColor: isDarkMode ? const Color(0xFF232323) : Colors.white, // Dynamic app bar
+        backgroundColor: isDarkMode ? const Color(0xFF232323) : Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: isDarkMode ? Colors.yellow : Colors.black), // Dynamic back icon
-          onPressed: () {
-            Navigator.pushAndRemoveUntil(
-              context,
-              MaterialPageRoute(builder: (context) => const HeightSelectionScreen()),
-                  (Route<dynamic> route) => false,
-            );
-          },
+          icon: Icon(Icons.arrow_back, color: isDarkMode ? Colors.yellow : Colors.black),
+          onPressed: () => Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const HeightSelectionScreen()),
+                (Route<dynamic> route) => false,
+          ),
         ),
         actions: [
           IconButton(
             icon: Icon(
               isDarkMode ? Icons.light_mode : Icons.dark_mode,
-              color: isDarkMode ? Colors.yellow : Colors.black, // Dynamic theme toggle icon
+              color: isDarkMode ? Colors.yellow : Colors.black,
             ),
-            onPressed: () {
-              themeProvider.toggleTheme(); // Toggle theme
-            },
+            onPressed: () => themeProvider.toggleTheme(),
           ),
         ],
       ),
@@ -95,7 +117,7 @@ class _WeightSelectionScreenState extends State<WeightSelectionScreen> {
             Text(
               "What Is Your Weight?",
               style: TextStyle(
-                color: isDarkMode ? Colors.white : Colors.black, // Dynamic title color
+                color: isDarkMode ? Colors.white : Colors.black,
                 fontSize: 26,
                 fontWeight: FontWeight.bold,
               ),
@@ -107,7 +129,7 @@ class _WeightSelectionScreenState extends State<WeightSelectionScreen> {
                 "Select your weight from the options below.",
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: isDarkMode ? Colors.white54 : Colors.black54, // Dynamic subtitle color
+                  color: isDarkMode ? Colors.white54 : Colors.black54,
                   fontSize: 16,
                 ),
               ),
@@ -119,7 +141,7 @@ class _WeightSelectionScreenState extends State<WeightSelectionScreen> {
               borderRadius: BorderRadius.circular(30),
               fillColor: const Color(0xFFE2F163),
               selectedColor: Colors.black,
-              color: isDarkMode ? Colors.white54 : Colors.black54, // Dynamic toggle text color
+              color: isDarkMode ? Colors.white54 : Colors.black54,
               children: const [
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -138,7 +160,7 @@ class _WeightSelectionScreenState extends State<WeightSelectionScreen> {
                 Container(
                   height: 80,
                   decoration: BoxDecoration(
-                    color: isDarkMode ? const Color(0xFFB3A0FF) : Colors.grey[200], // Dynamic ruler color
+                    color: isDarkMode ? const Color(0xFFB3A0FF) : Colors.grey[200],
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: ListView.builder(
@@ -165,15 +187,15 @@ class _WeightSelectionScreenState extends State<WeightSelectionScreen> {
                                   fontSize: selectedWeight == weight ? 24 : 18,
                                   fontWeight: FontWeight.bold,
                                   color: selectedWeight == weight
-                                      ? (isDarkMode ? Colors.yellow : Colors.blue) // Dynamic selected color
-                                      : (isDarkMode ? Colors.white54 : Colors.black54), // Dynamic text color
+                                      ? (isDarkMode ? Colors.yellow : Colors.blue)
+                                      : (isDarkMode ? Colors.white54 : Colors.black54),
                                 ),
                               ),
                               if (index != (maxWeight - minWeight).toInt())
                                 Container(
                                   height: 20,
                                   width: 2,
-                                  color: isDarkMode ? Colors.white54 : Colors.black54, // Dynamic line color
+                                  color: isDarkMode ? Colors.white54 : Colors.black54,
                                 ),
                             ],
                           ),
@@ -196,21 +218,16 @@ class _WeightSelectionScreenState extends State<WeightSelectionScreen> {
             Text(
               "${selectedWeight.toStringAsFixed(0)} ${isKg ? "Kg" : "Lb"}",
               style: TextStyle(
-                color: isDarkMode ? Colors.white : Colors.black, // Dynamic text color
+                color: isDarkMode ? Colors.white : Colors.black,
                 fontSize: 48,
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 40),
             ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const GoalSelectionScreen()),
-                );
-              },
+              onPressed: _saveWeight,
               style: ElevatedButton.styleFrom(
-                backgroundColor: isDarkMode ? Colors.grey[800] : Colors.white, // White in light mode
+                backgroundColor: isDarkMode ? Colors.grey[800] : Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(30),
@@ -219,7 +236,7 @@ class _WeightSelectionScreenState extends State<WeightSelectionScreen> {
               child: Text(
                 "Continue",
                 style: TextStyle(
-                  color: isDarkMode ? Colors.white : Colors.black, // Black in light mode
+                  color: isDarkMode ? Colors.white : Colors.black,
                   fontSize: 16,
                 ),
               ),

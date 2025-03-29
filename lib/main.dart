@@ -51,7 +51,7 @@ class _GenderSelectionAppState extends State<GenderSelectionApp> {
       theme: lightTheme, // Use your light theme
       darkTheme: darkTheme, // Use your dark theme
       themeMode: themeProvider.themeMode, // Use the selected theme mode
-      home: const SignUpScreen(),
+      home: const HomePage(),
       debugShowCheckedModeBanner: false,
     );
   }

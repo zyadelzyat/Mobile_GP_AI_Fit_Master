@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:untitled/theme_provider.dart';
 
 import '05 HeightSelectionScreen.dart';
@@ -13,6 +15,23 @@ class GenderSelectionScreen extends StatefulWidget {
 
 class _GenderSelectionScreenState extends State<GenderSelectionScreen> {
   String? selectedGender;
+
+  Future<void> saveGenderToFirestore(String gender) async {
+    try {
+      // Get the currently logged-in user
+      User? user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
+          'gender': gender,
+        });
+        print("Gender updated successfully!");
+      } else {
+        print("No user logged in");
+      }
+    } catch (error) {
+      print("Error updating gender: $error");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -57,8 +76,8 @@ class _GenderSelectionScreenState extends State<GenderSelectionScreen> {
           GenderOption(
             icon: Icons.male,
             label: "Male",
-            baseColor: Colors.blue, // Same color for both light and dark modes
-            selectedColor: Colors.blue, // Same color for both light and dark modes
+            baseColor: Colors.blue,
+            selectedColor: Colors.blue,
             isSelected: selectedGender == 'Male',
             onTap: () {
               setState(() {
@@ -70,8 +89,8 @@ class _GenderSelectionScreenState extends State<GenderSelectionScreen> {
           GenderOption(
             icon: Icons.female,
             label: "Female",
-            baseColor: Colors.pink, // Same color for both light and dark modes
-            selectedColor: Colors.pink, // Same color for both light and dark modes
+            baseColor: Colors.pink,
+            selectedColor: Colors.pink,
             isSelected: selectedGender == 'Female',
             onTap: () {
               setState(() {
@@ -81,8 +100,9 @@ class _GenderSelectionScreenState extends State<GenderSelectionScreen> {
           ),
           const SizedBox(height: 40),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               if (selectedGender != null) {
+                await saveGenderToFirestore(selectedGender!);
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -98,7 +118,7 @@ class _GenderSelectionScreenState extends State<GenderSelectionScreen> {
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: isDarkMode ? Theme.of(context).cardColor : Colors.white, // White only in light mode
+              backgroundColor: isDarkMode ? Theme.of(context).cardColor : Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(30),
@@ -107,7 +127,7 @@ class _GenderSelectionScreenState extends State<GenderSelectionScreen> {
             child: Text(
               "Continue",
               style: TextStyle(
-                color: isDarkMode ? Colors.white : Colors.black, // Black text only in light mode
+                color: isDarkMode ? Colors.white : Colors.black,
                 fontSize: 16,
               ),
             ),

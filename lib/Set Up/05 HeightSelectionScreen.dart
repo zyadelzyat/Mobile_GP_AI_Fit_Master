@@ -1,9 +1,14 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:untitled/theme_provider.dart'; // Import your ThemeProvider
-import '06 WeightSelectionScreen.dart'; // Import WeightSelectionScreen
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:untitled/theme_provider.dart';
+import '06 WeightSelectionScreen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   runApp(const HeightSelectionApp());
 }
 
@@ -30,7 +35,32 @@ class HeightSelectionScreen extends StatefulWidget {
 }
 
 class _HeightSelectionScreenState extends State<HeightSelectionScreen> {
-  int selectedHeight = 165; // Default height in cm
+  int selectedHeight = 165;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  Future<void> _saveHeight() async {
+    try {
+      User? user = _auth.currentUser;
+      if (user == null) throw Exception('User not authenticated');
+
+      await _firestore.collection('users').doc(user.uid).set({
+        'height': selectedHeight,
+        'lastUpdated': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const WeightSelectionScreen(gender: ''),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error saving height: ${e.toString()}')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,9 +74,7 @@ class _HeightSelectionScreenState extends State<HeightSelectionScreen> {
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: isDarkMode ? Colors.yellow : Colors.black),
-          onPressed: () {
-            Navigator.pop(context);
-          },
+          onPressed: () => Navigator.pop(context),
         ),
         actions: [
           IconButton(
@@ -54,9 +82,7 @@ class _HeightSelectionScreenState extends State<HeightSelectionScreen> {
               isDarkMode ? Icons.light_mode : Icons.dark_mode,
               color: isDarkMode ? Colors.yellow : Colors.black,
             ),
-            onPressed: () {
-              themeProvider.toggleTheme();
-            },
+            onPressed: () => themeProvider.toggleTheme(),
           ),
         ],
       ),
@@ -125,25 +151,19 @@ class _HeightSelectionScreenState extends State<HeightSelectionScreen> {
                         itemExtent: 40,
                         physics: const FixedExtentScrollPhysics(),
                         perspective: 0.003,
-                        onSelectedItemChanged: (index) {
-                          setState(() {
-                            selectedHeight = 140 + index;
-                          });
-                        },
+                        onSelectedItemChanged: (index) => setState(() => selectedHeight = 140 + index),
                         childDelegate: ListWheelChildBuilderDelegate(
-                          builder: (context, index) {
-                            return Center(
-                              child: Text(
-                                (140 + index).toString(),
-                                style: TextStyle(
-                                  color: selectedHeight == 140 + index
-                                      ? (isDarkMode ? Colors.yellow : Colors.blue)
-                                      : (isDarkMode ? Colors.white54 : Colors.black54),
-                                  fontSize: 20,
-                                ),
+                          builder: (context, index) => Center(
+                            child: Text(
+                              (140 + index).toString(),
+                              style: TextStyle(
+                                color: selectedHeight == 140 + index
+                                    ? (isDarkMode ? Colors.yellow : Colors.blue)
+                                    : (isDarkMode ? Colors.white54 : Colors.black54),
+                                fontSize: 20,
                               ),
-                            );
-                          },
+                            ),
+                          ),
                           childCount: 101,
                         ),
                       ),
@@ -152,7 +172,7 @@ class _HeightSelectionScreenState extends State<HeightSelectionScreen> {
                         right: 0,
                         child: Container(
                           height: 2,
-                          color: isDarkMode ? Colors.yellow : const Color(0xFFE2F163), // Updated line color in light mode
+                          color: isDarkMode ? Colors.yellow : const Color(0xFFE2F163),
                         ),
                       ),
                     ],
@@ -162,16 +182,9 @@ class _HeightSelectionScreenState extends State<HeightSelectionScreen> {
             ),
             const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const WeightSelectionScreen(gender: '',),
-                  ),
-                );
-              },
+              onPressed: _saveHeight,
               style: ElevatedButton.styleFrom(
-                backgroundColor: isDarkMode ? Colors.grey[800] : Colors.white, // White button in light mode
+                backgroundColor: isDarkMode ? Colors.grey[800] : Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(30),
@@ -180,7 +193,7 @@ class _HeightSelectionScreenState extends State<HeightSelectionScreen> {
               child: Text(
                 "Continue",
                 style: TextStyle(
-                  color: isDarkMode ? Colors.white : Colors.black, // Black text in light mode
+                  color: isDarkMode ? Colors.white : Colors.black,
                   fontSize: 16,
                 ),
               ),

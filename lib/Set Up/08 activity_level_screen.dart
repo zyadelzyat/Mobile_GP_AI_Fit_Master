@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:untitled/Home__Page/00_home_page.dart';
-import 'package:untitled/theme_provider.dart'; // Import ThemeProvider
+import 'package:untitled/theme_provider.dart';
 
 class ActivityLevelScreen extends StatefulWidget {
   const ActivityLevelScreen({super.key});
@@ -11,7 +13,34 @@ class ActivityLevelScreen extends StatefulWidget {
 }
 
 class _ActivityLevelScreenState extends State<ActivityLevelScreen> {
-  String? _selectedActivityLevel; // Stores the selected activity level
+  String? _selectedActivityLevel;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  Future<void> _saveActivityLevel() async {
+    try {
+      if (_selectedActivityLevel == null) {
+        throw Exception('Please select an activity level');
+      }
+
+      User? user = _auth.currentUser;
+      if (user == null) throw Exception('User not authenticated');
+
+      await _firestore.collection('users').doc(user.uid).set({
+        'activityLevel': _selectedActivityLevel,
+        'lastUpdated': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => HomePage()),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.toString()}')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,25 +48,21 @@ class _ActivityLevelScreenState extends State<ActivityLevelScreen> {
     final isDarkMode = themeProvider.themeMode == ThemeMode.dark;
 
     return Scaffold(
-      backgroundColor: isDarkMode ? const Color(0xFF232323) : Colors.white, // Dynamic background
+      backgroundColor: isDarkMode ? const Color(0xFF232323) : Colors.white,
       appBar: AppBar(
-        backgroundColor: isDarkMode ? const Color(0xFF232323) : Colors.white, // Dynamic app bar
-        elevation: 0, // Remove AppBar shadow
+        backgroundColor: isDarkMode ? const Color(0xFF232323) : Colors.white,
+        elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: isDarkMode ? Colors.white : Colors.black), // Dynamic back icon
-          onPressed: () {
-            Navigator.pop(context); // Go back to the previous screen
-          },
+          icon: Icon(Icons.arrow_back, color: isDarkMode ? Colors.white : Colors.black),
+          onPressed: () => Navigator.pop(context),
         ),
         actions: [
           IconButton(
             icon: Icon(
               isDarkMode ? Icons.light_mode : Icons.dark_mode,
-              color: isDarkMode ? Colors.white : Colors.black, // Dynamic theme toggle icon
+              color: isDarkMode ? Colors.white : Colors.black,
             ),
-            onPressed: () {
-              themeProvider.toggleTheme(); // Toggle theme
-            },
+            onPressed: () => themeProvider.toggleTheme(),
           ),
         ],
       ),
@@ -49,7 +74,7 @@ class _ActivityLevelScreenState extends State<ActivityLevelScreen> {
             Text(
               "Physical Activity Level",
               style: TextStyle(
-                color: isDarkMode ? Colors.white : Colors.black, // Dynamic title color
+                color: isDarkMode ? Colors.white : Colors.black,
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),
@@ -58,7 +83,7 @@ class _ActivityLevelScreenState extends State<ActivityLevelScreen> {
             Text(
               "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
               style: TextStyle(
-                color: isDarkMode ? Colors.grey : Colors.black54, // Dynamic subtitle color
+                color: isDarkMode ? Colors.grey : Colors.black54,
                 fontSize: 14,
               ),
             ),
@@ -69,31 +94,19 @@ class _ActivityLevelScreenState extends State<ActivityLevelScreen> {
                   ActivityOption(
                     title: "Beginner",
                     isSelected: _selectedActivityLevel == "Beginner",
-                    onTap: () {
-                      setState(() {
-                        _selectedActivityLevel = "Beginner";
-                      });
-                    },
+                    onTap: () => setState(() => _selectedActivityLevel = "Beginner"),
                     isDarkMode: isDarkMode,
                   ),
                   ActivityOption(
                     title: "Intermediate",
                     isSelected: _selectedActivityLevel == "Intermediate",
-                    onTap: () {
-                      setState(() {
-                        _selectedActivityLevel = "Intermediate";
-                      });
-                    },
+                    onTap: () => setState(() => _selectedActivityLevel = "Intermediate"),
                     isDarkMode: isDarkMode,
                   ),
                   ActivityOption(
                     title: "Advance",
                     isSelected: _selectedActivityLevel == "Advance",
-                    onTap: () {
-                      setState(() {
-                        _selectedActivityLevel = "Advance";
-                      });
-                    },
+                    onTap: () => setState(() => _selectedActivityLevel = "Advance"),
                     isDarkMode: isDarkMode,
                   ),
                 ],
@@ -102,14 +115,9 @@ class _ActivityLevelScreenState extends State<ActivityLevelScreen> {
             const SizedBox(height: 20),
             Center(
               child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => HomePage()), // استبدل HomePage بالصفحة الفعلية
-                  );
-                },
+                onPressed: _saveActivityLevel,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: isDarkMode ? Colors.grey[800] : Colors.white, // White in light mode
+                  backgroundColor: isDarkMode ? Colors.grey[800] : Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
@@ -118,7 +126,7 @@ class _ActivityLevelScreenState extends State<ActivityLevelScreen> {
                 child: Text(
                   "Continue",
                   style: TextStyle(
-                    color: isDarkMode ? Colors.white : Colors.black, // Black in light mode
+                    color: isDarkMode ? Colors.white : Colors.black,
                     fontSize: 16,
                   ),
                 ),
@@ -153,14 +161,14 @@ class ActivityOption extends StatelessWidget {
         child: Container(
           height: 60,
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFFE2F163) : (isDarkMode ? Colors.grey[800] : Colors.grey[200]), // Dynamic background
+            color: isSelected ? const Color(0xFFE2F163) : (isDarkMode ? Colors.grey[800] : Colors.grey[200]),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Center(
             child: Text(
               title,
               style: TextStyle(
-                color: isSelected ? Colors.black : (isDarkMode ? Colors.white : Colors.black), // Dynamic text color
+                color: isSelected ? Colors.black : (isDarkMode ? Colors.white : Colors.black),
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),

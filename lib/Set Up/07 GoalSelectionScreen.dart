@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:untitled/theme_provider.dart'; // Import ThemeProvider
-import '08 activity_level_screen.dart'; // Import ActivityLevelScreen
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:untitled/theme_provider.dart';
+import '08 activity_level_screen.dart';
 
 class GoalSelectionScreen extends StatefulWidget {
   const GoalSelectionScreen({super.key});
@@ -11,7 +13,32 @@ class GoalSelectionScreen extends StatefulWidget {
 }
 
 class _GoalSelectionScreenState extends State<GoalSelectionScreen> {
-  String? _selectedGoal; // Store the selected goal
+  String? _selectedGoal;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  Future<void> _saveGoal() async {
+    try {
+      if (_selectedGoal == null) throw Exception('Please select a goal');
+
+      User? user = _auth.currentUser;
+      if (user == null) throw Exception('User not authenticated');
+
+      await _firestore.collection('users').doc(user.uid).set({
+        'goal': _selectedGoal,
+        'lastUpdated': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const ActivityLevelScreen()),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.toString()}')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,25 +46,21 @@ class _GoalSelectionScreenState extends State<GoalSelectionScreen> {
     final isDarkMode = themeProvider.themeMode == ThemeMode.dark;
 
     return Scaffold(
-      backgroundColor: isDarkMode ? const Color(0xFF232323) : Colors.white, // Dynamic background
+      backgroundColor: isDarkMode ? const Color(0xFF232323) : Colors.white,
       appBar: AppBar(
-        backgroundColor: isDarkMode ? const Color(0xFF232323) : Colors.white, // Dynamic app bar
-        elevation: 0, // Remove AppBar shadow
+        backgroundColor: isDarkMode ? const Color(0xFF232323) : Colors.white,
+        elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: isDarkMode ? Colors.white : Colors.black), // Dynamic back icon
-          onPressed: () {
-            Navigator.pop(context); // Go back to the previous screen
-          },
+          icon: Icon(Icons.arrow_back, color: isDarkMode ? Colors.white : Colors.black),
+          onPressed: () => Navigator.pop(context),
         ),
         actions: [
           IconButton(
             icon: Icon(
               isDarkMode ? Icons.light_mode : Icons.dark_mode,
-              color: isDarkMode ? Colors.white : Colors.black, // Dynamic theme toggle icon
+              color: isDarkMode ? Colors.white : Colors.black,
             ),
-            onPressed: () {
-              themeProvider.toggleTheme(); // Toggle theme
-            },
+            onPressed: () => themeProvider.toggleTheme(),
           ),
         ],
       ),
@@ -49,7 +72,7 @@ class _GoalSelectionScreenState extends State<GoalSelectionScreen> {
             Text(
               "What Is Your Goal?",
               style: TextStyle(
-                color: isDarkMode ? Colors.white : Colors.black, // Dynamic title color
+                color: isDarkMode ? Colors.white : Colors.black,
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),
@@ -58,7 +81,7 @@ class _GoalSelectionScreenState extends State<GoalSelectionScreen> {
             Text(
               "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
               style: TextStyle(
-                color: isDarkMode ? Colors.grey : Colors.black54, // Dynamic subtitle color
+                color: isDarkMode ? Colors.grey : Colors.black54,
                 fontSize: 14,
               ),
             ),
@@ -69,51 +92,31 @@ class _GoalSelectionScreenState extends State<GoalSelectionScreen> {
                   GoalOption(
                     title: "Lose Weight",
                     isSelected: _selectedGoal == "Lose Weight",
-                    onTap: () {
-                      setState(() {
-                        _selectedGoal = "Lose Weight";
-                      });
-                    },
+                    onTap: () => setState(() => _selectedGoal = "Lose Weight"),
                     isDarkMode: isDarkMode,
                   ),
                   GoalOption(
                     title: "Gain Weight",
                     isSelected: _selectedGoal == "Gain Weight",
-                    onTap: () {
-                      setState(() {
-                        _selectedGoal = "Gain Weight";
-                      });
-                    },
+                    onTap: () => setState(() => _selectedGoal = "Gain Weight"),
                     isDarkMode: isDarkMode,
                   ),
                   GoalOption(
                     title: "Muscle Mass Gain",
                     isSelected: _selectedGoal == "Muscle Mass Gain",
-                    onTap: () {
-                      setState(() {
-                        _selectedGoal = "Muscle Mass Gain";
-                      });
-                    },
+                    onTap: () => setState(() => _selectedGoal = "Muscle Mass Gain"),
                     isDarkMode: isDarkMode,
                   ),
                   GoalOption(
                     title: "Shape Body",
                     isSelected: _selectedGoal == "Shape Body",
-                    onTap: () {
-                      setState(() {
-                        _selectedGoal = "Shape Body";
-                      });
-                    },
+                    onTap: () => setState(() => _selectedGoal = "Shape Body"),
                     isDarkMode: isDarkMode,
                   ),
                   GoalOption(
                     title: "Others",
                     isSelected: _selectedGoal == "Others",
-                    onTap: () {
-                      setState(() {
-                        _selectedGoal = "Others";
-                      });
-                    },
+                    onTap: () => setState(() => _selectedGoal = "Others"),
                     isDarkMode: isDarkMode,
                   ),
                 ],
@@ -122,14 +125,9 @@ class _GoalSelectionScreenState extends State<GoalSelectionScreen> {
             const SizedBox(height: 20),
             Center(
               child: ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const ActivityLevelScreen()),
-                  );
-                },
+                onPressed: _saveGoal,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: isDarkMode ? Colors.grey[800] : Colors.white, // White in light mode
+                  backgroundColor: isDarkMode ? Colors.grey[800] : Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
@@ -138,7 +136,7 @@ class _GoalSelectionScreenState extends State<GoalSelectionScreen> {
                 child: Text(
                   "Continue",
                   style: TextStyle(
-                    color: isDarkMode ? Colors.white : Colors.black, // Black in light mode
+                    color: isDarkMode ? Colors.white : Colors.black,
                     fontSize: 16,
                   ),
                 ),
@@ -173,14 +171,14 @@ class GoalOption extends StatelessWidget {
         child: Container(
           height: 60,
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFFE2F163) : (isDarkMode ? Colors.grey[800] : Colors.grey[200]), // Dynamic background
+            color: isSelected ? const Color(0xFFE2F163) : (isDarkMode ? Colors.grey[800] : Colors.grey[200]),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Center(
             child: Text(
               title,
               style: TextStyle(
-                color: isSelected ? Colors.black : (isDarkMode ? Colors.white : Colors.black), // Dynamic text color
+                color: isSelected ? Colors.black : (isDarkMode ? Colors.white : Colors.black),
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
