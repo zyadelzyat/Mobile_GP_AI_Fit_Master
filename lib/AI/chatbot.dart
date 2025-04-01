@@ -15,7 +15,7 @@ class MyApp extends StatelessWidget {
       title: 'Chatbot App',
       theme: ThemeData(
         primarySwatch: Colors.purple,
-        scaffoldBackgroundColor: Color(0xFF232323),
+        scaffoldBackgroundColor: const Color(0xFF232323),
         brightness: Brightness.dark,
       ),
       home: const ChatPage(),
@@ -83,46 +83,40 @@ class _ChatPageState extends State<ChatPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFF232323),
+      backgroundColor: const Color(0xFF232323),
       appBar: AppBar(
-        backgroundColor: Color(0xFF232323),
+        backgroundColor: const Color(0xFF232323),
         elevation: 0,
         leading: IconButton(
-          icon: Icon(
+          icon: const Icon(
             Icons.arrow_back_ios,
-            color: Colors.purple[400],
+            color: Colors.yellow, // Yellow back icon
             size: 20,
           ),
           onPressed: _clearChat,
         ),
-        title: Text(
-          "Chatbot",
-          style: TextStyle(
-            color: Colors.purple[400],
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
+        title: RichText(
+          text: TextSpan(
+            children: [
+              TextSpan(
+                text: "Chat",
+                style: TextStyle(
+                  color: Colors.purple[400],
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const TextSpan(
+                text: "bot",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
           ),
         ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16.0),
-            child: Row(
-              children: [
-                const Text(
-                  "16:04",
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(width: 4),
-                Icon(Icons.signal_cellular_alt, size: 12),
-                const SizedBox(width: 2),
-                Icon(Icons.battery_full, size: 12),
-              ],
-            ),
-          ),
-        ],
       ),
       body: Column(
         children: [
@@ -152,17 +146,11 @@ class _ChatPageState extends State<ChatPage> {
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Container(
-              height: 40,
+              height: 45,
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.purple.withOpacity(0.1),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: Colors.grey[400]!, width: 1.2),
               ),
               child: TextField(
                 controller: _controller,
@@ -192,30 +180,34 @@ class WelcomeWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          SizedBox(height: 120),
-          Text(
-            "Hello",
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const SizedBox(height: 60),
+        const Icon(
+          Icons.support_agent,
+          size: 80,
+          color: Colors.white,
+        ),
+        const SizedBox(height: 20),
+        const Text(
+          "Hello",
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
           ),
-          SizedBox(height: 8),
-          Text(
-            "How Can I Help You?",
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-            ),
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          "How Can I Help You?",
+          style: TextStyle(
+            color: Colors.white70,
+            fontSize: 16,
           ),
-          Spacer(),
-        ],
-      ),
+        ),
+        const SizedBox(height: 40),
+      ],
     );
   }
 }
@@ -262,9 +254,7 @@ class GeminiAPI {
     try {
       final response = await http.post(
         Uri.parse(apiUrl),
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "contents": [
             {
@@ -278,7 +268,6 @@ class GeminiAPI {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        // More robust parsing with error handling
         if (data.containsKey("candidates") &&
             data["candidates"].isNotEmpty &&
             data["candidates"][0].containsKey("content") &&
