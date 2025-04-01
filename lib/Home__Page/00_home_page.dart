@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:untitled/AI/chatbot.dart';
 import 'package:untitled/profile.dart';
 import 'package:untitled/theme_provider.dart';
@@ -16,8 +18,11 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _selectedCategoryIndex = 0;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  Map<String, dynamic> _userData = {};
+  bool _isLoadingUserData = false;
 
-  // Define category data for easier management
   final List<Map<String, dynamic>> _categories = [
     {'icon': Icons.fitness_center, 'label': 'Workout', 'route': null},
     {'icon': Icons.insert_chart, 'label': 'Progress', 'route': null},
@@ -27,6 +32,40 @@ class _HomePageState extends State<HomePage> {
     {'icon': Icons.store, 'label': 'Supplement Store', 'route': SupplementsStorePage()},
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    _fetchCurrentUserData();
+  }
+
+  Future<void> _fetchCurrentUserData() async {
+    setState(() {
+      _isLoadingUserData = true;
+    });
+
+    try {
+      User? currentUser = _auth.currentUser;
+      if (currentUser != null) {
+        DocumentSnapshot userDoc = await _firestore
+            .collection('users')
+            .doc(currentUser.uid)
+            .get();
+
+        if (userDoc.exists) {
+          setState(() {
+            _userData = userDoc.data() as Map<String, dynamic>;
+          });
+        }
+      }
+    } catch (e) {
+      print("Error fetching user data: $e");
+    } finally {
+      setState(() {
+        _isLoadingUserData = false;
+      });
+    }
+  }
+
   Widget _buildCategoryIcon(IconData icon, String label, int index) {
     bool isSelected = _selectedCategoryIndex == index;
     final themeColors = {
@@ -35,9 +74,8 @@ class _HomePageState extends State<HomePage> {
       'background': const Color(0xFF232323),
     };
 
-    // Calculate appropriate icon size based on container size to prevent overflow
     final containerSize = isSelected ? 60.0 : 50.0;
-    final iconSize = containerSize * 0.5; // Ensure icon is 50% of container size
+    final iconSize = containerSize * 0.5;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12.0),
@@ -46,7 +84,6 @@ class _HomePageState extends State<HomePage> {
           setState(() {
             _selectedCategoryIndex = index;
           });
-
           final route = _categories[index]['route'];
           if (route != null) {
             Navigator.push(
@@ -83,8 +120,8 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             const SizedBox(height: 8),
-            Container(
-              width: 80, // Fixed width for text to prevent overflow
+            SizedBox(
+              width: 80,
               child: Text(
                 label,
                 style: TextStyle(
@@ -92,13 +129,108 @@ class _HomePageState extends State<HomePage> {
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                   fontSize: isSelected ? 14 : 12,
                 ),
-                textAlign: TextAlign.center, // Center the text
-                overflow: TextOverflow.ellipsis, // Handle long text gracefully
+                textAlign: TextAlign.center,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  void _navigateToProfile() {
+    User? currentUser = _auth.currentUser;
+    if (currentUser != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ProfilePage(userId: currentUser.uid),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("You need to be logged in to view your profile")),
+      );
+    }
+  }
+
+  void _showProfileSheet() {
+    if (_isLoadingUserData) {
+      showDialog(
+        context: context,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(color: Color(0xFFB3A0FF)),
+        ),
+      );
+      return;
+    }
+
+    User? currentUser = _auth.currentUser;
+    if (currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("You need to be logged in to view your profile")),
+      );
+      return;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.grey[900],
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Center(
+                child: CircleAvatar(
+                  radius: 40,
+                  backgroundImage: AssetImage('assets/profile.png'),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                  "Name: ${_userData['firstName'] ?? ''} ${_userData['middleName'] != null && _userData['middleName'].isNotEmpty ? _userData['middleName'] + ' ' : ''}${_userData['lastName'] ?? ''}",
+                  style: const TextStyle(color: Colors.white, fontSize: 18)
+              ),
+              const SizedBox(height: 8),
+              Text(
+                  "Email: ${_userData['email'] ?? 'Not available'}",
+                  style: const TextStyle(color: Colors.white, fontSize: 16)
+              ),
+              const SizedBox(height: 8),
+              Text(
+                  "Phone: ${_userData['phone'] ?? 'Not available'}",
+                  style: const TextStyle(color: Colors.white, fontSize: 16)
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFB3A0FF)),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _navigateToProfile();
+                    },
+                    child: const Text("View Full Profile", style: TextStyle(color: Colors.white)),
+                  ),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.grey),
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text("Close", style: TextStyle(color: Colors.white)),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -110,25 +242,24 @@ class _HomePageState extends State<HomePage> {
         backgroundColor: const Color(0xFF232323),
         title: const Text("Health & Fitness Tracker", style: TextStyle(color: Colors.white)),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.person, color: Colors.white),
+            onPressed: _showProfileSheet,
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              "Welcome Back!",
-              style: TextStyle(fontSize: 24, color: Colors.white, fontWeight: FontWeight.bold),
-            ),
+            const Text("Welcome Back!", style: TextStyle(fontSize: 24, color: Colors.white, fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
-            const Text(
-              "Track your fitness and health journey.",
-              style: TextStyle(fontSize: 16, color: Colors.grey),
-            ),
+            const Text("Track your fitness and health journey.", style: TextStyle(fontSize: 16, color: Colors.grey)),
             const SizedBox(height: 20),
-            // Improved category icons section with overflow protection
             Container(
-              height: 120, // Increased height to prevent vertical overflow
+              height: 120,
               decoration: BoxDecoration(
                 color: Colors.grey[850],
                 borderRadius: BorderRadius.circular(16),
@@ -140,28 +271,8 @@ class _HomePageState extends State<HomePage> {
                   child: Row(
                     children: List.generate(
                       _categories.length,
-                          (index) => _buildCategoryIcon(
-                        _categories[index]['icon'],
-                        _categories[index]['label'],
-                        index,
-                      ),
+                          (index) => _buildCategoryIcon(_categories[index]['icon'], _categories[index]['label'], index),
                     ),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.grey[900],
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                padding: const EdgeInsets.all(16),
-                child: const Center(
-                  child: Text(
-                    "Select a category to explore.",
-                    style: TextStyle(color: Colors.white, fontSize: 18),
                   ),
                 ),
               ),

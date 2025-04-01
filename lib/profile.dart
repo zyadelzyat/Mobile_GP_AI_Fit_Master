@@ -1,133 +1,327 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-class ProfilePage extends StatelessWidget {
-  final Map<String, dynamic> userData = {
-    'firstName': 'asser',
-    'lastName': 'bassam',
-    'email': 'asserbassam@example.com',
-    'phone': '010 193 25872',
-    'dob': '01 / 04 / 2000',
-    'weight': '75 Kg',
-    'height': '1.65 CM',
-  };
+class ProfilePage extends StatefulWidget {
+  final String userId;
 
-  ProfilePage({super.key});
+  const ProfilePage({required this.userId, Key? key}) : super(key: key);
+
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  bool _isLoading = true;
+  Map<String, dynamic> userData = {};
+  String? errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserData();
+  }
+
+  Future<void> _fetchUserData() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      DocumentSnapshot userDoc = await _firestore
+          .collection('users')
+          .doc(widget.userId)
+          .get();
+
+      if (userDoc.exists) {
+        setState(() {
+          userData = userDoc.data() as Map<String, dynamic>;
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          errorMessage = "User not found";
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        errorMessage = "Error fetching profile: $e";
+        _isLoading = false;
+      });
+    }
+  }
+
+  String _calculateAge() {
+    if (userData['dob'] == null) return "N/A";
+
+    try {
+      // Parse DOB using the format from Firestore
+      List<String> parts = userData['dob'].split('-');
+      if (parts.length != 3) return "N/A";
+
+      DateTime birthDate = DateTime(
+          int.parse(parts[0]),
+          int.parse(parts[1]),
+          int.parse(parts[2])
+      );
+
+      DateTime today = DateTime.now();
+      int age = today.year - birthDate.year;
+
+      // Adjust age if birthday hasn't occurred yet this year
+      if (today.month < birthDate.month ||
+          (today.month == birthDate.month && today.day < birthDate.day)) {
+        age--;
+      }
+
+      return "$age";
+    } catch (e) {
+      return "N/A";
+    }
+  }
+
+  String _formatDOB() {
+    if (userData['dob'] == null) return "N/A";
+
+    try {
+      // Convert from YYYY-MM-DD to DD / MM / YYYY format
+      List<String> parts = userData['dob'].split('-');
+      if (parts.length != 3) return userData['dob'];
+
+      return "${parts[2]} / ${parts[1]} / ${parts[0]}";
+    } catch (e) {
+      return userData['dob'];
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: const Color(0xFF1E1E1E),
+        appBar: AppBar(
+          title: const Text("My Profile", style: TextStyle(color: Colors.white)),
+          backgroundColor: const Color(0xFF6A48F6),
+          iconTheme: const IconThemeData(color: Colors.white),
+          elevation: 0,
+        ),
+        body: const Center(
+          child: CircularProgressIndicator(color: Color(0xFF6A48F6)),
+        ),
+      );
+    }
+
+    if (errorMessage != null) {
+      return Scaffold(
+        backgroundColor: const Color(0xFF1E1E1E),
+        appBar: AppBar(
+          title: const Text("My Profile", style: TextStyle(color: Colors.white)),
+          backgroundColor: const Color(0xFF6A48F6),
+          iconTheme: const IconThemeData(color: Colors.white),
+          elevation: 0,
+        ),
+        body: Center(
+          child: Text(
+            errorMessage!,
+            style: const TextStyle(color: Colors.white),
+          ),
+        ),
+      );
+    }
+
+    String weightDisplay = "${userData['weight'] ?? '75'} ${userData['weightUnit'] ?? 'Kg'}";
+    String heightDisplay = "${userData['height'] ?? '1.65'} ${userData['heightUnit'] ?? 'CM'}";
+
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: const Color(0xFF1E1E1E),
       appBar: AppBar(
-        title: const Text("My Profile", style: TextStyle(color: Colors.white)),
-        backgroundColor: Color(0xFFB3A0FF),
-        iconTheme: const IconThemeData(color: Colors.white),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: const Text("My Profile",
+            style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.w500
+            )
+        ),
+        backgroundColor: const Color(0xFF6A48F6),
+        elevation: 0,
+        centerTitle: true,
       ),
       body: SingleChildScrollView(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 20),
-            CircleAvatar(
-              radius: 50,
-              backgroundImage: AssetImage('assets/profile.png'),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              '${userData['firstName']} ${userData['lastName']}',
-              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
-            ),
-            Text(
-              userData['email'],
-              style: const TextStyle(color: Colors.white70),
-            ),
-            const SizedBox(height: 20),
             Container(
-              padding: const EdgeInsets.all(16),
-              decoration: const BoxDecoration(
-                color: Color(0xFFB3A0FF),
-                borderRadius: BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20)),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  ProfileInfoBox(label: "Weight", value: userData['weight']),
-                  ProfileInfoBox(label: "Age", value: "28 Years Old"),
-                  ProfileInfoBox(label: "Height", value: userData['height']),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
+              color: const Color(0xFF6A48F6),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  ProfileField(label: "Full name", value: '${userData['firstName']} ${userData['lastName']}'),
-                  ProfileField(label: "Email", value: userData['email']),
-                  ProfileField(label: "Mobile Number", value: userData['phone']),
-                  ProfileField(label: "Date of birth", value: userData['dob']),
-                  ProfileField(label: "Weight", value: userData['weight']),
-                  ProfileField(label: "Height", value: userData['height']),
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(backgroundColor: Color(0xFFE2F163)),
-                      onPressed: () {},
-                      child: const Text("Update Profile", style: TextStyle(color: Colors.black)),
+                  const SizedBox(height: 10),
+                  Stack(
+                    alignment: Alignment.bottomRight,
+                    children: [
+                      const CircleAvatar(
+                        radius: 45,
+                        backgroundImage: AssetImage('assets/profile.png'),
+                      ),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE2DC30),
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        child: const Padding(
+                          padding: EdgeInsets.all(4.0),
+                          child: Icon(Icons.camera_alt, size: 16, color: Colors.black),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    userData['firstName'] != null ?
+                    '${userData['firstName']} ${userData['lastName'] ?? ''}' :
+                    'Madison Smith',
+                    style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white
                     ),
                   ),
+                  const SizedBox(height: 4),
+                  Text(
+                    userData['email'] ?? 'madisons@example.com',
+                    style: const TextStyle(color: Colors.white70, fontSize: 12),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Birthday: ${_formatDOB()}',
+                    style: const TextStyle(color: Colors.white70, fontSize: 12),
+                  ),
+                  const SizedBox(height: 16),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _buildProfileStat(weightDisplay, 'Weight'),
+                        _buildProfileStat('${_calculateAge()} Years Old', 'Age'),
+                        _buildProfileStat(heightDisplay, 'Height'),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
                 ],
               ),
             ),
+            const Padding(
+              padding: EdgeInsets.fromLTRB(16, 20, 16, 8),
+              child: Text(
+                'Full name',
+                style: TextStyle(color: Color(0xFF9D7BFF), fontSize: 14),
+              ),
+            ),
+            _buildTextField(userData['firstName'] != null ?
+            '${userData['firstName']} ${userData['lastName'] ?? ''}' :
+            'Madison Smith'),
+
+            const Padding(
+              padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Text(
+                'Email',
+                style: TextStyle(color: Color(0xFF9D7BFF), fontSize: 14),
+              ),
+            ),
+            _buildTextField(userData['email'] ?? 'madisons@example.com'),
+
+            const Padding(
+              padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Text(
+                'Mobile Number',
+                style: TextStyle(color: Color(0xFF9D7BFF), fontSize: 14),
+              ),
+            ),
+            _buildTextField(userData['phone'] ?? '+123 567 89000'),
+
+            const Padding(
+              padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Text(
+                'Date of birth',
+                style: TextStyle(color: Color(0xFF9D7BFF), fontSize: 14),
+              ),
+            ),
+            _buildTextField(_formatDOB()),
+
+            const Padding(
+              padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Text(
+                'Weight',
+                style: TextStyle(color: Color(0xFF9D7BFF), fontSize: 14),
+              ),
+            ),
+            _buildTextField(weightDisplay),
+
+            const Padding(
+              padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Text(
+                'Height',
+                style: TextStyle(color: Color(0xFF9D7BFF), fontSize: 14),
+              ),
+            ),
+            _buildTextField(heightDisplay),
+
+            const SizedBox(height: 30),
           ],
         ),
       ),
     );
   }
-}
 
-class ProfileInfoBox extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const ProfileInfoBox({required this.label, required this.value, super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(value, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-        Text(label, style: const TextStyle(color: Colors.white70)),
-      ],
-    );
-  }
-}
-
-class ProfileField extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const ProfileField({required this.label, required this.value, super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+  Widget _buildProfileStat(String value, String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFF9D7BFF),
+        borderRadius: BorderRadius.circular(8),
+      ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(color: Colors.white, fontSize: 16)),
-          const SizedBox(height: 5),
-          TextFormField(
-            initialValue: value,
-            style: const TextStyle(color: Colors.white),
-            decoration: InputDecoration(
-              filled: true,
-              fillColor: Colors.white10,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+          Text(
+            value,
+            style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.bold
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 12
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTextField(String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: const Color(0xFF2A2A2A),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          value,
+          style: const TextStyle(color: Colors.white),
+        ),
       ),
     );
   }
