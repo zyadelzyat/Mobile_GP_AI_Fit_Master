@@ -37,7 +37,7 @@ class SupplementsStorePage extends StatefulWidget {
 class _SupplementsStorePageState extends State<SupplementsStorePage> {
   // Custom colors
   final Color customPurple = const Color(0xFFB892FF);
-  final Color backgroundColor = Colors.black;
+  final Color backgroundColor = const Color(0xFF232323);
   final Color cardColor = Colors.white;
   final Color textColor = Colors.black;
 
@@ -322,7 +322,7 @@ class CheckoutPage extends StatefulWidget {
 
 class _CheckoutPageState extends State<CheckoutPage> {
   late Map<Product, int> checkoutCart;
-  final Color customPurple = const Color(0xFFB892FF);
+  final Color customPurple = const Color(0xFF232323);
 
   @override
   void initState() {
