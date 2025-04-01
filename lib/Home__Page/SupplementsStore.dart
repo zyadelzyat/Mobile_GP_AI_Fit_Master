@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:untitled/Home__Page/CalorieCalculator.dart'; // تأكد من أن هذا المسار صحيح
+import '00_home_page.dart'; // Adjust the path as needed
 
 // نموذج المنتج مع تجاوز (==) والـ hashCode ليعمل بشكل صحيح في Map
 class Product {
@@ -150,12 +151,9 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
-            // عند الضغط على السهم يتم الرجوع إلى صفحة CalorieCalculatorPage
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(
-                builder: (context) => CalorieCalculatorPage(),
-              ),
+              MaterialPageRoute(builder: (context) => HomePage()), // Navigate to home page
             );
           },
         ),

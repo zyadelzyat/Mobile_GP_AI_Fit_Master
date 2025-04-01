@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:untitled/Home__Page/SupplementsStore.dart';
 import 'package:untitled/Home__Page/SupplementsStore.dart'; // تأكد من أن هذا المسار صحيح
+import '00_home_page.dart'; // Adjust the path as needed
 
 class CalorieCalculatorPage extends StatefulWidget {
   @override
@@ -74,7 +75,7 @@ class _CalorieCalculatorPageState extends State<CalorieCalculatorPage> {
           onPressed: () {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => SupplementsStorePage()),
+              MaterialPageRoute(builder: (context) => HomePage()), // Navigate to home page
             );
           },
         ),
