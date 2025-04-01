@@ -280,7 +280,7 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
             ),
           ),
 
-          // Bottom navigation bar
+          // Bottom navigation bar - MODIFIED: Only home and profile icons
           Container(
             height: 60,
             decoration: BoxDecoration(
@@ -290,17 +290,20 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
+                // Only home icon is functional - navigates to HomePage
                 IconButton(
                   icon: Icon(Icons.home, color: Colors.white),
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => HomePage()),
+                    );
+                  },
                 ),
+                // Profile icon (disabled)
                 IconButton(
-                  icon: Icon(Icons.star, color: Colors.white),
-                  onPressed: () {},
-                ),
-                IconButton(
-                  icon: Icon(Icons.person, color: Colors.white),
-                  onPressed: () {},
+                  icon: Icon(Icons.person, color: Colors.white70),
+                  onPressed: null, // Disabled button
                 ),
               ],
             ),
@@ -311,7 +314,7 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
   }
 }
 
-// Checkout page
+// Checkout page - No changes needed here
 class CheckoutPage extends StatefulWidget {
   final Map<Product, int> cart;
   const CheckoutPage({Key? key, required this.cart}) : super(key: key);
