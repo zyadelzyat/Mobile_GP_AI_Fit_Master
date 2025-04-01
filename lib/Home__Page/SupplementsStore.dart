@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:untitled/Home__Page/CalorieCalculator.dart'; // تأكد من أن هذا المسار صحيح
-import '00_home_page.dart'; // Adjust the path as needed
+import 'package:untitled/Home__Page/CalorieCalculator.dart';
+import '00_home_page.dart';
 
-// نموذج المنتج مع تجاوز (==) والـ hashCode ليعمل بشكل صحيح في Map
+// Product model with overridden == and hashCode for correct Map functionality
 class Product {
   final String name;
-  final String price; // السعر كنص مع رمز العملة (مثلاً "EGP 350")
+  final String price;
   final String category;
   final String description;
+  final String imageUrl; // Added image URL property
 
   Product({
     required this.name,
     required this.price,
     required this.category,
     required this.description,
+    required this.imageUrl, // Required image URL
   });
 
   @override
@@ -26,80 +28,59 @@ class Product {
   int get hashCode => name.hashCode ^ price.hashCode;
 }
 
-// صفحة المتجر الرئيسية
+// Main supplements store page
 class SupplementsStorePage extends StatefulWidget {
   @override
   _SupplementsStorePageState createState() => _SupplementsStorePageState();
 }
 
 class _SupplementsStorePageState extends State<SupplementsStorePage> {
-  // اللون البنفسجي الفاتح المخصص
+  // Custom colors
   final Color customPurple = const Color(0xFFB892FF);
+  final Color backgroundColor = Colors.black;
+  final Color cardColor = Colors.white;
+  final Color textColor = Colors.black;
 
-  // قائمة التصنيفات مع إضافة تصنيف الفيتامينات
-  List<String> categories = ['All', 'Bulking', 'Cutting', 'Vitamins'];
-  String selectedCategory = 'All';
+  // Search controller
+  final TextEditingController searchController = TextEditingController();
 
-  // قائمة المنتجات مع إضافة منتجات جديدة ضمن فئة الفيتامينات وبعض المنتجات الإضافية
+  // Product list with images
   List<Product> products = [
-    // منتجات مكملات لبناء العضلات (Bulking)
     Product(
-      name: 'Whey Protein',
-      price: 'EGP 350',
+      name: 'Creatine Monohydrate',
+      price: '1200 EG',
+      category: 'Bulking',
+      description: 'Improves strength and workout performance.',
+      imageUrl: 'assets/images/creatine.png',
+    ),
+    Product(
+      name: 'Optimum Nutrition Gold Standard 100% Whey',
+      price: '5000 EG',
       category: 'Bulking',
       description: 'High-quality protein for muscle building.',
+      imageUrl: 'assets/images/whey.png',
     ),
     Product(
-      name: 'Mass Gainer',
-      price: 'EGP 400',
-      category: 'Bulking',
-      description: 'Increase calorie intake for weight gain.',
-    ),
-    // منتجات عامة
-    Product(
-      name: 'Creatine',
-      price: 'EGP 200',
-      category: 'All',
-      description: 'Improves strength and workout performance.',
-    ),
-    // منتجات لتخسيس (Cutting)
-    Product(
-      name: 'Citrulline',
-      price: 'EGP 250',
-      category: 'Cutting',
-      description: 'Enhances blood flow and reduces fatigue.',
+      name: 'Hexagonal Dumbbell Two Pieces Each Weighing 5 Kg',
+      price: '999 EG',
+      category: 'Equipment',
+      description: 'Perfect for home workouts and strength training.',
+      imageUrl: 'assets/images/dumbbells.png',
     ),
     Product(
-      name: 'Pre-Workout',
-      price: 'EGP 300',
-      category: 'Cutting',
-      description: 'Boosts energy and focus before training.',
+      name: 'Adidas Performance Sport Bag For Women',
+      price: '500 EG',
+      category: 'Accessories',
+      description: 'Stylish and functional gym bag.',
+      imageUrl: 'assets/images/bag.png',
     ),
-    // منتجات فيتامينات
-    Product(
-      name: 'Multivitamin',
-      price: 'EGP 150',
-      category: 'Vitamins',
-      description: 'Supports overall health and wellness.',
-    ),
-    Product(
-      name: 'Vitamin C',
-      price: 'EGP 80',
-      category: 'Vitamins',
-      description: 'Boosts immune system and fights free radicals.',
-    ),
-    Product(
-      name: 'Vitamin D',
-      price: 'EGP 90',
-      category: 'Vitamins',
-      description: 'Promotes bone health and immune support.',
-    ),
+    // Additional products can be added here
   ];
 
-  // السلة: خريطة تربط كل منتج بالكمية المختارة
+  // Shopping cart
   Map<Product, int> cart = {};
 
-  // دالة لإضافة المنتج للسلة أو زيادة الكمية إذا كان موجوداً
+  // Add product to cart
   void addToCart(Product product) {
     setState(() {
       if (cart.containsKey(product)) {
@@ -110,141 +91,187 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
     });
   }
 
-  // دالة لزيادة كمية منتج معين
-  void incrementProduct(Product product) {
-    setState(() {
-      if (cart.containsKey(product)) {
-        cart[product] = cart[product]! + 1;
-      }
-    });
-  }
-
-  // دالة لإنقاص كمية منتج معين، وحذفه إذا أصبحت الكمية 0
-  void decrementProduct(Product product) {
-    setState(() {
-      if (cart.containsKey(product)) {
-        int current = cart[product]!;
-        if (current > 1) {
-          cart[product] = current - 1;
-        } else {
-          cart.remove(product);
-        }
-      }
-    });
-  }
-
-  // دالة لحساب إجمالي عدد العناصر في السلة (للشارة)
+  // Total items in cart
   int totalItemsInCart() {
     return cart.values.fold(0, (prev, amount) => prev + amount);
   }
 
   @override
   Widget build(BuildContext context) {
-    // تصفية المنتجات بحسب التصنيف المختار
-    List<Product> displayedProducts = selectedCategory == 'All'
-        ? products
-        : products.where((p) => p.category == selectedCategory || p.category == 'All').toList();
-
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: backgroundColor,
       appBar: AppBar(
+        backgroundColor: backgroundColor,
+        elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back, color: Colors.green),
           onPressed: () {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => HomePage()), // Navigate to home page
+              MaterialPageRoute(builder: (context) => HomePage()),
             );
           },
         ),
-        title: const Text('Supplements Store'),
-        backgroundColor: customPurple,
         actions: [
-          // أيقونة السلة مع الشارة في أعلى اليمين
           IconButton(
+            icon: const Icon(Icons.search, color: Colors.white),
+            onPressed: () {},
+          ),
+          IconButton(
+            icon: const Icon(Icons.shopping_cart, color: Colors.white),
             onPressed: () {
-              if (cart.isEmpty) {
-                // إذا كانت السلة فارغة، عرض رسالة تنبيه
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Please add products to your cart.'),
-                  ),
-                );
-              } else {
-                // الانتقال إلى صفحة Checkout إذا كانت السلة غير فارغة
+              if (cart.isNotEmpty) {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => CheckoutPage(cart: cart),
-                  ),
-                ).then((_) {
-                  // تحديث حالة السلة بعد العودة
-                  setState(() {});
-                });
+                  MaterialPageRoute(builder: (context) => CheckoutPage(cart: cart)),
+                ).then((_) => setState(() {}));
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Your cart is empty')),
+                );
               }
             },
-            icon: Stack(
-              children: [
-                const Icon(Icons.shopping_cart, color: Colors.white, size: 28),
-                if (cart.isNotEmpty)
-                  Positioned(
-                    right: 0,
-                    top: 0,
-                    child: Container(
-                      padding: const EdgeInsets.all(2),
-                      decoration: BoxDecoration(
-                        color: Colors.red,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      constraints: const BoxConstraints(
-                        minWidth: 16,
-                        minHeight: 16,
-                      ),
-                      child: Text(
-                        '${totalItemsInCart()}',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.person, color: Colors.white),
+            onPressed: () {},
           ),
         ],
       ),
       body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // شريط التصنيفات (Categories)
-          Container(
-            height: 50,
+          // Title
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+            child: Text(
+              'Our Products',
+              style: TextStyle(
+                color: Colors.yellow,
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+
+          // Search bar
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(30),
+              ),
+              child: TextField(
+                controller: searchController,
+                decoration: InputDecoration(
+                  hintText: 'Search',
+                  border: InputBorder.none,
+                  icon: Icon(Icons.search, color: Colors.grey),
+                ),
+              ),
+            ),
+          ),
+
+          // Product list
+          Expanded(
             child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: categories.length,
+              padding: const EdgeInsets.all(16),
+              itemCount: products.length,
               itemBuilder: (context, index) {
-                String category = categories[index];
-                bool isSelected = category == selectedCategory;
-                return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      selectedCategory = category;
-                    });
-                  },
+                Product product = products[index];
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
                   child: Container(
-                    alignment: Alignment.center,
-                    margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
                     decoration: BoxDecoration(
-                      color: isSelected ? customPurple : Colors.grey[800],
+                      color: Colors.white,
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: Text(
-                      category,
-                      style: TextStyle(
-                        color: isSelected ? Colors.black : Colors.white,
-                        fontWeight: FontWeight.bold,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        children: [
+                          // Product ID
+                          Container(
+                            width: 30,
+                            height: 30,
+                            decoration: BoxDecoration(
+                              color: Colors.grey[200],
+                              shape: BoxShape.circle,
+                            ),
+                            child: Center(
+                              child: Text(
+                                '${index + 1}',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: 12),
+
+                          // Product info
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  product.name,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                SizedBox(height: 4),
+                                Text(
+                                  'Price: ${product.price}',
+                                  style: TextStyle(
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          // Product image and more button
+                          Column(
+                            children: [
+                              Container(
+                                width: 80,
+                                height: 80,
+                                child: Image.asset(
+                                  product.imageUrl,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Container(
+                                      color: Colors.grey[300],
+                                      child: Icon(Icons.image_not_supported),
+                                    );
+                                  },
+                                ),
+                              ),
+                              SizedBox(height: 8),
+                              ElevatedButton(
+                                onPressed: () {
+                                  addToCart(product);
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: customPurple,
+                                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                ),
+                                child: Text(
+                                  'More...',
+                                  style: TextStyle(color: Colors.black),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -252,136 +279,28 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
               },
             ),
           ),
-          // عرض المنتجات في شبكة (GridView)
-          Expanded(
-            child: GridView.builder(
-              padding: const EdgeInsets.all(16),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2, // عمودين
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                childAspectRatio: 0.8,
-              ),
-              itemCount: displayedProducts.length,
-              itemBuilder: (context, index) {
-                Product product = displayedProducts[index];
-                bool inCart = cart.containsKey(product);
-                int quantity = inCart ? cart[product]! : 0;
 
-                return Card(
-                  color: Colors.grey[900],
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // اسم المنتج
-                        Text(
-                          product.name,
-                          style: const TextStyle(color: Colors.white, fontSize: 16),
-                        ),
-                        const SizedBox(height: 4),
-                        // السعر
-                        Text(
-                          product.price,
-                          style: TextStyle(color: customPurple, fontSize: 14),
-                        ),
-                        const SizedBox(height: 8),
-                        // وصف مختصر
-                        Text(
-                          product.description,
-                          style: const TextStyle(color: Colors.white70, fontSize: 12),
-                        ),
-                        const Spacer(),
-                        // زر إضافة المنتج أو تعديل الكمية إذا كان موجوداً بالسلة
-                        Center(
-                          child: inCart
-                              ? Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: Icon(Icons.remove, color: customPurple),
-                                onPressed: () {
-                                  decrementProduct(product);
-                                },
-                              ),
-                              Text(
-                                quantity.toString(),
-                                style: const TextStyle(color: Colors.white),
-                              ),
-                              IconButton(
-                                icon: Icon(Icons.add, color: customPurple),
-                                onPressed: () {
-                                  incrementProduct(product);
-                                },
-                              ),
-                            ],
-                          )
-                              : ElevatedButton(
-                            onPressed: () {
-                              addToCart(product);
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: customPurple,
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                            ),
-                            child: const Text(
-                              'Add',
-                              style: TextStyle(color: Colors.black),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-          // قسم السلة في أسفل الصفحة مع السعر الإجمالي وزر "Checkout"
+          // Bottom navigation bar
           Container(
-            padding: const EdgeInsets.all(16),
+            height: 60,
             decoration: BoxDecoration(
-              color: Colors.grey[850],
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+              color: customPurple,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
             ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                Text(
-                  'Total: EGP ${cart.entries.fold(0.0, (total, entry) {
-                    double price = double.tryParse(entry.key.price.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0;
-                    return total + price * entry.value;
-                  }).toStringAsFixed(2)}',
-                  style: const TextStyle(color: Colors.white, fontSize: 18),
+                IconButton(
+                  icon: Icon(Icons.home, color: Colors.white),
+                  onPressed: () {},
                 ),
-                ElevatedButton(
-                  onPressed: () async {
-                    if (cart.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Please add products to your cart.'),
-                        ),
-                      );
-                    } else {
-                      await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => CheckoutPage(cart: cart),
-                        ),
-                      );
-                      setState(() {}); // تحديث حالة السلة بعد العودة
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: customPurple,
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  ),
-                  child: const Text(
-                    'Checkout',
-                    style: TextStyle(color: Colors.black),
-                  ),
+                IconButton(
+                  icon: Icon(Icons.star, color: Colors.white),
+                  onPressed: () {},
+                ),
+                IconButton(
+                  icon: Icon(Icons.person, color: Colors.white),
+                  onPressed: () {},
                 ),
               ],
             ),
@@ -392,7 +311,7 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
   }
 }
 
-// صفحة Checkout لعرض العناصر المختارة مع إمكانية تعديل الكميات
+// Checkout page
 class CheckoutPage extends StatefulWidget {
   final Map<Product, int> cart;
   const CheckoutPage({Key? key, required this.cart}) : super(key: key);
@@ -402,7 +321,6 @@ class CheckoutPage extends StatefulWidget {
 }
 
 class _CheckoutPageState extends State<CheckoutPage> {
-  // نسخة محلية من السلة للتعديل
   late Map<Product, int> checkoutCart;
   final Color customPurple = const Color(0xFFB892FF);
 
@@ -480,7 +398,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
               },
             ),
           ),
-          // عرض السعر الإجمالي وزر تأكيد الطلب
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
