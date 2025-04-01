@@ -51,28 +51,28 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
       price: '1200 EG',
       category: 'Bulking',
       description: 'Improves strength and workout performance.',
-      imageUrl: 'assets/images/creatine.png',
+      imageUrl: 'assets/images/creatine.jpg',
     ),
     Product(
       name: 'Optimum Nutrition Gold Standard 100% Whey',
       price: '5000 EG',
       category: 'Bulking',
       description: 'High-quality protein for muscle building.',
-      imageUrl: 'assets/images/whey.png',
+      imageUrl: 'assets/images/whey.jpg',
     ),
     Product(
       name: 'Hexagonal Dumbbell Two Pieces Each Weighing 5 Kg',
       price: '999 EG',
       category: 'Equipment',
       description: 'Perfect for home workouts and strength training.',
-      imageUrl: 'assets/images/dumbbells.png',
+      imageUrl: 'assets/images/dumbbells.jpg',
     ),
     Product(
       name: 'Adidas Performance Sport Bag For Women',
       price: '500 EG',
       category: 'Accessories',
       description: 'Stylish and functional gym bag.',
-      imageUrl: 'assets/images/bag.png',
+      imageUrl: 'assets/images/bag.jpg',
     ),
     // Additional products can be added here
   ];
