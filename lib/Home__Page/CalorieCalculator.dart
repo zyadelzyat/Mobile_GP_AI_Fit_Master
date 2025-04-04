@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import '00_home_page.dart'; // Adjust the path as needed
+// Adjust the path as needed
 
 class CalorieCalculatorPage extends StatefulWidget {
+  const CalorieCalculatorPage({super.key});
+
   @override
   _CalorieCalculatorPageState createState() => _CalorieCalculatorPageState();
 }
@@ -235,7 +237,7 @@ class _CalorieCalculatorPageState extends State<CalorieCalculatorPage> {
               const Icon(Icons.local_fire_department, color: Colors.white, size: 36),
               const SizedBox(width: 8),
               Text(
-                '${_calories!.toStringAsFixed(0)}',
+                _calories!.toStringAsFixed(0),
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 36,

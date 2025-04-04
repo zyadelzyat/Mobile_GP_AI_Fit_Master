@@ -186,17 +186,17 @@ class WelcomeWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return const Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const SizedBox(height: 60),
-        const Icon(
+        SizedBox(height: 60),
+        Icon(
           Icons.support_agent,
           size: 80,
           color: Colors.white,
         ),
-        const SizedBox(height: 20),
-        const Text(
+        SizedBox(height: 20),
+        Text(
           "Hello",
           style: TextStyle(
             color: Colors.white,
@@ -204,15 +204,15 @@ class WelcomeWidget extends StatelessWidget {
             fontWeight: FontWeight.bold,
           ),
         ),
-        const SizedBox(height: 8),
-        const Text(
+        SizedBox(height: 8),
+        Text(
           "How Can I Help You?",
           style: TextStyle(
             color: Colors.white70,
             fontSize: 16,
           ),
         ),
-        const SizedBox(height: 40),
+        SizedBox(height: 40),
       ],
     );
   }

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:untitled/Home__Page/CalorieCalculator.dart';
 import '00_home_page.dart';
 
 // Product model with overridden == and hashCode for correct Map functionality
@@ -30,6 +29,8 @@ class Product {
 
 // Main supplements store page
 class SupplementsStorePage extends StatefulWidget {
+  const SupplementsStorePage({super.key});
+
   @override
   _SupplementsStorePageState createState() => _SupplementsStorePageState();
 }
@@ -108,7 +109,7 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
           onPressed: () {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => HomePage()),
+              MaterialPageRoute(builder: (context) => const HomePage()),
             );
           },
         ),
@@ -142,8 +143,8 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Title
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 8, 16, 20),
             child: Text(
               'Our Products',
               style: TextStyle(
@@ -165,7 +166,7 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
               ),
               child: TextField(
                 controller: searchController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   hintText: 'Search',
                   border: InputBorder.none,
                   icon: Icon(Icons.search, color: Colors.grey),
@@ -203,13 +204,13 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
                             child: Center(
                               child: Text(
                                 '${index + 1}',
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ),
                           ),
-                          SizedBox(width: 12),
+                          const SizedBox(width: 12),
 
                           // Product info
                           Expanded(
@@ -218,17 +219,17 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
                               children: [
                                 Text(
                                   product.name,
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 16,
                                   ),
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
                                 ),
-                                SizedBox(height: 4),
+                                const SizedBox(height: 4),
                                 Text(
                                   'Price: ${product.price}',
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     color: Colors.black87,
                                   ),
                                 ),
@@ -239,7 +240,7 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
                           // Product image and more button
                           Column(
                             children: [
-                              Container(
+                              SizedBox(
                                 width: 80,
                                 height: 80,
                                 child: Image.asset(
@@ -247,24 +248,24 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
                                   errorBuilder: (context, error, stackTrace) {
                                     return Container(
                                       color: Colors.grey[300],
-                                      child: Icon(Icons.image_not_supported),
+                                      child: const Icon(Icons.image_not_supported),
                                     );
                                   },
                                 ),
                               ),
-                              SizedBox(height: 8),
+                              const SizedBox(height: 8),
                               ElevatedButton(
                                 onPressed: () {
                                   addToCart(product);
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: customPurple,
-                                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(20),
                                   ),
                                 ),
-                                child: Text(
+                                child: const Text(
                                   'More...',
                                   style: TextStyle(color: Colors.black),
                                 ),
@@ -285,23 +286,23 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
             height: 60,
             decoration: BoxDecoration(
               color: customPurple,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 // Only home icon is functional - navigates to HomePage
                 IconButton(
-                  icon: Icon(Icons.home, color: Colors.white),
+                  icon: const Icon(Icons.home, color: Colors.white),
                   onPressed: () {
                     Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(builder: (context) => HomePage()),
+                      MaterialPageRoute(builder: (context) => const HomePage()),
                     );
                   },
                 ),
                 // Profile icon (disabled)
-                IconButton(
+                const IconButton(
                   icon: Icon(Icons.person, color: Colors.white70),
                   onPressed: null, // Disabled button
                 ),
@@ -317,7 +318,7 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
 // Checkout page - No changes needed here
 class CheckoutPage extends StatefulWidget {
   final Map<Product, int> cart;
-  const CheckoutPage({Key? key, required this.cart}) : super(key: key);
+  const CheckoutPage({super.key, required this.cart});
 
   @override
   _CheckoutPageState createState() => _CheckoutPageState();

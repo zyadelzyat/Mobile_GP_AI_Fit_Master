@@ -100,13 +100,13 @@ class _HomePageState extends State<HomePage> {
       case 'CalorieCalculator':
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => CalorieCalculatorPage()),
+          MaterialPageRoute(builder: (context) => const CalorieCalculatorPage()),
         );
         break;
       case 'SupplementsStore':
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => SupplementsStorePage()),
+          MaterialPageRoute(builder: (context) => const SupplementsStorePage()),
         );
         break;
       case 'VideosPage':
@@ -463,8 +463,8 @@ class _HomePageState extends State<HomePage> {
                     ),
                     TextButton(
                       onPressed: () {},
-                      child: Row(
-                        children: const [
+                      child: const Row(
+                        children: [
                           Text(
                             "See All",
                             style: TextStyle(
@@ -515,9 +515,9 @@ class _HomePageState extends State<HomePage> {
                           borderRadius: BorderRadius.circular(16),
                           color: const Color(0xFF8E7AFE).withOpacity(0.2),
                         ),
-                        child: Row(
+                        child: const Row(
                           mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
+                          children: [
                             Icon(Icons.chat_bubble_outline, color: Color(0xFF8E7AFE)),
                             SizedBox(width: 10),
                             Text(

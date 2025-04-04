@@ -40,15 +40,15 @@ class _GenderSelectionScreenState extends State<GenderSelectionScreen> {
   @override
   Widget build(BuildContext context) {
     // Define colors to match the new design
-    final backgroundColor = const Color(0xFF232323); // Updated background color
-    final textColor = Colors.white;
-    final purpleHeaderColor = const Color(0xFF9D8AD5);
-    final maleCircleColor = Colors.transparent;
-    final maleIconColor = Colors.white;
-    final maleBorderColor = Colors.white;
-    final femaleCircleColor = const Color(0xFFD7F24D); // Bright lime green/yellow
-    final femaleIconColor = Colors.black;
-    final buttonColor = const Color(0xFF333333);
+    const backgroundColor = Color(0xFF232323); // Updated background color
+    const textColor = Colors.white;
+    const purpleHeaderColor = Color(0xFF9D8AD5);
+    const maleCircleColor = Colors.transparent;
+    const maleIconColor = Colors.white;
+    const maleBorderColor = Colors.white;
+    const femaleCircleColor = Color(0xFFD7F24D); // Bright lime green/yellow
+    const femaleIconColor = Colors.black;
+    const buttonColor = Color(0xFF333333);
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -57,8 +57,8 @@ class _GenderSelectionScreenState extends State<GenderSelectionScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Title section
-            Padding(
-              padding: const EdgeInsets.only(top: 40, bottom: 20),
+            const Padding(
+              padding: EdgeInsets.only(top: 40, bottom: 20),
               child: Text(
                 "What's Your Gender",
                 style: TextStyle(

@@ -3,15 +3,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:untitled/profile.dart';
 import 'package:untitled/Login___Signup/01_signin_screen.dart';
-import 'Home__Page/00_home_page.dart';
-import 'Login___Signup/signup_screen.dart';
 import 'theme.dart';
 import 'theme_provider.dart';
-import 'Set Up/03 GenderSelectionScreen.dart';
-import 'ui/onboarding_screen.dart'; // Import your onboarding screen
-import 'fitness_screen.dart';
+// Import your onboarding screen
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
