@@ -11,6 +11,7 @@ import 'theme.dart';
 import 'theme_provider.dart';
 import 'Set Up/03 GenderSelectionScreen.dart';
 import 'ui/onboarding_screen.dart'; // Import your onboarding screen
+import 'fitness_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -56,7 +57,7 @@ class _GenderSelectionAppState extends State<GenderSelectionApp> {
       theme: lightTheme,
       darkTheme: darkTheme,
       themeMode: themeProvider.themeMode,
-      home: const SignInScreen(),
+      home: const HomePage(),
       debugShowCheckedModeBanner: false,
     );
   }

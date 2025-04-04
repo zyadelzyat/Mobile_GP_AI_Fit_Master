@@ -97,6 +97,7 @@ flutter:
     - assets/supplement.jpg
     - assets/daily.jpg
     - assets/promo.jpg
+    - assets/fitness_image.jpg
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see
