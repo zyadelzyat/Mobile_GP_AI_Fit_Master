@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../Home__Page/00_home_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -93,7 +94,12 @@ class _ChatPageState extends State<ChatPage> {
             color: Colors.yellow, // Yellow back icon
             size: 20,
           ),
-          onPressed: _clearChat,
+          onPressed: () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const HomePage()),
+            );
+          },
         ),
         title: RichText(
           text: TextSpan(

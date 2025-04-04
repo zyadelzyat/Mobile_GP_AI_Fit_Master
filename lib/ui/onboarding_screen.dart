@@ -1,9 +1,27 @@
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:untitled/profile.dart';
+import 'package:untitled/Login___Signup/01_signin_screen.dart';
+import '../Home__Page/00_home_page.dart';
+import '../Login___Signup/signup_screen.dart';
+import '../theme.dart';
+import '../theme_provider.dart';
+import '../Set Up/03 GenderSelectionScreen.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => ThemeProvider(),
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatefulWidget {
@@ -20,6 +38,7 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     _loadOnboardingStatus();
+
     // Set system UI overlay style for fullscreen
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     // Set status bar to be transparent
@@ -44,29 +63,26 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+
     if (firstLaunch == null) {
-      return const MaterialApp(
-        home: Scaffold(
+      return MaterialApp(
+        theme: lightTheme,
+        darkTheme: darkTheme,
+        themeMode: themeProvider.themeMode,
+        home: const Scaffold(
           body: Center(child: CircularProgressIndicator()),
         ),
+        debugShowCheckedModeBanner: false,
       );
     }
 
     return MaterialApp(
+      theme: lightTheme,
+      darkTheme: darkTheme,
+      themeMode: themeProvider.themeMode,
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primaryColor: Colors.purple,
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.white,
-            foregroundColor: Colors.purple,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(30),
-            ),
-          ),
-        ),
-      ),
-      home: firstLaunch! ? const OnboardingScreen() : const HomeScreen(),
+      home: firstLaunch! ? const OnboardingScreen() : const HomePage(),
     );
   }
 }
@@ -120,7 +136,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
+        MaterialPageRoute(builder: (context) => const HomePage()),
       );
     }
   }
@@ -138,6 +154,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           return FullScreenOnboardingPage(
             model: _pages[index],
             isLastPage: index == _pages.length - 1,
+            currentPage: _currentPage,
+            totalPages: _pages.length,
             onPressed: () {
               if (index == _pages.length - 1) {
                 _completeOnboarding();
@@ -158,16 +176,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 class FullScreenOnboardingPage extends StatelessWidget {
   final OnboardingModel model;
   final bool isLastPage;
+  final int currentPage;
+  final int totalPages;
   final VoidCallback onPressed;
 
   const FullScreenOnboardingPage({
     required this.model,
     required this.isLastPage,
+    required this.currentPage,
+    required this.totalPages,
     required this.onPressed,
     super.key,
   });
-
-  get _currentPage => null;
 
   @override
   Widget build(BuildContext context) {
@@ -181,7 +201,7 @@ class FullScreenOnboardingPage extends StatelessWidget {
           fit: BoxFit.cover,
         ),
 
-        // Semi-transparent overlay for the whole screen (optional)
+        // Semi-transparent overlay for the whole screen
         Container(
           width: MediaQuery.of(context).size.width,
           height: MediaQuery.of(context).size.height,
@@ -206,6 +226,19 @@ class FullScreenOnboardingPage extends StatelessWidget {
                 const SizedBox(height: 16),
 
                 // Title text
+                Text(
+                  model.title,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+
+                const SizedBox(height: 10),
+
+                // Description text
                 Text(
                   model.description,
                   style: const TextStyle(
@@ -255,13 +288,13 @@ class FullScreenOnboardingPage extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: List.generate(
-              4, // Number of pages
+              totalPages,
                   (index) => Container(
                 margin: const EdgeInsets.symmetric(horizontal: 4),
                 width: 8,
                 height: 8,
                 decoration: BoxDecoration(
-                  color: _currentPage == index ? Colors.white : Colors.white.withOpacity(0.5),
+                  color: currentPage == index ? Colors.white : Colors.white.withOpacity(0.5),
                   shape: BoxShape.circle,
                 ),
               ),
@@ -283,22 +316,4 @@ class OnboardingModel {
     required this.description,
     required this.image,
   });
-}
-
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("AI Fit Master"),
-        backgroundColor: Colors.purple,
-        foregroundColor: Colors.white,
-      ),
-      body: const Center(
-        child: Text("Welcome to AI Fit Master!"),
-      ),
-    );
-  }
 }

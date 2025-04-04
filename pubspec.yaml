@@ -92,6 +92,11 @@ flutter:
     - assets/onboarding2.jpg
     - assets/onboarding3.jpg
     - assets/onboarding4.jpg
+    - assets/workout1.jpg
+    - assets/workout2.jpg
+    - assets/supplement.jpg
+    - assets/daily.jpg
+    - assets/promo.jpg
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see
