@@ -56,7 +56,7 @@ class _GenderSelectionAppState extends State<GenderSelectionApp> {
       theme: lightTheme,
       darkTheme: darkTheme,
       themeMode: themeProvider.themeMode,
-      home: widget.firstLaunch ? const OnboardingScreen() : const HomePage(),
+      home: const HomePage(),
       debugShowCheckedModeBanner: false,
     );
   }

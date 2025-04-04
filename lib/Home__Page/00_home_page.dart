@@ -26,6 +26,8 @@ class _HomePageState extends State<HomePage> {
   final List<Map<String, dynamic>> _categories = [
     {'icon': Icons.fitness_center, 'label': 'Workout', 'route': null},
     {'icon': Icons.insert_chart, 'label': 'Nutrition', 'route': null},
+    {'icon': Icons.shopping_bag, 'label': 'Products', 'route': 'SupplementsStore'},
+    {'icon': Icons.calculate_outlined, 'label': 'Calories', 'route': 'CalorieCalculator'},
   ];
 
   final List<Map<String, dynamic>> _workouts = [
@@ -46,11 +48,6 @@ class _HomePageState extends State<HomePage> {
   ];
 
   final List<Map<String, dynamic>> _features = [
-    {
-      'title': 'Supplement Guide',
-      'image': 'assets/supplement.jpg',
-      'route': 'SupplementsStore',
-    },
   ];
 
   @override
@@ -87,7 +84,9 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  void _navigateToFeature(String routeName) {
+  void _navigateToFeature(String? routeName) {
+    if (routeName == null) return;
+
     switch (routeName) {
       case 'Workout':
       // Navigate to workout page when implemented
@@ -102,6 +101,18 @@ class _HomePageState extends State<HomePage> {
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => CalorieCalculatorPage()),
+        );
+        break;
+      case 'SupplementsStore':
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => SupplementsStorePage()),
+        );
+        break;
+      case 'VideosPage':
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => VideosPage()),
         );
         break;
     }
@@ -131,28 +142,36 @@ class _HomePageState extends State<HomePage> {
         setState(() {
           _selectedCategoryIndex = index;
         });
+
+        if (index < _categories.length && _categories[index]['route'] != null) {
+          _navigateToFeature(_categories[index]['route']);
+        }
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        margin: const EdgeInsets.only(right: 10),
+        width: 80,
+        padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF8E7AFE) : Colors.transparent,
-          borderRadius: BorderRadius.circular(22),
+          color: isSelected ? const Color(0xFF8E7AFE).withOpacity(0.2) : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+          border: isSelected
+              ? Border.all(color: const Color(0xFF8E7AFE), width: 2)
+              : null,
         ),
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               icon,
-              color: isSelected ? Colors.white : const Color(0xFF8E7AFE),
-              size: 22,
+              color: isSelected ? const Color(0xFF8E7AFE) : Colors.grey[400],
+              size: 28,
             ),
-            const SizedBox(width: 6),
+            const SizedBox(height: 8),
             Text(
               label,
               style: TextStyle(
-                color: isSelected ? Colors.white : const Color(0xFF8E7AFE),
-                fontWeight: FontWeight.w600,
-                fontSize: 14,
+                color: isSelected ? const Color(0xFF8E7AFE) : Colors.grey[400],
+                fontWeight: FontWeight.w500,
+                fontSize: 12,
               ),
             ),
           ],
@@ -272,7 +291,7 @@ class _HomePageState extends State<HomePage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Text(
-                  "Achieve Your\nGoals",
+                  "Active Your\nGoals",
                   style: TextStyle(
                     color: Color(0xFFE2F163),
                     fontSize: 20,
@@ -281,7 +300,7 @@ class _HomePageState extends State<HomePage> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  "Plans With Hip Twist",
+                  "Punk With Hip Twist",
                   style: TextStyle(
                     color: Colors.grey[300],
                     fontSize: 14,
@@ -329,6 +348,8 @@ class _HomePageState extends State<HomePage> {
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
             const Icon(Icons.arrow_forward_ios, color: Colors.grey, size: 16),
@@ -355,7 +376,7 @@ class _HomePageState extends State<HomePage> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Expanded(  // Added Expanded to make text area flexible
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -366,8 +387,8 @@ class _HomePageState extends State<HomePage> {
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
                             ),
-                            maxLines: 1,  // Added to prevent text overflow
-                            overflow: TextOverflow.ellipsis,  // Added to handle text overflow
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                           const Text(
                             "It's time to challenge your limits.",
@@ -375,35 +396,35 @@ class _HomePageState extends State<HomePage> {
                               color: Colors.grey,
                               fontSize: 14,
                             ),
-                            maxLines: 1,  // Added to prevent text overflow
-                            overflow: TextOverflow.ellipsis,  // Added to handle text overflow
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ),
                     ),
                     Row(
-                      mainAxisSize: MainAxisSize.min,  // Added to make this row take minimum space
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
                           icon: const Icon(Icons.search, color: Colors.white),
                           onPressed: () {},
-                          iconSize: 20,  // Reduced icon size slightly
-                          padding: EdgeInsets.zero,  // Reduced padding
-                          constraints: const BoxConstraints(minWidth: 36, minHeight: 36),  // Constrained button size
+                          iconSize: 24,
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
                         ),
                         IconButton(
                           icon: const Icon(Icons.notifications_outlined, color: Colors.white),
                           onPressed: () {},
-                          iconSize: 20,  // Reduced icon size slightly
-                          padding: EdgeInsets.zero,  // Reduced padding
-                          constraints: const BoxConstraints(minWidth: 36, minHeight: 36),  // Constrained button size
+                          iconSize: 24,
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
                         ),
                         GestureDetector(
                           onTap: _navigateToProfile,
                           child: const CircleAvatar(
-                            radius: 16,  // Slightly reduced from 18
+                            radius: 16,
                             backgroundColor: Color(0xFF8E7AFE),
-                            child: Icon(Icons.person, color: Colors.white, size: 16),  // Reduced size from 20
+                            child: Icon(Icons.person, color: Colors.white, size: 16),
                           ),
                         ),
                       ],
@@ -411,12 +432,11 @@ class _HomePageState extends State<HomePage> {
                   ],
                 ),
               ),
-              const SizedBox(height: 8),
-              SizedBox(
-                height: 80,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     for (int i = 0; i < _categories.length; i++)
                       _buildCategoryButton(
@@ -424,10 +444,10 @@ class _HomePageState extends State<HomePage> {
                         _categories[i]['label'],
                         i,
                       ),
-                    _buildCategoryButton(Icons.calculate_outlined, 'Calorie', 2),
                   ],
                 ),
               ),
+              const SizedBox(height: 24),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
@@ -472,6 +492,8 @@ class _HomePageState extends State<HomePage> {
                   itemBuilder: (context, index) => _buildWorkoutCard(_workouts[index]),
                 ),
               ),
+
+              // Rest of content remains the same
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: _buildPromoBanner(),
@@ -481,17 +503,8 @@ class _HomePageState extends State<HomePage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      "Health & Fit",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
                     const SizedBox(height: 16),
                     for (var feature in _features) _buildFeatureItem(feature),
-                    // ChatBot button at the bottom (only)
                     GestureDetector(
                       onTap: () => _navigateToFeature('ChatBot'),
                       child: Container(
