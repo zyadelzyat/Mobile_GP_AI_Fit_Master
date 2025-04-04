@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart'; // Import Provider for state management
-import 'package:firebase_auth/firebase_auth.dart'; // Import FirebaseAuth for authentication
-import 'signup_screen.dart'; // Import SignUp screen
-import 'forgotton_password.dart'; // Import ResetPasswordScreen
-import '../fitness_screen.dart'; // Import FitnessScreen
-import 'package:untitled/theme_provider.dart'; // Import ThemeProvider for theme management
+import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'signup_screen.dart';
+import 'forgotton_password.dart';
+import '../fitness_screen.dart';
+import 'package:untitled/theme_provider.dart';
+import 'package:untitled/Home__Page/00_home_page.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -45,17 +47,42 @@ class _SignInScreenState extends State<SignInScreen> {
         password: password,
       );
 
-      // Navigate to FitnessScreen after successful login
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const FitnessScreen()),
-      );
+      // Check if profile is complete after successful login
+      User? user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        DocumentSnapshot userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
+
+        bool isProfileComplete = false;
+        if (userDoc.exists) {
+          Map<String, dynamic>? userData = userDoc.data() as Map<String, dynamic>?;
+          if (userData != null) {
+            isProfileComplete = userData['gender'] != null &&
+                userData['height'] != null &&
+                userData['weight'] != null &&
+                userData['goal'] != null &&
+                userData['activityLevel'] != null;
+          }
+        }
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+            isProfileComplete ? const HomePage() : const FitnessScreen(),
+          ),
+        );
+      }
     } on FirebaseAuthException catch (e) {
       _showSnackBar(e.message ?? "Login failed. Please try again.");
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -81,7 +108,6 @@ class _SignInScreenState extends State<SignInScreen> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
               const SizedBox(height: 50),
-
               Align(
                 alignment: Alignment.topRight,
                 child: IconButton(
@@ -96,7 +122,6 @@ class _SignInScreenState extends State<SignInScreen> {
                   },
                 ),
               ),
-
               Text(
                 'Login',
                 style: TextStyle(
@@ -106,7 +131,6 @@ class _SignInScreenState extends State<SignInScreen> {
                 ),
               ),
               const SizedBox(height: 10),
-
               Text(
                 'Welcome!',
                 style: TextStyle(
@@ -116,7 +140,6 @@ class _SignInScreenState extends State<SignInScreen> {
                 ),
               ),
               const SizedBox(height: 30),
-
               Container(
                 padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 20),
                 decoration: BoxDecoration(
@@ -132,7 +155,6 @@ class _SignInScreenState extends State<SignInScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-
               TextButton(
                 onPressed: () {
                   Navigator.push(
@@ -148,7 +170,6 @@ class _SignInScreenState extends State<SignInScreen> {
                 ),
               ),
               const SizedBox(height: 40),
-
               _isLoading
                   ? const CircularProgressIndicator()
                   : MaterialButton(
@@ -169,12 +190,11 @@ class _SignInScreenState extends State<SignInScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    'Don’t have an account? ',
+                    'Don\'t have an account? ',
                     style: TextStyle(
                       color: Theme.of(context).textTheme.bodyLarge?.color,
                     ),
@@ -203,7 +223,12 @@ class _SignInScreenState extends State<SignInScreen> {
     );
   }
 
-  Widget _buildTextField(String hintText, IconData icon, TextEditingController controller, {bool obscureText = false}) {
+  Widget _buildTextField(
+      String hintText,
+      IconData icon,
+      TextEditingController controller, {
+        bool obscureText = false,
+      }) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
