@@ -7,7 +7,7 @@ import 'package:untitled/profile.dart';
 import 'package:untitled/theme_provider.dart';
 import 'package:untitled/videos_page.dart';
 import 'CalorieCalculator.dart';
-import 'SupplementsStore.dart';
+import 'Store.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});

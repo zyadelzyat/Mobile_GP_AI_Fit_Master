@@ -148,7 +148,7 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
             child: Text(
               'Our Products',
               style: TextStyle(
-                color: Colors.yellow,
+                color: Color(0xFFE2F163),
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
               ),
