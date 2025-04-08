@@ -40,8 +40,6 @@ class _HomePageState extends State<HomePage> {
     },
     {
       'title': 'Best Bulking Drink For Skinny Guys!',
-      'duration': '25 Minutes',
-      'kcal': '190 Kcal',
       'image': 'assets/workout2.jpg',
       'color': Colors.blue,
       'videoUrl': 'https://www.youtube.com/watch?v=3sH7wbIZjEY',
@@ -213,7 +211,6 @@ class _HomePageState extends State<HomePage> {
           borderRadius: BorderRadius.circular(16),
           color: const Color(0xFF2A2A2A),
         ),
-        // Fix: Use ConstrainedBox to ensure the card fits within the parent's constraints
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxHeight: 190),
           child: Column(
@@ -225,7 +222,7 @@ class _HomePageState extends State<HomePage> {
                     borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
                     child: Image.asset(
                       workout['image'],
-                      height: 110, // Reduced height to prevent overflow
+                      height: 110,
                       width: double.infinity,
                       fit: BoxFit.cover,
                     ),
@@ -234,25 +231,44 @@ class _HomePageState extends State<HomePage> {
                     Positioned(
                       bottom: 8,
                       right: 8,
-                      child: CircleAvatar(
-                        radius: 16,
-                        backgroundColor: workout['color'],
-                        child: const Icon(
-                          Icons.play_arrow,
-                          color: Colors.white,
-                          size: 20,
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              const Color(0xFF9B7BFE),
+                              const Color(0xFF7C68FE),
+                            ],
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF8E7AFE).withOpacity(0.3),
+                              blurRadius: 8,
+                              spreadRadius: 2,
+                            ),
+                          ],
+                        ),
+                        child: const Center(
+                          child: Icon(
+                            Icons.play_arrow,
+                            color: Colors.white,
+                            size: 20,
+                          ),
                         ),
                       ),
                     ),
                 ],
               ),
-              // Fix: Use Expanded to ensure the content doesn't overflow
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.all(12),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min, // Use minimal space
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
                         workout['title'],
@@ -261,11 +277,10 @@ class _HomePageState extends State<HomePage> {
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
                         ),
-                        maxLines: 1, // Limit to one line to prevent overflow
+                        maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 8),
-                      // Only show duration and kcal if they exist
                       if (workout.containsKey('duration') && workout.containsKey('kcal'))
                         Row(
                           children: [
