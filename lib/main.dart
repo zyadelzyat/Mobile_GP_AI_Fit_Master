@@ -9,6 +9,7 @@ import 'theme_provider.dart';
 import 'Set Up/03 GenderSelectionScreen.dart';
 // Import your onboarding screen
 import 'Home__Page/Store.dart';
+import 'Home__Page/00_home_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -54,9 +55,10 @@ class _GenderSelectionAppState extends State<GenderSelectionApp> {
       theme: lightTheme,
       darkTheme: darkTheme,
       themeMode: themeProvider.themeMode,
-      home: const SignInScreen(),
+      // home: const SignInScreen(),
       // home: const GenderSelectionScreen(),
       // home:  SupplementsStorePage(),
+      home: const HomePage(),
       debugShowCheckedModeBanner: false,
     );
   }

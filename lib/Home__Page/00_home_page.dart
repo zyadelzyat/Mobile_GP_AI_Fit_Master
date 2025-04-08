@@ -8,6 +8,7 @@ import 'package:untitled/theme_provider.dart';
 import 'package:untitled/videos_page.dart';
 import 'CalorieCalculator.dart';
 import 'Store.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -32,23 +33,22 @@ class _HomePageState extends State<HomePage> {
 
   final List<Map<String, dynamic>> _workouts = [
     {
-      'title': 'Squat Exercise',
-      'duration': '32 Minutes',
-      'kcal': '320 Kcal',
+      'title': '3 tips for gym beginners',
       'image': 'assets/workout1.jpg',
       'color': Colors.purple,
+      'videoUrl': 'https://youtube.com/shorts/ajWEUdlbMOA?si=2N01glDn192AaGv6',
     },
     {
-      'title': 'Full Body Stretching',
+      'title': 'Best Bulking Drink For Skinny Guys!',
       'duration': '25 Minutes',
       'kcal': '190 Kcal',
       'image': 'assets/workout2.jpg',
       'color': Colors.blue,
+      'videoUrl': 'https://www.youtube.com/watch?v=3sH7wbIZjEY',
     },
   ];
 
-  final List<Map<String, dynamic>> _features = [
-  ];
+  final List<Map<String, dynamic>> _features = [];
 
   @override
   void initState() {
@@ -181,77 +181,125 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildWorkoutCard(Map<String, dynamic> workout) {
-    return Container(
-      width: 200,
-      margin: const EdgeInsets.only(right: 16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        color: const Color(0xFF2A2A2A),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Stack(
-            children: [
-              ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                child: Image.asset(
-                  workout['image'],
-                  height: 120,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
+    return GestureDetector(
+      onTap: () {
+        if (workout.containsKey('videoUrl')) {
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: Text(workout['videoTitle'] ?? 'Workout Video'),
+              content: const Text('Open video in YouTube?'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Cancel'),
                 ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    launchUrl(Uri.parse(workout['videoUrl']));
+                  },
+                  child: const Text('Open'),
+                ),
+              ],
+            ),
+          );
+        }
+      },
+      child: Container(
+        width: 200,
+        margin: const EdgeInsets.only(right: 16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          color: const Color(0xFF2A2A2A),
+        ),
+        // Fix: Use ConstrainedBox to ensure the card fits within the parent's constraints
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 190),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                    child: Image.asset(
+                      workout['image'],
+                      height: 110, // Reduced height to prevent overflow
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  if (workout.containsKey('videoUrl'))
+                    Positioned(
+                      bottom: 8,
+                      right: 8,
+                      child: CircleAvatar(
+                        radius: 16,
+                        backgroundColor: workout['color'],
+                        child: const Icon(
+                          Icons.play_arrow,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                ],
               ),
-              Positioned(
-                bottom: 8,
-                right: 8,
-                child: CircleAvatar(
-                  radius: 16,
-                  backgroundColor: workout['color'],
-                  child: const Icon(
-                    Icons.play_arrow,
-                    color: Colors.white,
-                    size: 20,
+              // Fix: Use Expanded to ensure the content doesn't overflow
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min, // Use minimal space
+                    children: [
+                      Text(
+                        workout['title'],
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                        maxLines: 1, // Limit to one line to prevent overflow
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 8),
+                      // Only show duration and kcal if they exist
+                      if (workout.containsKey('duration') && workout.containsKey('kcal'))
+                        Row(
+                          children: [
+                            const Icon(Icons.timer, color: Colors.grey, size: 14),
+                            const SizedBox(width: 4),
+                            Text(
+                              workout['duration'],
+                              style: const TextStyle(color: Colors.grey, fontSize: 12),
+                            ),
+                            const SizedBox(width: 10),
+                            const Icon(Icons.local_fire_department, color: Colors.grey, size: 14),
+                            const SizedBox(width: 4),
+                            Text(
+                              workout['kcal'],
+                              style: const TextStyle(color: Colors.grey, fontSize: 12),
+                            ),
+                          ],
+                        ),
+                      if (workout.containsKey('videoTitle')) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          workout['videoTitle'],
+                          style: const TextStyle(color: Colors.amber, fontSize: 12),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ]
+                    ],
                   ),
                 ),
               ),
             ],
           ),
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  workout['title'],
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    const Icon(Icons.timer, color: Colors.grey, size: 14),
-                    const SizedBox(width: 4),
-                    Text(
-                      workout['duration'],
-                      style: const TextStyle(color: Colors.grey, fontSize: 12),
-                    ),
-                    const SizedBox(width: 10),
-                    const Icon(Icons.local_fire_department, color: Colors.grey, size: 14),
-                    const SizedBox(width: 4),
-                    Text(
-                      workout['kcal'],
-                      style: const TextStyle(color: Colors.grey, fontSize: 12),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -291,7 +339,7 @@ class _HomePageState extends State<HomePage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Text(
-                  "Active Your\nGoals",
+                  "Achieve Your\nGoals",
                   style: TextStyle(
                     color: Color(0xFFE2F163),
                     fontSize: 20,
@@ -300,7 +348,7 @@ class _HomePageState extends State<HomePage> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  "Punk With Hip Twist",
+                  "Plank With Hip Twist",
                   style: TextStyle(
                     color: Colors.grey[300],
                     fontSize: 14,
@@ -454,7 +502,7 @@ class _HomePageState extends State<HomePage> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
-                      "Workouts",
+                      "Tips",
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 18,
@@ -483,8 +531,9 @@ class _HomePageState extends State<HomePage> {
                   ],
                 ),
               ),
+              // Fix: Increase the height from 200 to 210 to accommodate the content
               SizedBox(
-                height: 200,
+                height: 210,
                 child: ListView.builder(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   scrollDirection: Axis.horizontal,
@@ -494,10 +543,6 @@ class _HomePageState extends State<HomePage> {
               ),
 
               // Rest of content remains the same
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: _buildPromoBanner(),
-              ),
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
