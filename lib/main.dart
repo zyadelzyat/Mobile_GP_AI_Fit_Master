@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:untitled/Login___Signup/01_signin_screen.dart';
 import 'theme.dart';
 import 'theme_provider.dart';
+import 'Set Up/03 GenderSelectionScreen.dart';
 // Import your onboarding screen
 import 'Home__Page/Store.dart';
 
@@ -53,8 +54,9 @@ class _GenderSelectionAppState extends State<GenderSelectionApp> {
       theme: lightTheme,
       darkTheme: darkTheme,
       themeMode: themeProvider.themeMode,
-      //home: const SignInScreen(),
-      home:  SupplementsStorePage(),
+      home: const SignInScreen(),
+      // home: const GenderSelectionScreen(),
+      // home:  SupplementsStorePage(),
       debugShowCheckedModeBanner: false,
     );
   }

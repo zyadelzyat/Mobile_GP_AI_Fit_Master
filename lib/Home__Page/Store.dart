@@ -155,7 +155,6 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
             ),
           ),
 
-          // Search bar
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Container(
