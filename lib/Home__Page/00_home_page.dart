@@ -8,6 +8,7 @@ import 'package:untitled/theme_provider.dart';
 import 'package:untitled/videos_page.dart';
 import 'CalorieCalculator.dart';
 import 'Store.dart';
+import 'trainer_trainees_page.dart'; // <-- NEW import
 import 'package:url_launcher/url_launcher.dart';
 
 class HomePage extends StatefulWidget {
@@ -87,31 +88,18 @@ class _HomePageState extends State<HomePage> {
 
     switch (routeName) {
       case 'Workout':
-      // Navigate to workout page when implemented
         break;
       case 'ChatBot':
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const ChatPage()),
-        );
+        Navigator.push(context, MaterialPageRoute(builder: (context) => const ChatPage()));
         break;
       case 'CalorieCalculator':
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const CalorieCalculatorPage()),
-        );
+        Navigator.push(context, MaterialPageRoute(builder: (context) => const CalorieCalculatorPage()));
         break;
       case 'SupplementsStore':
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const SupplementsStorePage()),
-        );
+        Navigator.push(context, MaterialPageRoute(builder: (context) => const SupplementsStorePage()));
         break;
       case 'VideosPage':
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => VideosPage()),
-        );
+        Navigator.push(context, MaterialPageRoute(builder: (context) => VideosPage()));
         break;
     }
   }
@@ -130,6 +118,13 @@ class _HomePageState extends State<HomePage> {
         const SnackBar(content: Text("You need to be logged in to view your profile")),
       );
     }
+  }
+
+  void _navigateToTrainees() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const TrainerTraineesPage()),
+    );
   }
 
   Widget _buildCategoryButton(IconData icon, String label, int index) {
@@ -151,9 +146,7 @@ class _HomePageState extends State<HomePage> {
         decoration: BoxDecoration(
           color: isSelected ? const Color(0xFF8E7AFE).withOpacity(0.2) : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
-          border: isSelected
-              ? Border.all(color: const Color(0xFF8E7AFE), width: 2)
-              : null,
+          border: isSelected ? Border.all(color: const Color(0xFF8E7AFE), width: 2) : null,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -211,212 +204,30 @@ class _HomePageState extends State<HomePage> {
           borderRadius: BorderRadius.circular(16),
           color: const Color(0xFF2A2A2A),
         ),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxHeight: 190),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Stack(
-                children: [
-                  ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                    child: Image.asset(
-                      workout['image'],
-                      height: 110,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  if (workout.containsKey('videoUrl'))
-                    Positioned(
-                      bottom: 8,
-                      right: 8,
-                      child: Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              const Color(0xFF9B7BFE),
-                              const Color(0xFF7C68FE),
-                            ],
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFF8E7AFE).withOpacity(0.3),
-                              blurRadius: 8,
-                              spreadRadius: 2,
-                            ),
-                          ],
-                        ),
-                        child: const Center(
-                          child: Icon(
-                            Icons.play_arrow,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        workout['title'],
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 8),
-                      if (workout.containsKey('duration') && workout.containsKey('kcal'))
-                        Row(
-                          children: [
-                            const Icon(Icons.timer, color: Colors.grey, size: 14),
-                            const SizedBox(width: 4),
-                            Text(
-                              workout['duration'],
-                              style: const TextStyle(color: Colors.grey, fontSize: 12),
-                            ),
-                            const SizedBox(width: 10),
-                            const Icon(Icons.local_fire_department, color: Colors.grey, size: 14),
-                            const SizedBox(width: 4),
-                            Text(
-                              workout['kcal'],
-                              style: const TextStyle(color: Colors.grey, fontSize: 12),
-                            ),
-                          ],
-                        ),
-                      if (workout.containsKey('videoTitle')) ...[
-                        const SizedBox(height: 8),
-                        Text(
-                          workout['videoTitle'],
-                          style: const TextStyle(color: Colors.amber, fontSize: 12),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ]
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPromoBanner() {
-    return Container(
-      height: 120,
-      margin: const EdgeInsets.symmetric(vertical: 20),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        gradient: const LinearGradient(
-          colors: [Color(0xFF2A2A2A), Color(0xFF333333)],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-        ),
-      ),
-      child: Stack(
-        children: [
-          Positioned(
-            right: 0,
-            bottom: 0,
-            child: ClipRRect(
-              borderRadius: const BorderRadius.only(
-                bottomRight: Radius.circular(16),
-              ),
-              child: Image.asset(
-                'assets/promo.jpg',
-                height: 120,
-                fit: BoxFit.cover,
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text(
-                  "Achieve Your\nGoals",
-                  style: TextStyle(
-                    color: Color(0xFFE2F163),
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  "Plank With Hip Twist",
-                  style: TextStyle(
-                    color: Colors.grey[300],
-                    fontSize: 14,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFeatureItem(Map<String, dynamic> feature) {
-    return GestureDetector(
-      onTap: () => _navigateToFeature(feature['route']),
-      child: Container(
-        width: double.infinity,
-        height: 100,
-        margin: const EdgeInsets.only(bottom: 16),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          color: const Color(0xFF2A2A2A),
-        ),
-        child: Row(
+        child: Column(
           children: [
             ClipRRect(
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(16),
-                bottomLeft: Radius.circular(16),
-              ),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
               child: Image.asset(
-                feature['image'],
-                width: 100,
-                height: 100,
+                workout['image'],
+                height: 110,
+                width: double.infinity,
                 fit: BoxFit.cover,
               ),
             ),
-            const SizedBox(width: 16),
-            Expanded(
+            Padding(
+              padding: const EdgeInsets.all(12),
               child: Text(
-                feature['title'],
+                workout['title'],
                 style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
                 ),
-                maxLines: 1,
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            const Icon(Icons.arrow_forward_ios, color: Colors.grey, size: 16),
-            const SizedBox(width: 16),
           ],
         ),
       ),
@@ -450,8 +261,6 @@ class _HomePageState extends State<HomePage> {
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                           ),
                           const Text(
                             "It's time to challenge your limits.",
@@ -459,38 +268,25 @@ class _HomePageState extends State<HomePage> {
                               color: Colors.grey,
                               fontSize: 14,
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ),
                     ),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.search, color: Colors.white),
-                          onPressed: () {},
-                          iconSize: 24,
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.notifications_outlined, color: Colors.white),
-                          onPressed: () {},
-                          iconSize: 24,
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-                        ),
-                        GestureDetector(
-                          onTap: _navigateToProfile,
-                          child: const CircleAvatar(
-                            radius: 16,
-                            backgroundColor: Color(0xFF8E7AFE),
-                            child: Icon(Icons.person, color: Colors.white, size: 16),
-                          ),
-                        ),
-                      ],
+                    IconButton(
+                      icon: const Icon(Icons.search, color: Colors.white),
+                      onPressed: () {},
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.notifications_outlined, color: Colors.white),
+                      onPressed: () {},
+                    ),
+                    GestureDetector(
+                      onTap: _navigateToProfile,
+                      child: const CircleAvatar(
+                        radius: 16,
+                        backgroundColor: Color(0xFF8E7AFE),
+                        child: Icon(Icons.person, color: Colors.white, size: 16),
+                      ),
                     ),
                   ],
                 ),
@@ -513,42 +309,18 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(height: 24),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      "Tips",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () {},
-                      child: const Row(
-                        children: [
-                          Text(
-                            "See All",
-                            style: TextStyle(
-                              color: Color(0xFF8E7AFE),
-                              fontSize: 14,
-                            ),
-                          ),
-                          Icon(
-                            Icons.arrow_forward_ios,
-                            color: Color(0xFF8E7AFE),
-                            size: 12,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                child: const Text(
+                  "Tips",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
-              // Fix: Increase the height from 200 to 210 to accommodate the content
+              const SizedBox(height: 12),
               SizedBox(
-                height: 210,
+                height: 200,
                 child: ListView.builder(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   scrollDirection: Axis.horizontal,
@@ -556,21 +328,42 @@ class _HomePageState extends State<HomePage> {
                   itemBuilder: (context, index) => _buildWorkoutCard(_workouts[index]),
                 ),
               ),
-
-              // Rest of content remains the same
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 16),
-                    for (var feature in _features) _buildFeatureItem(feature),
+                    GestureDetector(
+                      onTap: _navigateToTrainees,
+                      child: Container(
+                        width: double.infinity,
+                        height: 60,
+                        margin: const EdgeInsets.only(bottom: 16),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          color: const Color(0xFF8E7AFE).withOpacity(0.2),
+                        ),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.group, color: Color(0xFF8E7AFE)),
+                            SizedBox(width: 10),
+                            Text(
+                              "View Assigned Trainees",
+                              style: TextStyle(
+                                color: Color(0xFF8E7AFE),
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                     GestureDetector(
                       onTap: () => _navigateToFeature('ChatBot'),
                       child: Container(
                         width: double.infinity,
                         height: 60,
-                        margin: const EdgeInsets.only(bottom: 16),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(16),
                           color: const Color(0xFF8E7AFE).withOpacity(0.2),
@@ -594,7 +387,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ],
                 ),
-              ),
+              )
             ],
           ),
         ),

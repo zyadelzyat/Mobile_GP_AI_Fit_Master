@@ -29,6 +29,51 @@ class _SignUpScreenState extends State<SignUpScreen> {
   String? _selectedDisease;
   final List<String> _diseases = ['No Diseases', 'Heart Diseases', 'Diabetes', 'Blood Pressure', 'Other'];
   bool _isLoading = false;
+  bool _loadingTrainers = false;
+  List<Map<String, dynamic>> _availableTrainers = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchTrainers();
+  }
+
+  Future<void> _fetchTrainers() async {
+    setState(() {
+      _loadingTrainers = true;
+    });
+
+    try {
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .where('role', isEqualTo: 'Trainer')
+          .get();
+
+      setState(() {
+        _availableTrainers = querySnapshot.docs
+            .map((doc) => {
+          'id': doc.id,
+          'name': '${doc.data()['firstName']} ${doc.data()['lastName']}',
+        })
+            .toList();
+      });
+    } catch (e) {
+      print('Error fetching trainers: $e');
+    } finally {
+      setState(() {
+        _loadingTrainers = false;
+      });
+    }
+  }
+
+  String? _getTrainerIdByName(String trainerName) {
+    for (var trainer in _availableTrainers) {
+      if (trainer['name'] == trainerName) {
+        return trainer['id'] as String?;
+      }
+    }
+    return null;
+  }
 
   Future<void> _selectDateOfBirth(BuildContext context) async {
     final DateTime? pickedDate = await showDatePicker(
@@ -101,6 +146,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
       return false;
     }
 
+    if (_selectedRole == 'Trainee' && _selectedCoach == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text("Please select a coach."),
+      ));
+      return false;
+    }
+
     return true;
   }
 
@@ -125,7 +177,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
           'phone': _phoneController.text.trim(),
           'dob': _dobController.text.trim(),
           'role': _selectedRole,
-          'coach': _selectedCoach,
+          'coachName': _selectedCoach,
+          'coachId': _selectedRole == 'Trainee' ? _getTrainerIdByName(_selectedCoach!) : null,
           'disease': _selectedDisease,
           'otherDisease': _otherDiseaseController.text.trim(),
           'createdAt': FieldValue.serverTimestamp(),
@@ -245,15 +298,26 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       }),
                     ),
                     const SizedBox(height: 20),
-                    if (_selectedRole != 'Self-Trainee')
-                      _buildDropdownField(
-                        label: "Select Coach Name",
+                    if (_selectedRole == 'Trainee')
+                      _loadingTrainers
+                          ? const Center(child: CircularProgressIndicator())
+                          : _availableTrainers.isEmpty
+                          ? const Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Text(
+                          "No trainers available. Please check back later.",
+                          style: TextStyle(color: Colors.white),
+                          textAlign: TextAlign.center,
+                        ),
+                      )
+                          : _buildDropdownField(
+                        label: "Select Coach",
                         value: _selectedCoach,
-                        items: ["Coach A", "Coach B", "Coach C"],
+                        items: _availableTrainers.map((t) => t['name'] as String).toList(),
                         icon: Icons.sports,
                         onChanged: (value) => setState(() => _selectedCoach = value),
                       ),
-                    const SizedBox(height: 20),
+                    if (_selectedRole == 'Trainee') const SizedBox(height: 20),
                     _buildDiseasesDropdown(),
                     if (_selectedDisease == 'Other') ...[
                       const SizedBox(height: 20),
