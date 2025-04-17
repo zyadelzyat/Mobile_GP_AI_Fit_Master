@@ -40,7 +40,7 @@ dependencies:
   open_file: ^3.3.1  # Add this line
   cupertino_icons: ^1.0.8
   path_provider: ^2.1.1
-  shared_preferences: ^2.2.2
+  shared_preferences: 2.2.2
   flutter_gemini: ^3.0.0
   flutter_markdown: ^0.7.4+3
   firebase_storage: ^12.3.7
@@ -98,6 +98,11 @@ flutter:
     - assets/daily.jpg
     - assets/promo.jpg
     - assets/fitness_image.jpg
+    - assets/images/carrot_smoothie.png
+    - assets/images/fruit_smoothie.png
+    - assets/images/recipe_day.png
+    - assets/images/meal_banner.png
+
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

@@ -7,14 +7,16 @@ class Product {
   final String price;
   final String category;
   final String description;
-  final String imageUrl; // Added image URL property
+  final String imageUrl;
+  int quantity; // لإحتساب الكمية المطلوبة لكل منتج
 
   Product({
     required this.name,
     required this.price,
     required this.category,
     required this.description,
-    required this.imageUrl, // Required image URL
+    required this.imageUrl,
+    this.quantity = 1,
   });
 
   @override
@@ -27,7 +29,6 @@ class Product {
   int get hashCode => name.hashCode ^ price.hashCode;
 }
 
-// Main supplements store page
 class SupplementsStorePage extends StatefulWidget {
   const SupplementsStorePage({super.key});
 
@@ -36,14 +37,13 @@ class SupplementsStorePage extends StatefulWidget {
 }
 
 class _SupplementsStorePageState extends State<SupplementsStorePage> {
-  // Custom colors
   final Color customPurple = const Color(0xFFB892FF);
   final Color backgroundColor = const Color(0xFF232323);
   final Color cardColor = Colors.white;
   final Color textColor = Colors.black;
 
-  // Search controller
   final TextEditingController searchController = TextEditingController();
+  String selectedCategory = 'All'; // Default to 'All' category
 
   // Product list with images
   List<Product> products = [
@@ -75,13 +75,49 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
       description: 'Stylish and functional gym bag.',
       imageUrl: 'assets/images/bag.jpg',
     ),
-    // Additional products can be added here
   ];
 
-  // Shopping cart
+  // Shopping cart: يخزن الكمية المطلوبة لكل منتج
   Map<Product, int> cart = {};
 
-  // Add product to cart
+  // دالة لبناء أزرار الفئات
+  Widget _buildCategoryButton(String category) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: selectedCategory == category ? customPurple : Colors.grey[600],
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+        ),
+        onPressed: () {
+          setState(() {
+            selectedCategory = category;
+          });
+        },
+        child: Text(
+          category,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 12,
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Filtered product list based on search and category
+  List<Product> get filteredProducts {
+    final query = searchController.text.toLowerCase();
+    return products.where((product) {
+      final matchesCategory = selectedCategory == 'All' || product.category == selectedCategory;
+      final matchesSearch = product.name.toLowerCase().contains(query);
+      return matchesCategory && matchesSearch;
+    }).toList();
+  }
+
+  // Add product to cart (بناءً على الكمية المحددة للمنتج)
   void addToCart(Product product) {
     setState(() {
       if (cart.containsKey(product)) {
@@ -92,9 +128,149 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
     });
   }
 
-  // Total items in cart
+  // Remove product from cart
+  void removeFromCart(Product product) {
+    setState(() {
+      if (cart.containsKey(product) && cart[product]! > 1) {
+        cart[product] = cart[product]! - 1;
+      } else {
+        cart.remove(product);
+      }
+    });
+  }
+// تفريغ السلة
+  void clearCart() {
+    setState(() {
+      cart.clear();
+    });
+  }
+
+  // حساب إجمالي عدد المنتجات في السلة
   int totalItemsInCart() {
     return cart.values.fold(0, (prev, amount) => prev + amount);
+  }
+
+// حساب المجموع الكلي للسلة
+  String calculateTotal() {
+    double total = 0;
+    cart.forEach((product, quantity) {
+      final price = double.parse(product.price.replaceAll(RegExp(r'[^0-9.]'), ''));
+      total += price * quantity;
+    });
+    return '${total.toStringAsFixed(2)} EG';
+  }
+
+  // عرض نافذة الدفع
+  void showPaymentDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Choose Payment Method'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context); // Close dialog
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('You chose to pay by Cash')),
+                  );
+
+                  clearCart(); // ✅ تصفير السلة بعد الدفع كاش
+                },
+                child: const Text('Cash'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context); // Close dialog
+                  showVisaPaymentDialog(); // Show Visa form
+                },
+                child: const Text('Visa'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // Close dialog
+              },
+              child: const Text('Cancel'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // نافذة إدخال بيانات الفيزا
+  void showVisaPaymentDialog() {
+    TextEditingController cardNumberController = TextEditingController();
+    TextEditingController expiryDateController = TextEditingController();
+    TextEditingController cvvController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Enter Visa Details'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: cardNumberController,
+                  decoration: const InputDecoration(
+                    hintText: 'Card Number',
+                  ),
+                  keyboardType: TextInputType.number,
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: expiryDateController,
+                  decoration: const InputDecoration(
+                    hintText: 'Expiry Date (MM/YY)',
+                  ),
+                  keyboardType: TextInputType.datetime,
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: cvvController,
+                  decoration: const InputDecoration(
+                    hintText: 'CVV',
+                  ),
+                  keyboardType: TextInputType.number,
+                  obscureText: true,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // Close form
+              },
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                // تقدر تضيف هنا تحقق من البيانات إذا حبيت
+
+                Navigator.pop(context); // Close form
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Visa Payment Details Submitted')),
+                );
+
+                clearCart(); // ✅ تصفير السلة بعد الدفع بالفيزا
+              },
+              child: const Text('Submit'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -118,20 +294,78 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
             icon: const Icon(Icons.search, color: Colors.white),
             onPressed: () {},
           ),
-          IconButton(
-            icon: const Icon(Icons.shopping_cart, color: Colors.white),
-            onPressed: () {
-              if (cart.isNotEmpty) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => CheckoutPage(cart: cart)),
-                ).then((_) => setState(() {}));
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Your cart is empty')),
-                );
-              }
-            },
+          // أيقونة السلة مع عرض عدد المنتجات
+          Stack(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.shopping_cart, color: Colors.white),
+                onPressed: () {
+                  if (cart.isNotEmpty) {
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: const Text('Your Cart'),
+                          content: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              ...cart.entries.map((entry) => ListTile(
+                                title: Text(entry.key.name),
+                                subtitle: Text('${entry.key.price} x ${entry.value}'),
+                                trailing: IconButton(
+                                  icon: const Icon(Icons.remove),
+                                  onPressed: () => removeFromCart(entry.key),
+                                ),
+                              )),
+                              const Divider(),
+                              Text('Total: ${calculateTotal()}'),
+                            ],
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () {
+                                Navigator.pop(context); // Dismiss dialog
+                              },
+                              child: const Text('Continue Shopping'),
+                            ),
+                            ElevatedButton(
+                              onPressed: () {
+                                Navigator.pop(context); // Close dialog
+                                showPaymentDialog(); // Show payment options
+                              },
+                              child: const Text('Checkout'),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Your cart is empty')),
+                    );
+                  }
+                },
+              ),
+              if (totalItemsInCart() > 0)
+                Positioned(
+                  right: 4,
+                  top: 4,
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: const BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Text(
+                      totalItemsInCart().toString(),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
           IconButton(
             icon: const Icon(Icons.person, color: Colors.white),
@@ -142,19 +376,23 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Title
-          const Padding(
-            padding: EdgeInsets.fromLTRB(16, 8, 16, 20),
-            child: Text(
-              'Our Products',
-              style: TextStyle(
-                color: Color(0xFFE2F163),
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
+          // Category Filter
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  _buildCategoryButton('All'),
+                  _buildCategoryButton('Bulking'),
+                  _buildCategoryButton('Equipment'),
+                  _buildCategoryButton('Accessories'),
+                ],
               ),
             ),
           ),
 
+          // Search Bar
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Container(
@@ -165,6 +403,7 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
               ),
               child: TextField(
                 controller: searchController,
+                onChanged: (value) => setState(() {}),
                 decoration: const InputDecoration(
                   hintText: 'Search',
                   border: InputBorder.none,
@@ -174,13 +413,13 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
             ),
           ),
 
-          // Product list
+          // Product List
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.all(16),
-              itemCount: products.length,
+              itemCount: filteredProducts.length,
               itemBuilder: (context, index) {
-                Product product = products[index];
+                Product product = filteredProducts[index];
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 16),
                   child: Container(
@@ -211,7 +450,7 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
                           ),
                           const SizedBox(width: 12),
 
-                          // Product info
+                          // Product Info
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -236,7 +475,7 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
                             ),
                           ),
 
-                          // Product image and more button
+                          // Product Image and Details Button
                           Column(
                             children: [
                               SizedBox(
@@ -255,19 +494,80 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
                               const SizedBox(height: 8),
                               ElevatedButton(
                                 onPressed: () {
-                                  addToCart(product);
+                                  // Show product details in a dialog
+                                  showDialog(
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      return AlertDialog(
+                                        title: Text(product.name),
+                                        content: SingleChildScrollView(
+                                          child: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              SizedBox(
+                                                height: 200,
+                                                child: Image.asset(
+                                                  product.imageUrl,
+                                                  errorBuilder: (context, error, stackTrace) {
+                                                    return Container(
+                                                      color: Colors.grey[300],
+                                                      child: const Icon(Icons.image_not_supported, size: 50),
+                                                    );
+                                                  },
+                                                ),
+                                              ),
+                                              const SizedBox(height: 16),
+                                              Text('Price: ${product.price}', style: const TextStyle(fontSize: 18)),
+                                              const SizedBox(height: 8),
+                                              Text('Category: ${product.category}'),
+                                              const SizedBox(height: 8),
+                                              Text('Description: ${product.description}'),
+                                            ],
+                                          ),
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () {
+                                              Navigator.pop(context);
+                                            },
+                                            child: const Text('Close'),
+                                          ),
+                                          ElevatedButton(
+                                            onPressed: () {
+                                              addToCart(product);
+                                              Navigator.pop(context);
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                SnackBar(content: Text('${product.name} added to cart')),
+                                              );
+                                            },
+                                            child: const Text('Add to Cart'),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  );
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: customPurple,
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
+                                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
                                 ),
-                                child: const Text(
-                                  'More...',
-                                  style: TextStyle(color: Colors.black),
-                                ),
+                                child: const Text('View Details'),
+                              ),
+                            ],
+                          ),
+
+                          // Quantity Control (+ / -)
+                          Column(
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.remove_circle_outline, color: Colors.red),
+                                onPressed: () => removeFromCart(product),
+                              ),
+                              Text(cart[product]?.toString() ?? '0'),
+                              IconButton(
+                                icon: const Icon(Icons.add_circle_outline, color: Colors.green),
+                                onPressed: () => addToCart(product),
                               ),
                             ],
                           ),
@@ -279,173 +579,55 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
               },
             ),
           ),
-
-          // Bottom navigation bar - MODIFIED: Only home and profile icons
-          Container(
-            height: 60,
-            decoration: BoxDecoration(
-              color: customPurple,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                // Only home icon is functional - navigates to HomePage
-                IconButton(
-                  icon: const Icon(Icons.home, color: Colors.white),
-                  onPressed: () {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => const HomePage()),
-                    );
-                  },
-                ),
-                // Profile icon (disabled)
-                const IconButton(
-                  icon: Icon(Icons.person, color: Colors.white70),
-                  onPressed: null, // Disabled button
-                ),
-              ],
-            ),
-          ),
         ],
       ),
-    );
-  }
-}
-
-// Checkout page - No changes needed here
-class CheckoutPage extends StatefulWidget {
-  final Map<Product, int> cart;
-  const CheckoutPage({super.key, required this.cart});
-
-  @override
-  _CheckoutPageState createState() => _CheckoutPageState();
-}
-
-class _CheckoutPageState extends State<CheckoutPage> {
-  late Map<Product, int> checkoutCart;
-  final Color customPurple = const Color(0xFF232323);
-
-  @override
-  void initState() {
-    super.initState();
-    checkoutCart = Map.from(widget.cart);
-  }
-
-  double calculateTotal() {
-    double total = 0;
-    checkoutCart.forEach((product, quantity) {
-      double price = double.tryParse(product.price.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0;
-      total += price * quantity;
-    });
-    return total;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        title: const Text('Checkout'),
-        backgroundColor: customPurple,
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              itemCount: checkoutCart.keys.length,
-              itemBuilder: (context, index) {
-                Product product = checkoutCart.keys.elementAt(index);
-                int quantity = checkoutCart[product]!;
-                return Card(
-                  color: Colors.grey[900],
-                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: ListTile(
-                    title: Text(product.name, style: const TextStyle(color: Colors.white)),
-                    subtitle: Text(
-                      product.price,
-                      style: TextStyle(color: customPurple),
-                    ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: Icon(Icons.remove, color: customPurple),
-                          onPressed: () {
-                            setState(() {
-                              if (quantity > 1) {
-                                checkoutCart[product] = quantity - 1;
-                              } else {
-                                checkoutCart.remove(product);
-                              }
-                            });
-                          },
-                        ),
-                        Text(
-                          quantity.toString(),
-                          style: const TextStyle(color: Colors.white),
-                        ),
-                        IconButton(
-                          icon: Icon(Icons.add, color: customPurple),
-                          onPressed: () {
-                            setState(() {
-                              checkoutCart[product] = quantity + 1;
-                            });
-                          },
-                        ),
-                      ],
-                    ),
+      // Checkout Button at bottom right
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          if (cart.isNotEmpty) {
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: const Text('Checkout'),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ...cart.entries.map((entry) => ListTile(
+                        title: Text(entry.key.name),
+                        subtitle: Text('${entry.key.price} x ${entry.value}'),
+                      )),
+                      const Divider(),
+                      Text('Total: ${calculateTotal()}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                    ],
                   ),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      child: const Text('Continue Shopping'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        showPaymentDialog();
+                      },
+                      child: const Text('Proceed to Payment'),
+                    ),
+                  ],
                 );
               },
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.grey[850],
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Total: EGP ${calculateTotal().toStringAsFixed(2)}',
-                  style: const TextStyle(color: Colors.white, fontSize: 18),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: const Text('Order Confirmed'),
-                        content: const Text('Your order has been placed successfully!'),
-                        actions: [
-                          TextButton(
-                            onPressed: () {
-                              Navigator.pop(context); // Close dialog
-                              Navigator.pop(context); // Return to previous page
-                            },
-                            child: const Text('OK'),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: customPurple,
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  ),
-                  child: const Text(
-                    'Confirm Order',
-                    style: TextStyle(color: Colors.black),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Your cart is empty')),
+            );
+          }
+        },
+        backgroundColor: customPurple,
+        label: Text('Checkout (${totalItemsInCart()})'),
+        icon: const Icon(Icons.shopping_cart),
       ),
     );
   }
