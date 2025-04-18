@@ -82,7 +82,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   String _formatDOB() {
-    if (userData['dob'] == null) return "N/A";
+    if (userData['dob'] == null) return "01 / 04 / 199X";
 
     try {
       // Convert from YYYY-MM-DD to DD / MM / YYYY format
@@ -93,6 +93,55 @@ class _ProfilePageState extends State<ProfilePage> {
     } catch (e) {
       return userData['dob'];
     }
+  }
+
+  Widget _showMembershipModal() {
+    return AlertDialog(
+      backgroundColor: const Color(0xFF232323),
+      title: const Text(
+        "Membership Details",
+        style: TextStyle(color: Colors.white),
+        textAlign: TextAlign.center,
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildMembershipDetail("Type", userData['membershipType'] ?? "Premium"),
+          _buildMembershipDetail("Price", userData['membershipPrice'] ?? "\$19.99/month"),
+          _buildMembershipDetail("Start Date", userData['membershipStart'] ?? "01/01/2025"),
+          _buildMembershipDetail("End Date", userData['membershipEnd'] ?? "01/01/2026"),
+        ],
+      ),
+      actions: [
+        TextButton(
+          child: const Text(
+            "Close",
+            style: TextStyle(color: Color(0xFF6A48F6)),
+          ),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMembershipDetail(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(color: Colors.grey),
+          ),
+          Text(
+            value,
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -132,6 +181,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
     String weightDisplay = "${userData['weight'] ?? '75'} ${userData['weightUnit'] ?? 'Kg'}";
     String heightDisplay = "${userData['height'] ?? '1.65'} ${userData['heightUnit'] ?? 'CM'}";
+    String ageDisplay = "${_calculateAge()} Years Old";
 
     return Scaffold(
       backgroundColor: const Color(0xFF1E1E1E),
@@ -155,11 +205,14 @@ class _ProfilePageState extends State<ProfilePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Purple header section
             Container(
               color: const Color(0xFF6A48F6),
+              width: double.infinity,
               child: Column(
                 children: [
                   const SizedBox(height: 10),
+                  // Profile image with camera icon
                   Stack(
                     alignment: Alignment.bottomRight,
                     children: [
@@ -180,6 +233,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     ],
                   ),
                   const SizedBox(height: 8),
+                  // User name
                   Text(
                     userData['firstName'] != null ?
                     '${userData['firstName']} ${userData['lastName'] ?? ''}' :
@@ -191,23 +245,26 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                   ),
                   const SizedBox(height: 4),
+                  // Email
                   Text(
                     userData['email'] ?? 'madisons@example.com',
                     style: const TextStyle(color: Colors.white70, fontSize: 12),
                   ),
                   const SizedBox(height: 4),
+                  // Birthday
                   Text(
                     'Birthday: ${_formatDOB()}',
                     style: const TextStyle(color: Colors.white70, fontSize: 12),
                   ),
                   const SizedBox(height: 16),
+                  // Stats row
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         _buildProfileStat(weightDisplay, 'Weight'),
-                        _buildProfileStat('${_calculateAge()} Years Old', 'Age'),
+                        _buildProfileStat(ageDisplay, 'Age'),
                         _buildProfileStat(heightDisplay, 'Height'),
                       ],
                     ),
@@ -216,6 +273,8 @@ class _ProfilePageState extends State<ProfilePage> {
                 ],
               ),
             ),
+
+            // Profile fields
             const Padding(
               padding: EdgeInsets.fromLTRB(16, 20, 16, 8),
               child: Text(
@@ -272,9 +331,101 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             _buildTextField(heightDisplay),
 
+            // New fields
+            const Padding(
+              padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Text(
+                'Gender',
+                style: TextStyle(color: Color(0xFF9D7BFF), fontSize: 14),
+              ),
+            ),
+            _buildTextField(userData['gender'] ?? 'Female'),
+
+            const Padding(
+              padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Text(
+                'Diseases',
+                style: TextStyle(color: Color(0xFF9D7BFF), fontSize: 14),
+              ),
+            ),
+            _buildTextField(userData['Diseases'] ?? 'None'),
+
+            const Padding(
+              padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Text(
+                'Role',
+                style: TextStyle(color: Color(0xFF9D7BFF), fontSize: 14),
+              ),
+            ),
+            _buildTextField(userData['role'] ?? 'Member'),
+
+            const Padding(
+              padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Text(
+                'Coach',
+                style: TextStyle(color: Color(0xFF9D7BFF), fontSize: 14),
+              ),
+            ),
+            _buildTextField(userData['coach'] ?? 'Not assigned'),
+
+            // Membership button
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+              child: GestureDetector(
+                onTap: () {
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) => _showMembershipModal(),
+                  );
+                },
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF6A48F6),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Text(
+                    "View Membership Details",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            ),
+
             const SizedBox(height: 30),
           ],
         ),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: 2, // Profile tab
+        backgroundColor: const Color(0xFF232323),
+        selectedItemColor: const Color(0xFF6A48F6),
+        unselectedItemColor: Colors.grey,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.star),
+            label: 'Favorites',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Profile',
+          ),
+        ],
+        onTap: (index) {
+          if (index != 2) {
+            Navigator.pop(context);
+          }
+        },
       ),
     );
   }
@@ -313,10 +464,12 @@ class _ProfilePageState extends State<ProfilePage> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
+        width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: const Color(0xFF2A2A2A),
           borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.transparent),
         ),
         child: Text(
           value,
