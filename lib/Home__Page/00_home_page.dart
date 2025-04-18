@@ -10,6 +10,7 @@ import 'CalorieCalculator.dart';
 import 'Store.dart';
 import 'trainer_trainees_page.dart'; // <-- NEW import
 import 'package:url_launcher/url_launcher.dart';
+import 'package:untitled/Home__Page/NutritionMainPage.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -27,7 +28,7 @@ class _HomePageState extends State<HomePage> {
 
   final List<Map<String, dynamic>> _categories = [
     {'icon': Icons.fitness_center, 'label': 'Workout', 'route': null},
-    {'icon': Icons.insert_chart, 'label': 'Nutrition', 'route': null},
+    {'icon': Icons.insert_chart, 'label': 'Nutrition', 'route': 'Nutrition'}, // تم التعديل هنا
     {'icon': Icons.shopping_bag, 'label': 'Products', 'route': 'SupplementsStore'},
     {'icon': Icons.calculate_outlined, 'label': 'Calories', 'route': 'CalorieCalculator'},
   ];
@@ -88,6 +89,9 @@ class _HomePageState extends State<HomePage> {
 
     switch (routeName) {
       case 'Workout':
+        break;
+      case 'Nutrition': // عدلت هنا
+        Navigator.push(context, MaterialPageRoute(builder: (context) => NutritionPage()));
         break;
       case 'ChatBot':
         Navigator.push(context, MaterialPageRoute(builder: (context) => const ChatPage()));
