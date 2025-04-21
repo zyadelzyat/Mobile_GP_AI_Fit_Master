@@ -55,6 +55,8 @@ dependencies:
   get: any
   get_storage: any
   flutter_native_splash: ^2.3.10
+  email_validator: ^3.0.0
+  firebase_app_check: ^0.3.2+5
 flutter_native_splash:
   color: "#000000" # Background color (black)
   image: assets/splash_image.svg # Ensure the image exists in assets

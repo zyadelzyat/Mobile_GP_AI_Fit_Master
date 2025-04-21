@@ -5,6 +5,8 @@ import 'package:intl/intl.dart';
 import 'package:untitled/theme_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:email_validator/email_validator.dart'; // Add this package
+import 'dart:async';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -30,6 +32,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final List<String> _diseases = ['No Diseases', 'Heart Diseases', 'Diabetes', 'Blood Pressure', 'Other'];
   bool _isLoading = false;
   bool _loadingTrainers = false;
+  bool _isVerifyingEmail = false;
   List<Map<String, dynamic>> _availableTrainers = [];
 
   @override
@@ -91,8 +94,47 @@ class _SignUpScreenState extends State<SignUpScreen> {
   }
 
   bool _isValidEmail(String email) {
-    final regex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
-    return regex.hasMatch(email);
+    // First check basic email format
+    if (!EmailValidator.validate(email)) {
+      return false;
+    }
+
+    // Then check if it's a Gmail address
+    return email.toLowerCase().endsWith('@gmail.com');
+  }
+
+  // This function checks if the email exists by attempting to send a verification email
+  Future<bool> _checkEmailExists(String email) async {
+    try {
+      setState(() {
+        _isVerifyingEmail = true;
+      });
+
+      // This will throw an error if the email doesn't exist in Firebase Auth
+      // We will use signInWithEmailAndPassword with an invalid password to check if email exists
+      // Note: This is a common technique but has limitations
+      try {
+        await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: email,
+          password: 'temporaryInvalidPassword123!',
+        );
+        // If we get here, the email exists and the password was somehow correct (extremely unlikely)
+        return true;
+      } on FirebaseAuthException catch (e) {
+        if (e.code == 'user-not-found') {
+          // Email doesn't exist in Firebase
+          return false;
+        } else if (e.code == 'wrong-password') {
+          // Email exists but password is wrong (which is expected)
+          return true;
+        }
+        return false; // Other errors
+      }
+    } finally {
+      setState(() {
+        _isVerifyingEmail = false;
+      });
+    }
   }
 
   bool _isOldEnough(String dob) {
@@ -105,7 +147,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     }
   }
 
-  bool _validateFields() {
+  Future<bool> _validateFields() async {
     if (_firstNameController.text.isEmpty ||
         _lastNameController.text.isEmpty ||
         _emailController.text.isEmpty ||
@@ -120,7 +162,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
     if (!_isValidEmail(_emailController.text)) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text("Please enter a valid email address."),
+        content: Text("Please enter a valid Gmail address (e.g., example@gmail.com)."),
+      ));
+      return false;
+    }
+
+    // Check if the email exists
+    bool emailExists = await _checkEmailExists(_emailController.text);
+    if (emailExists) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text("This email is already in use. Please use a different email or sign in."),
       ));
       return false;
     }
@@ -157,7 +208,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
   }
 
   Future<void> _createAccount() async {
-    if (!_validateFields()) return;
+    bool isValid = await _validateFields();
+    if (!isValid) return;
 
     setState(() => _isLoading = true);
 
@@ -169,6 +221,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
       User? user = userCredential.user;
       if (user != null) {
+        // Send email verification
+        await user.sendEmailVerification();
+
         await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
           'firstName': _firstNameController.text.trim(),
           'middleName': _middleNameController.text.trim(),
@@ -181,11 +236,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
           'coachId': _selectedRole == 'Trainee' ? _getTrainerIdByName(_selectedCoach!) : null,
           'disease': _selectedDisease,
           'otherDisease': _otherDiseaseController.text.trim(),
+          'emailVerified': false,
           'createdAt': FieldValue.serverTimestamp(),
         });
 
+        // Sign out the user so they have to verify their email
+        await FirebaseAuth.instance.signOut();
+
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text("Account created successfully! Please sign in."),
+          content: Text("Account created successfully! Please verify your email before signing in."),
           backgroundColor: Colors.green,
         ));
 
@@ -326,7 +385,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     const SizedBox(height: 20),
                     _buildTextField(_phoneController, 'Phone Number', Icons.phone),
                     const SizedBox(height: 20),
-                    _buildTextField(_emailController, 'Email', Icons.email),
+                    _buildEmailField(),
                     const SizedBox(height: 20),
                     _buildTextField(_passwordController, 'Password', Icons.lock, obscureText: true),
                     const SizedBox(height: 20),
@@ -351,7 +410,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(30),
                 ),
-                onPressed: _isLoading ? null : _createAccount,
+                onPressed: (_isLoading || _isVerifyingEmail) ? null : _createAccount,
                 child: _isLoading
                     ? const CircularProgressIndicator()
                     : const Text(
@@ -394,6 +453,59 @@ class _SignUpScreenState extends State<SignUpScreen> {
       ),
     );
   }
+
+  Widget _buildEmailField() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 5,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextFormField(
+              controller: _emailController,
+              style: const TextStyle(color: Colors.black),
+              keyboardType: TextInputType.emailAddress,
+              onChanged: (value) {
+                // Reset verification state when email changes
+                setState(() {});
+              },
+              decoration: InputDecoration(
+                hintText: 'Gmail Address',
+                hintStyle: const TextStyle(color: Colors.grey),
+                prefixIcon: const Icon(Icons.email, color: Colors.grey),
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 10),
+                suffixIcon: _emailController.text.isNotEmpty
+                    ? _isValidEmail(_emailController.text)
+                    ? const Icon(Icons.check_circle, color: Colors.green)
+                    : const Icon(Icons.error, color: Colors.red)
+                    : null,
+              ),
+            ),
+          ),
+          if (_isVerifyingEmail)
+            const Padding(
+              padding: EdgeInsets.only(right: 10),
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildTextField(
       TextEditingController controller,
       String label,
