@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:untitled/Login___Signup/01_signin_screen.dart';
 import 'theme.dart';
 import 'theme_provider.dart';
+import 'Set Up/06 WeightSelectionScreen.dart';
 import 'Set Up/03 GenderSelectionScreen.dart';
 // Import your onboarding screen
 import 'Home__Page/Store.dart';
@@ -55,10 +56,11 @@ class _GenderSelectionAppState extends State<GenderSelectionApp> {
       theme: lightTheme,
       darkTheme: darkTheme,
       themeMode: themeProvider.themeMode,
-      home: const SignInScreen(),
+      // home: const SignInScreen(),
+      // home: const WeightSelectionScreen();
       // home: const GenderSelectionScreen(),
       // home:  SupplementsStorePage(),
-      //  home: const HomePage(),
+       home: const HomePage(),
       debugShowCheckedModeBanner: false,
     );
   }

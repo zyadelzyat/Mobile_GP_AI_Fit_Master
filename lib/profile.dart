@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:intl/intl.dart'; // Add this import for date formatting
 // Import your login screen
 import 'Login___Signup/01_signin_screen.dart'; // Update this path to match your project structure
 
@@ -53,6 +54,17 @@ class _ProfilePageState extends State<ProfilePage> {
         _isLoading = false;
       });
     }
+  }
+
+  // Check if user is a trainer
+  bool _isTrainer() {
+    return userData['role'] == 'trainer';
+  }
+
+  // Check if user can view membership details (selftrainee or trainee)
+  bool _canViewMembership() {
+    final role = userData['role']?.toString().toLowerCase() ?? '';
+    return role == 'self-trainee' || role == 'trainee';
   }
 
   String _calculateAge() {
@@ -112,6 +124,7 @@ class _ProfilePageState extends State<ProfilePage> {
         children: [
           _buildMembershipDetail("Type", userData['membershipType'] ?? "Premium"),
           _buildMembershipDetail("Price", userData['membershipPrice'] ?? "\$19.99/month"),
+          _buildMembershipDetail("Payment Type", userData['paymentType'] ?? "Visa"),
           _buildMembershipDetail("Start Date", userData['membershipStart'] ?? "01/01/2025"),
           _buildMembershipDetail("End Date", userData['membershipEnd'] ?? "01/01/2026"),
         ],
@@ -125,6 +138,339 @@ class _ProfilePageState extends State<ProfilePage> {
           onPressed: () => Navigator.of(context).pop(),
         ),
       ],
+    );
+  }
+
+  // New method to show add membership form
+  void _showAddMembershipForm() {
+    // Form controllers
+    final emailController = TextEditingController(text: userData['email']);
+    String selectedMembershipType = 'Silver';
+    final priceController = TextEditingController();
+    String selectedPaymentType = 'Cash';
+    DateTime startDate = DateTime.now();
+    DateTime endDate = DateTime.now().add(const Duration(days: 30));
+    bool isLoading = false;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+            builder: (context, setState) {
+              return AlertDialog(
+                backgroundColor: const Color(0xFF232323),
+                title: const Text(
+                  "Add Membership",
+                  style: TextStyle(color: Colors.white),
+                  textAlign: TextAlign.center,
+                ),
+                content: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Email Field
+                      const Text(
+                        "Email",
+                        style: TextStyle(color: Color(0xFF9D7BFF), fontSize: 14),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: emailController,
+                        style: const TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: const Color(0xFF2A2A2A),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Membership Type
+                      const Text(
+                        "Membership Type",
+                        style: TextStyle(color: Color(0xFF9D7BFF), fontSize: 14),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF2A2A2A),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: DropdownButton<String>(
+                          value: selectedMembershipType,
+                          isExpanded: true,
+                          dropdownColor: const Color(0xFF2A2A2A),
+                          underline: Container(),
+                          style: const TextStyle(color: Colors.white),
+                          items: <String>['Silver', 'Gold']
+                              .map<DropdownMenuItem<String>>((String value) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value),
+                            );
+                          }).toList(),
+                          onChanged: (String? newValue) {
+                            setState(() {
+                              selectedMembershipType = newValue!;
+                              // Set default price based on membership type
+                              if (newValue == 'Silver') {
+                                priceController.text = '19.99';
+                              } else {
+                                priceController.text = '29.99';
+                              }
+                            });
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Price
+                      const Text(
+                        "Price",
+                        style: TextStyle(color: Color(0xFF9D7BFF), fontSize: 14),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: priceController,
+                        style: const TextStyle(color: Colors.white),
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: const Color(0xFF2A2A2A),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12
+                          ),
+                          prefixText: '\$ ',
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Payment Type
+                      const Text(
+                        "Payment Type",
+                        style: TextStyle(color: Color(0xFF9D7BFF), fontSize: 14),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF2A2A2A),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: DropdownButton<String>(
+                          value: selectedPaymentType,
+                          isExpanded: true,
+                          dropdownColor: const Color(0xFF2A2A2A),
+                          underline: Container(),
+                          style: const TextStyle(color: Colors.white),
+                          items: <String>['Cash', 'Visa']
+                              .map<DropdownMenuItem<String>>((String value) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value),
+                            );
+                          }).toList(),
+                          onChanged: (String? newValue) {
+                            setState(() {
+                              selectedPaymentType = newValue!;
+                            });
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Start Date
+                      const Text(
+                        "Start Date",
+                        style: TextStyle(color: Color(0xFF9D7BFF), fontSize: 14),
+                      ),
+                      const SizedBox(height: 8),
+                      GestureDetector(
+                        onTap: () async {
+                          final DateTime? picked = await showDatePicker(
+                            context: context,
+                            initialDate: startDate,
+                            firstDate: DateTime.now(),
+                            lastDate: DateTime.now().add(const Duration(days: 365)),
+                            builder: (context, child) {
+                              return Theme(
+                                data: ThemeData.dark().copyWith(
+                                  colorScheme: const ColorScheme.dark(
+                                    primary: Color(0xFF6A48F6),
+                                    onPrimary: Colors.white,
+                                    surface: Color(0xFF232323),
+                                    onSurface: Colors.white,
+                                  ),
+                                  dialogBackgroundColor: const Color(0xFF232323),
+                                ),
+                                child: child!,
+                              );
+                            },
+                          );
+                          if (picked != null) {
+                            setState(() {
+                              startDate = picked;
+                              // Auto-set end date to 30 days from start for Silver, 365 for Gold
+                              if (selectedMembershipType == 'Silver') {
+                                endDate = startDate.add(const Duration(days: 30));
+                              } else {
+                                endDate = startDate.add(const Duration(days: 365));
+                              }
+                            });
+                          }
+                        },
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF2A2A2A),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            DateFormat('dd/MM/yyyy').format(startDate),
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // End Date
+                      const Text(
+                        "End Date",
+                        style: TextStyle(color: Color(0xFF9D7BFF), fontSize: 14),
+                      ),
+                      const SizedBox(height: 8),
+                      GestureDetector(
+                        onTap: () async {
+                          final DateTime? picked = await showDatePicker(
+                            context: context,
+                            initialDate: endDate,
+                            firstDate: startDate,
+                            lastDate: startDate.add(const Duration(days: 730)), // 2 years max
+                            builder: (context, child) {
+                              return Theme(
+                                data: ThemeData.dark().copyWith(
+                                  colorScheme: const ColorScheme.dark(
+                                    primary: Color(0xFF6A48F6),
+                                    onPrimary: Colors.white,
+                                    surface: Color(0xFF232323),
+                                    onSurface: Colors.white,
+                                  ),
+                                  dialogBackgroundColor: const Color(0xFF232323),
+                                ),
+                                child: child!,
+                              );
+                            },
+                          );
+                          if (picked != null) {
+                            setState(() {
+                              endDate = picked;
+                            });
+                          }
+                        },
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF2A2A2A),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            DateFormat('dd/MM/yyyy').format(endDate),
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    child: const Text(
+                      "Cancel",
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                  isLoading
+                      ? const CircularProgressIndicator(color: Color(0xFF6A48F6))
+                      : TextButton(
+                    child: const Text(
+                      "Save",
+                      style: TextStyle(color: Color(0xFF6A48F6)),
+                    ),
+                    onPressed: () async {
+                      setState(() {
+                        isLoading = true;
+                      });
+
+                      try {
+                        // Format dates for Firestore
+                        String startDateFormatted = DateFormat('dd/MM/yyyy').format(startDate);
+                        String endDateFormatted = DateFormat('dd/MM/yyyy').format(endDate);
+
+                        // Create membership data
+                        Map<String, dynamic> membershipData = {
+                          'email': emailController.text,
+                          'membershipType': selectedMembershipType,
+                          'membershipPrice': '\$${priceController.text}',
+                          'paymentType': selectedPaymentType,
+                          'membershipStart': startDateFormatted,
+                          'membershipEnd': endDateFormatted,
+                          'updatedAt': FieldValue.serverTimestamp(),
+                        };
+
+                        // Update user document in Firestore
+                        await _firestore
+                            .collection('users')
+                            .doc(widget.userId)
+                            .update(membershipData);
+
+                        // Close dialog and refresh data
+                        Navigator.of(context).pop();
+                        _fetchUserData();
+
+                        // Show success message
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Membership added successfully!'),
+                            backgroundColor: Color(0xFF6A48F6),
+                          ),
+                        );
+                      } catch (e) {
+                        setState(() {
+                          isLoading = false;
+                        });
+
+                        // Show error message
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Error adding membership: $e'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                ],
+              );
+            }
+        );
+      },
     );
   }
 
@@ -494,35 +840,73 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             _buildTextField(userData['coach'] ?? 'Not assigned'),
 
-            // Membership button
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-              child: GestureDetector(
-                onTap: () {
-                  showDialog(
-                    context: context,
-                    builder: (BuildContext context) => _showMembershipModal(),
-                  );
-                },
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 15),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF6A48F6),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Text(
-                    "View Membership Details",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+            // Only show membership buttons for selftrainee or trainee
+            if (_canViewMembership()) ...[
+              // View Membership button
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+                child: GestureDetector(
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) => _showMembershipModal(),
+                    );
+                  },
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF6A48F6),
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    textAlign: TextAlign.center,
+                    child: const Text(
+                      "View Membership Details",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
                   ),
                 ),
               ),
-            ),
+
+              // Add Membership button
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: GestureDetector(
+                  onTap: () {
+                    _showAddMembershipForm();
+                  },
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE2DC30), // Yellow color
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Icon(Icons.add, color: Colors.black87),
+                        SizedBox(width: 8),
+                        Text(
+                          "Add Membership",
+                          style: TextStyle(
+                            color: Colors.black87,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+
+
 
             // Logout button
             Padding(
