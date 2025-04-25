@@ -4,10 +4,12 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   cloud_firestore
+  file_selector_windows
   firebase_auth
   firebase_core
   firebase_storage
   flutter_inappwebview_windows
+  permission_handler_windows
   printing
   url_launcher_windows
 )

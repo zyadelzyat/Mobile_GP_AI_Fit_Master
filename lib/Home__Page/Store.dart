@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '00_home_page.dart';
 
 // Product model with overridden == and hashCode for correct Map functionality
 class Product {
+  final String id;
   final String name;
   final String price;
   final String category;
@@ -11,6 +13,7 @@ class Product {
   int quantity; // لإحتساب الكمية المطلوبة لكل منتج
 
   Product({
+    required this.id,
     required this.name,
     required this.price,
     required this.category,
@@ -19,14 +22,28 @@ class Product {
     this.quantity = 1,
   });
 
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-    return other is Product && other.name == name && other.price == price;
+  // Factory constructor to create Product from Firestore document
+  factory Product.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    return Product(
+      id: doc.id,
+      name: data['name'] ?? 'Unnamed Product',
+      // Convert the price to string with EG suffix
+      price: '${data['price']?.toString() ?? '0'} EG',
+      category: data['category'] ?? 'Other',
+      description: data['description'] ?? 'No description available',
+      imageUrl: data['imageUrl'] ?? 'assets/images/placeholder.jpg',
+    );
   }
 
   @override
-  int get hashCode => name.hashCode ^ price.hashCode;
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is Product && other.id == id;
+  }
+
+  @override
+  int get hashCode => id.hashCode;
 }
 
 class SupplementsStorePage extends StatefulWidget {
@@ -45,40 +62,14 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
   final TextEditingController searchController = TextEditingController();
   String selectedCategory = 'All'; // Default to 'All' category
 
-  // Product list with images
-  List<Product> products = [
-    Product(
-      name: 'Creatine Monohydrate',
-      price: '1200 EG',
-      category: 'Bulking',
-      description: 'Improves strength and workout performance.',
-      imageUrl: 'assets/images/creatine.jpg',
-    ),
-    Product(
-      name: 'Optimum Nutrition Gold Standard 100% Whey',
-      price: '5000 EG',
-      category: 'Bulking',
-      description: 'High-quality protein for muscle building.',
-      imageUrl: 'assets/images/whey.jpg',
-    ),
-    Product(
-      name: 'Hexagonal Dumbbell Two Pieces Each Weighing 5 Kg',
-      price: '999 EG',
-      category: 'Equipment',
-      description: 'Perfect for home workouts and strength training.',
-      imageUrl: 'assets/images/dumbbells.jpg',
-    ),
-    Product(
-      name: 'Adidas Performance Sport Bag For Women',
-      price: '500 EG',
-      category: 'Accessories',
-      description: 'Stylish and functional gym bag.',
-      imageUrl: 'assets/images/bag.jpg',
-    ),
-  ];
+  // Firestore instance
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   // Shopping cart: يخزن الكمية المطلوبة لكل منتج
   Map<Product, int> cart = {};
+
+  // List to store all available categories
+  List<String> categories = ['All'];
 
   // دالة لبناء أزرار الفئات
   Widget _buildCategoryButton(String category) {
@@ -107,16 +98,6 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
     );
   }
 
-  // Filtered product list based on search and category
-  List<Product> get filteredProducts {
-    final query = searchController.text.toLowerCase();
-    return products.where((product) {
-      final matchesCategory = selectedCategory == 'All' || product.category == selectedCategory;
-      final matchesSearch = product.name.toLowerCase().contains(query);
-      return matchesCategory && matchesSearch;
-    }).toList();
-  }
-
   // Add product to cart (بناءً على الكمية المحددة للمنتج)
   void addToCart(Product product) {
     setState(() {
@@ -138,7 +119,8 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
       }
     });
   }
-// تفريغ السلة
+
+  // تفريغ السلة
   void clearCart() {
     setState(() {
       cart.clear();
@@ -150,7 +132,7 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
     return cart.values.fold(0, (prev, amount) => prev + amount);
   }
 
-// حساب المجموع الكلي للسلة
+  // حساب المجموع الكلي للسلة
   String calculateTotal() {
     double total = 0;
     cart.forEach((product, quantity) {
@@ -314,7 +296,50 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
                                 subtitle: Text('${entry.key.price} x ${entry.value}'),
                                 trailing: IconButton(
                                   icon: const Icon(Icons.remove),
-                                  onPressed: () => removeFromCart(entry.key),
+                                  onPressed: () {
+                                    removeFromCart(entry.key);
+                                    Navigator.pop(context);
+                                    if (cart.isNotEmpty) {
+                                      showDialog(
+                                        context: context,
+                                        builder: (BuildContext context) {
+                                          return AlertDialog(
+                                            title: const Text('Your Cart'),
+                                            content: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                ...cart.entries.map((entry) => ListTile(
+                                                  title: Text(entry.key.name),
+                                                  subtitle: Text('${entry.key.price} x ${entry.value}'),
+                                                  trailing: IconButton(
+                                                    icon: const Icon(Icons.remove),
+                                                    onPressed: () => removeFromCart(entry.key),
+                                                  ),
+                                                )),
+                                                const Divider(),
+                                                Text('Total: ${calculateTotal()}'),
+                                              ],
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () {
+                                                  Navigator.pop(context); // Dismiss dialog
+                                                },
+                                                child: const Text('Continue Shopping'),
+                                              ),
+                                              ElevatedButton(
+                                                onPressed: () {
+                                                  Navigator.pop(context); // Close dialog
+                                                  showPaymentDialog(); // Show payment options
+                                                },
+                                                child: const Text('Checkout'),
+                                              ),
+                                            ],
+                                          );
+                                        },
+                                      );
+                                    }
+                                  },
                                 ),
                               )),
                               const Divider(),
@@ -376,20 +401,42 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Category Filter
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  _buildCategoryButton('All'),
-                  _buildCategoryButton('Bulking'),
-                  _buildCategoryButton('Equipment'),
-                  _buildCategoryButton('Accessories'),
-                ],
-              ),
-            ),
+          // Categories from Firestore
+          StreamBuilder<QuerySnapshot>(
+            stream: _firestore.collection('products').snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return const Center(child: Text('Error loading categories'));
+              }
+
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              }
+
+              // Extract unique categories
+              Set<String> categorySet = {'All'};
+              for (var doc in snapshot.data!.docs) {
+                final data = doc.data() as Map<String, dynamic>;
+                if (data['category'] != null) {
+                  categorySet.add(data['category'].toString());
+                }
+              }
+
+              List<String> availableCategories = categorySet.toList();
+
+              return Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: availableCategories.map((category) => _buildCategoryButton(category)).toList(),
+                  ),
+                ),
+              );
+            },
           ),
 
           // Search Bar
@@ -413,168 +460,223 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
             ),
           ),
 
-          // Product List
+          // Product List from Firestore
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: filteredProducts.length,
-              itemBuilder: (context, index) {
-                Product product = filteredProducts[index];
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Row(
-                        children: [
-                          // Product ID
-                          Container(
-                            width: 30,
-                            height: 30,
-                            decoration: BoxDecoration(
-                              color: Colors.grey[200],
-                              shape: BoxShape.circle,
-                            ),
-                            child: Center(
-                              child: Text(
-                                '${index + 1}',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
+            child: StreamBuilder<QuerySnapshot>(
+              stream: _firestore.collection('products').snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                }
 
-                          // Product Info
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  product.name,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Price: ${product.price}',
-                                  style: const TextStyle(
-                                    color: Colors.black87,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-                          // Product Image and Details Button
-                          Column(
+                if (snapshot.data == null || snapshot.data!.docs.isEmpty) {
+                  return const Center(child: Text('No products available'));
+                }
+
+                // Convert to Product objects
+                List<Product> allProducts = snapshot.data!.docs
+                    .map((doc) => Product.fromFirestore(doc))
+                    .toList();
+
+                // Filter products based on search and category
+                List<Product> filteredProducts = allProducts.where((product) {
+                  final matchesCategory = selectedCategory == 'All' ||
+                      product.category == selectedCategory;
+                  final matchesSearch = product.name.toLowerCase()
+                      .contains(searchController.text.toLowerCase());
+                  return matchesCategory && matchesSearch;
+                }).toList();
+
+                if (filteredProducts.isEmpty) {
+                  return const Center(child: Text('No products match your criteria'));
+                }
+
+                return ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: filteredProducts.length,
+                  itemBuilder: (context, index) {
+                    Product product = filteredProducts[index];
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Row(
                             children: [
-                              SizedBox(
-                                width: 80,
-                                height: 80,
-                                child: Image.asset(
-                                  product.imageUrl,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Container(
-                                      color: Colors.grey[300],
-                                      child: const Icon(Icons.image_not_supported),
-                                    );
-                                  },
+                              // Product ID
+                              Container(
+                                width: 30,
+                                height: 30,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[200],
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    '${index + 1}',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                                 ),
                               ),
-                              const SizedBox(height: 8),
-                              ElevatedButton(
-                                onPressed: () {
-                                  // Show product details in a dialog
-                                  showDialog(
-                                    context: context,
-                                    builder: (BuildContext context) {
-                                      return AlertDialog(
-                                        title: Text(product.name),
-                                        content: SingleChildScrollView(
-                                          child: Column(
-                                            mainAxisSize: MainAxisSize.min,
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              SizedBox(
-                                                height: 200,
-                                                child: Image.asset(
-                                                  product.imageUrl,
-                                                  errorBuilder: (context, error, stackTrace) {
-                                                    return Container(
-                                                      color: Colors.grey[300],
-                                                      child: const Icon(Icons.image_not_supported, size: 50),
-                                                    );
-                                                  },
-                                                ),
+                              const SizedBox(width: 12),
+
+                              // Product Info
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      product.name,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Price: ${product.price}',
+                                      style: const TextStyle(
+                                        color: Colors.black87,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              // Product Image and Details Button
+                              Column(
+                                children: [
+                                  SizedBox(
+                                    width: 80,
+                                    height: 80,
+                                    child: product.imageUrl.startsWith('http') || product.imageUrl.startsWith('https')
+                                        ? Image.network(
+                                      product.imageUrl,
+                                      errorBuilder: (context, error, stackTrace) {
+                                        return Container(
+                                          color: Colors.grey[300],
+                                          child: const Icon(Icons.image_not_supported),
+                                        );
+                                      },
+                                    )
+                                        : Image.asset(
+                                      product.imageUrl,
+                                      errorBuilder: (context, error, stackTrace) {
+                                        return Container(
+                                          color: Colors.grey[300],
+                                          child: const Icon(Icons.image_not_supported),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  ElevatedButton(
+                                    onPressed: () {
+                                      // Show product details in a dialog
+                                      showDialog(
+                                        context: context,
+                                        builder: (BuildContext context) {
+                                          return AlertDialog(
+                                            title: Text(product.name),
+                                            content: SingleChildScrollView(
+                                              child: Column(
+                                                mainAxisSize: MainAxisSize.min,
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  SizedBox(
+                                                    height: 200,
+                                                    child: product.imageUrl.startsWith('http') || product.imageUrl.startsWith('https')
+                                                        ? Image.network(
+                                                      product.imageUrl,
+                                                      errorBuilder: (context, error, stackTrace) {
+                                                        return Container(
+                                                          color: Colors.grey[300],
+                                                          child: const Icon(Icons.image_not_supported, size: 50),
+                                                        );
+                                                      },
+                                                    )
+                                                        : Image.asset(
+                                                      product.imageUrl,
+                                                      errorBuilder: (context, error, stackTrace) {
+                                                        return Container(
+                                                          color: Colors.grey[300],
+                                                          child: const Icon(Icons.image_not_supported, size: 50),
+                                                        );
+                                                      },
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 16),
+                                                  Text('Price: ${product.price}', style: const TextStyle(fontSize: 18)),
+                                                  const SizedBox(height: 8),
+                                                  Text('Category: ${product.category}'),
+                                                  const SizedBox(height: 8),
+                                                  Text('Description: ${product.description}'),
+                                                ],
                                               ),
-                                              const SizedBox(height: 16),
-                                              Text('Price: ${product.price}', style: const TextStyle(fontSize: 18)),
-                                              const SizedBox(height: 8),
-                                              Text('Category: ${product.category}'),
-                                              const SizedBox(height: 8),
-                                              Text('Description: ${product.description}'),
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () {
+                                                  Navigator.pop(context);
+                                                },
+                                                child: const Text('Close'),
+                                              ),
+                                              ElevatedButton(
+                                                onPressed: () {
+                                                  addToCart(product);
+                                                  Navigator.pop(context);
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    SnackBar(content: Text('${product.name} added to cart')),
+                                                  );
+                                                },
+                                                child: const Text('Add to Cart'),
+                                              ),
                                             ],
-                                          ),
-                                        ),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () {
-                                              Navigator.pop(context);
-                                            },
-                                            child: const Text('Close'),
-                                          ),
-                                          ElevatedButton(
-                                            onPressed: () {
-                                              addToCart(product);
-                                              Navigator.pop(context);
-                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                SnackBar(content: Text('${product.name} added to cart')),
-                                              );
-                                            },
-                                            child: const Text('Add to Cart'),
-                                          ),
-                                        ],
+                                          );
+                                        },
                                       );
                                     },
-                                  );
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: customPurple,
-                                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                                ),
-                                child: const Text('View Details'),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: customPurple,
+                                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                                    ),
+                                    child: const Text('View Details'),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
 
-                          // Quantity Control (+ / -)
-                          Column(
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.remove_circle_outline, color: Colors.red),
-                                onPressed: () => removeFromCart(product),
-                              ),
-                              Text(cart[product]?.toString() ?? '0'),
-                              IconButton(
-                                icon: const Icon(Icons.add_circle_outline, color: Colors.green),
-                                onPressed: () => addToCart(product),
+                              // Quantity Control (+ / -)
+                              Column(
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.remove_circle_outline, color: Colors.red),
+                                    onPressed: () => removeFromCart(product),
+                                  ),
+                                  Text(cart[product]?.toString() ?? '0'),
+                                  IconButton(
+                                    icon: const Icon(Icons.add_circle_outline, color: Colors.green),
+                                    onPressed: () => addToCart(product),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
-                        ],
+                        ),
                       ),
-                    ),
-                  ),
+                    );
+                  },
                 );
               },
             ),

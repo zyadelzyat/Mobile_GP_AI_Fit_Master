@@ -4,11 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:untitled/Login___Signup/01_signin_screen.dart';
+import 'Home__Page/admin_dashboard.dart';
 import 'theme.dart';
 import 'theme_provider.dart';
 import 'Set Up/06 WeightSelectionScreen.dart';
 import 'Set Up/03 GenderSelectionScreen.dart';
-// Import your onboarding screen
 import 'Home__Page/Store.dart';
 import 'Home__Page/00_home_page.dart';
 
@@ -60,7 +60,8 @@ class _GenderSelectionAppState extends State<GenderSelectionApp> {
       // home: const WeightSelectionScreen();
       // home: const GenderSelectionScreen(),
       // home:  SupplementsStorePage(),
-       home: const HomePage(),
+      //  home: const HomePage(),
+      home : AdminDashboard(),
       debugShowCheckedModeBanner: false,
     );
   }

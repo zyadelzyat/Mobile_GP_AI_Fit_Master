@@ -31,7 +31,7 @@ dependencies:
   flutter:
     sdk: flutter
   provider: ^6.1.2
-  intl: ^0.18.1
+  intl: ^0.20.2
   http: ^1.2.2
   pdf: ^3.10.0  # For generating PDFs
   printing: ^5.11.0  # For printing or saving PDFs
@@ -40,10 +40,10 @@ dependencies:
   open_file: ^3.3.1  # Add this line
   cupertino_icons: ^1.0.8
   path_provider: ^2.1.1
-  shared_preferences: 2.2.2
+  shared_preferences: ^2.5.3
   flutter_gemini: ^3.0.0
   flutter_markdown: ^0.7.4+3
-  firebase_storage: ^12.3.7
+  firebase_storage: ^12.4.5
   cloud_firestore: ^5.6.2
   firebase_core: ^3.10.1
   google_sign_in: ^6.2.2
@@ -57,6 +57,8 @@ dependencies:
   flutter_native_splash: ^2.3.10
   email_validator: ^3.0.0
   firebase_app_check: ^0.3.2+5
+  image_picker: ^1.1.2
+  permission_handler: ^12.0.0+1
 flutter_native_splash:
   color: "#000000" # Background color (black)
   image: assets/splash_image.svg # Ensure the image exists in assets
@@ -73,7 +75,7 @@ dev_dependencies:
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: ^4.0.0
+  flutter_lints: ^5.0.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

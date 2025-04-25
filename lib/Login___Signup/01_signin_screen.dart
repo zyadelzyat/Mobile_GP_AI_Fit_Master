@@ -47,6 +47,7 @@ class _SignInScreenState extends State<SignInScreen> {
         password: password,
       );
 
+
       // Check if profile is complete after successful login
       User? user = FirebaseAuth.instance.currentUser;
       if (user != null) {
