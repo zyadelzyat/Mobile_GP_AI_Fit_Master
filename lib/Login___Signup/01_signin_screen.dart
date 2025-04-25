@@ -7,6 +7,7 @@ import 'forgotton_password.dart';
 import '../fitness_screen.dart';
 import 'package:untitled/theme_provider.dart';
 import 'package:untitled/Home__Page/00_home_page.dart';
+import 'package:untitled/Home__Page/admin_dashboard.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -47,8 +48,7 @@ class _SignInScreenState extends State<SignInScreen> {
         password: password,
       );
 
-
-      // Check if profile is complete after successful login
+      // Check user role after successful login
       User? user = FirebaseAuth.instance.currentUser;
       if (user != null) {
         DocumentSnapshot userDoc = await FirebaseFirestore.instance
@@ -56,9 +56,23 @@ class _SignInScreenState extends State<SignInScreen> {
             .doc(user.uid)
             .get();
 
-        bool isProfileComplete = false;
         if (userDoc.exists) {
           Map<String, dynamic>? userData = userDoc.data() as Map<String, dynamic>?;
+
+          // Check if user is an Admin
+          if (userData != null && userData['role'] == 'Admin') {
+            // Route to AdminDashboard if user is an admin
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const AdminDashboard(),
+              ),
+            );
+            return;
+          }
+
+          // Otherwise handle regular user flow
+          bool isProfileComplete = false;
           if (userData != null) {
             isProfileComplete = userData['gender'] != null &&
                 userData['height'] != null &&
@@ -66,15 +80,15 @@ class _SignInScreenState extends State<SignInScreen> {
                 userData['goal'] != null &&
                 userData['activityLevel'] != null;
           }
-        }
 
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) =>
-            isProfileComplete ? const HomePage() : const FitnessScreen(),
-          ),
-        );
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+              isProfileComplete ? const HomePage() : const FitnessScreen(),
+            ),
+          );
+        }
       }
     } on FirebaseAuthException catch (e) {
       _showSnackBar(e.message ?? "Login failed. Please try again.");
