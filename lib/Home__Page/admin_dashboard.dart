@@ -326,17 +326,29 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       final dateOfBirth = data['dateOfBirth'] != null
                           ? (data['dateOfBirth'] is Timestamp
                           ? (data['dateOfBirth'] as Timestamp).toDate()
-                          : DateTime.parse(data['dateOfBirth']))
+                          : DateTime.parse(data['dateOfBirth'].toString()))
                           : null;
 
-                      // Handle diseases (string or list)
+                      // Fixed: Handle diseases with multiple field names (disease or diseases)
                       String diseases = 'N/A';
-                      if (data['diseases'] != null) {
+                      if (data['disease'] != null) {
+                        diseases = data['disease'].toString();
+                      } else if (data['diseases'] != null) {
                         if (data['diseases'] is String) {
                           diseases = data['diseases'];
                         } else if (data['diseases'] is List) {
                           diseases = (data['diseases'] as List).join(', ');
+                        } else {
+                          diseases = data['diseases'].toString();
                         }
+                      }
+
+                      // Fixed: Handle phone number with multiple field names (phone or phoneNumber)
+                      String phoneNumber = 'N/A';
+                      if (data['phone'] != null) {
+                        phoneNumber = data['phone'].toString();
+                      } else if (data['phoneNumber'] != null) {
+                        phoneNumber = data['phoneNumber'].toString();
                       }
 
                       return DataRow(
@@ -350,7 +362,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                           DataCell(SizedBox(
                             width: 100,
                             child: Text(
-                              data['displayName'] ?? data['email']?.split('@')[0] ?? 'User',
+                              data['displayName'] ?? data['firstName'] ?? data['email']?.split('@')[0] ?? 'User',
                               overflow: TextOverflow.ellipsis,
                             ),
                           )),
@@ -364,7 +376,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                           )),
                           DataCell(Text(data['height']?.toString() ?? 'N/A')),
                           DataCell(Text(data['weight']?.toString() ?? 'N/A')),
-                          DataCell(Text(data['phoneNumber'] ?? 'N/A')),
+                          DataCell(Text(phoneNumber)),
                           DataCell(Text(data['coachName'] ?? 'None')),
                           DataCell(Text(data['role'] ?? 'User')),
                           DataCell(SizedBox(
@@ -447,34 +459,50 @@ class _AdminDashboardState extends State<AdminDashboard> {
   // Method to show edit user dialog
   void _showEditUserDialog(DocumentSnapshot user) {
     final data = user.data() as Map<String, dynamic>;
-    final TextEditingController nameController =
-    TextEditingController(text: data['displayName']);
-    final TextEditingController genderController =
-    TextEditingController(text: data['gender']);
-    final TextEditingController goalController =
-    TextEditingController(text: data['goal']);
-    final TextEditingController heightController =
-    TextEditingController(text: data['height']?.toString());
-    final TextEditingController weightController =
-    TextEditingController(text: data['weight']?.toString());
-    final TextEditingController phoneController =
-    TextEditingController(text: data['phoneNumber']);
-    final TextEditingController coachController =
-    TextEditingController(text: data['coachName']);
-    final TextEditingController roleController =
-    TextEditingController(text: data['role'] ?? 'User');
-    final TextEditingController diseasesController =
-    TextEditingController(text: data['diseases'] is String
-        ? data['diseases']
-        : (data['diseases'] as List?)?.join(', '));
-    final TextEditingController emailController =
-    TextEditingController(text: data['email']);
+
+    // Fixed handling of user name
+    final String userName = data['displayName'] ?? data['firstName'] ?? data['email']?.split('@')[0] ?? 'User';
+    final TextEditingController nameController = TextEditingController(text: userName);
+
+    final TextEditingController genderController = TextEditingController(text: data['gender']);
+    final TextEditingController goalController = TextEditingController(text: data['goal']);
+    final TextEditingController heightController = TextEditingController(text: data['height']?.toString());
+    final TextEditingController weightController = TextEditingController(text: data['weight']?.toString());
+
+    // Fixed handling of phone number
+    String phoneNumber = '';
+    if (data['phone'] != null) {
+      phoneNumber = data['phone'].toString();
+    } else if (data['phoneNumber'] != null) {
+      phoneNumber = data['phoneNumber'].toString();
+    }
+    final TextEditingController phoneController = TextEditingController(text: phoneNumber);
+
+    final TextEditingController coachController = TextEditingController(text: data['coachName']);
+    final TextEditingController roleController = TextEditingController(text: data['role'] ?? 'User');
+
+    // Fixed handling of diseases
+    String diseases = '';
+    if (data['disease'] != null) {
+      diseases = data['disease'].toString();
+    } else if (data['diseases'] != null) {
+      if (data['diseases'] is String) {
+        diseases = data['diseases'];
+      } else if (data['diseases'] is List) {
+        diseases = (data['diseases'] as List).join(', ');
+      } else {
+        diseases = data['diseases'].toString();
+      }
+    }
+    final TextEditingController diseasesController = TextEditingController(text: diseases);
+
+    final TextEditingController emailController = TextEditingController(text: data['email']);
     final TextEditingController dobController = TextEditingController(
         text: data['dateOfBirth'] != null
             ? (data['dateOfBirth'] is Timestamp
             ? DateFormat('MMM dd, yyyy')
             .format((data['dateOfBirth'] as Timestamp).toDate())
-            : data['dateOfBirth'])
+            : data['dateOfBirth'].toString())
             : '');
 
     showDialog(
@@ -674,14 +702,15 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     'weight': weightController.text.isEmpty
                         ? null
                         : double.tryParse(weightController.text),
-                    'phoneNumber':
-                    phoneController.text.isEmpty ? null : phoneController.text,
+                    // Fixed: Update both possible phone field names
+                    'phone': phoneController.text.isEmpty ? null : phoneController.text,
+                    'phoneNumber': phoneController.text.isEmpty ? null : phoneController.text,
                     'coachName':
                     coachController.text.isEmpty ? null : coachController.text,
                     'role': roleController.text,
-                    'diseases': diseasesController.text.isEmpty
-                        ? null
-                        : diseasesController.text,
+                    // Fixed: Update both possible disease field names
+                    'disease': diseasesController.text.isEmpty ? null : diseasesController.text,
+                    'diseases': diseasesController.text.isEmpty ? null : diseasesController.text,
                     'email': emailController.text,
                     'dateOfBirth': dobController.text.isEmpty
                         ? null
