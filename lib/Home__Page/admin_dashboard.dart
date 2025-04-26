@@ -118,7 +118,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
           // Stats cards - redesigned with softer colors
           Container(
             decoration: BoxDecoration(
-              color: purpleColor.withOpacity(0.3),
+              color: purpleColor, // Changed from purpleColor.withOpacity(0.3) to solid #B3A0FF
               borderRadius: BorderRadius.zero,
             ),
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
@@ -221,11 +221,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
   }
 
   Widget _buildStatsCard(String title, String value) {
-    // Updated to match the new design
+    // Updated to match the light gray color in the image
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: lightGrayColor.withOpacity(0.8),
+        color: const Color(0xFFE0E0E0), // Light gray color similar to the image
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -234,7 +234,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
           Text(
             title,
             style: const TextStyle(
-              color: Colors.black87,
+              color: Colors.black87, // Dark gray for the title
               fontSize: 18,
             ),
           ),
@@ -242,7 +242,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
           Text(
             value,
             style: const TextStyle(
-              color: Colors.black,
+              color: Colors.black, // Bold black for the value
               fontSize: 32,
               fontWeight: FontWeight.bold,
             ),
