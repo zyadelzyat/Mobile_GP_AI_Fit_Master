@@ -115,10 +115,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
             ),
           ),
 
-          // Stats cards - redesigned with softer colors
+          // Stats cards - redesigned with solid #B3A0FF background
           Container(
             decoration: BoxDecoration(
-              color: purpleColor, // Changed from purpleColor.withOpacity(0.3) to solid #B3A0FF
+              color: purpleColor, // Changed to solid #B3A0FF
               borderRadius: BorderRadius.zero,
             ),
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
@@ -153,8 +153,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
             child: _currentIndex == 0
                 ? _buildUsersTable()
                 : _currentIndex == 1
-                    ? _buildPaymentsSection()
-                    : _buildProductsSection(),
+                ? _buildPaymentsSection()
+                : _buildProductsSection(),
           ),
         ],
       ),
@@ -221,11 +221,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
   }
 
   Widget _buildStatsCard(String title, String value) {
-    // Updated to match the light gray color in the image
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFE0E0E0), // Light gray color similar to the image
+        color: const Color(0xFFE0E0E0), // Light gray color for white appearance
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -234,7 +233,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
           Text(
             title,
             style: const TextStyle(
-              color: Colors.black87, // Dark gray for the title
+              color: Colors.black87,
               fontSize: 18,
             ),
           ),
@@ -242,7 +241,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
           Text(
             value,
             style: const TextStyle(
-              color: Colors.black, // Bold black for the value
+              color: Colors.black,
               fontSize: 32,
               fontWeight: FontWeight.bold,
             ),
@@ -253,7 +252,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
   }
 
   Widget _buildUsersTable() {
-    // Updated table design to match screenshot
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
@@ -281,133 +279,463 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     style: TextStyle(color: Colors.black)));
           }
 
-          return Column(
-            children: [
-              // Table header
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  children: [
-                    Expanded(
-                      flex: 2,
-                      child: Text(
-                        'Name',
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      flex: 2,
-                      child: Text(
-                        'Role',
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      flex: 2,
-                      child: Text(
-                        'Date',
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      flex: 2,
-                      child: Text(
-                        'Status',
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
+          // Scrollable data table
+          return Scrollbar(
+            thumbVisibility: true,
+            thickness: 6.0,
+            radius: const Radius.circular(10),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: SingleChildScrollView(
+                child: DataTable(
+                  headingRowColor: MaterialStateProperty.all(Colors.grey[200]),
+                  dataRowColor: MaterialStateProperty.resolveWith<Color?>(
+                        (Set<MaterialState> states) {
+                      // Even rows will have a grey color
+                      if (states.contains(MaterialState.selected)) {
+                        return Theme.of(context).colorScheme.primary.withOpacity(0.08);
+                      }
+                      return null; // Use default value for other states
+                    },
+                  ),
+                  columnSpacing: 20,
+                  horizontalMargin: 20,
+                  headingRowHeight: 50,
+                  dataRowMinHeight: 60,
+                  dataRowMaxHeight: 60,
+                  showCheckboxColumn: false,
+                  columns: const [
+                    DataColumn(label: Text('Name', style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(label: Text('Gender', style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(label: Text('Goal', style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(label: Text('Height', style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(label: Text('Weight', style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(label: Text('Phone', style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(label: Text('Coach', style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(label: Text('Role', style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(label: Text('Diseases', style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(label: Text('Email', style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(label: Text('DOB', style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(label: Text('Actions', style: TextStyle(fontWeight: FontWeight.bold))),
                   ],
-                ),
-              ),
+                  rows: List<DataRow>.generate(
+                    users.length,
+                        (index) {
+                      final user = users[index];
+                      final data = user.data() as Map<String, dynamic>;
+                      final dateOfBirth = data['dateOfBirth'] != null
+                          ? (data['dateOfBirth'] is Timestamp
+                          ? (data['dateOfBirth'] as Timestamp).toDate()
+                          : DateTime.parse(data['dateOfBirth']))
+                          : null;
 
-              // Table rows
-              Expanded(
-                child: ListView.builder(
-                  itemCount: users.length,
-                  itemBuilder: (context, index) {
-                    final user = users[index];
-                    final data = user.data() as Map<String, dynamic>;
-                    final isActive =
-                        data['status'] == 'active' || index % 2 == 0; // Demo logic
-                    final createdAt = data['createdAt'] != null
-                        ? (data['createdAt'] as Timestamp).toDate()
-                        : DateTime.now();
+                      // Handle diseases (string or list)
+                      String diseases = 'N/A';
+                      if (data['diseases'] != null) {
+                        if (data['diseases'] is String) {
+                          diseases = data['diseases'];
+                        } else if (data['diseases'] is List) {
+                          diseases = (data['diseases'] as List).join(', ');
+                        }
+                      }
 
-                    return Container(
-                      color: index % 2 == 0
-                          ? Colors.grey[200]
-                          : Colors.white,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 12.0, horizontal: 16.0),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              flex: 2,
-                              child: Text(
-                                data['displayName'] ??
-                                    data['email']?.split('@')[0] ??
-                                    'User',
-                                style: const TextStyle(color: Colors.black),
-                              ),
-                            ),
-                            Expanded(
-                              flex: 2,
-                              child: Text(
-                                data['role'] ?? 'User',
-                                style: const TextStyle(color: Colors.black),
-                              ),
-                            ),
-                            Expanded(
-                              flex: 2,
-                              child: Text(
-                                DateFormat('MMM dd, yyyy').format(createdAt),
-                                style: const TextStyle(color: Colors.black),
-                              ),
-                            ),
-                            Expanded(
-                              flex: 2,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: isActive ? purpleColor : Colors.grey,
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: Text(
-                                  isActive ? 'Active' : 'Inactive',
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
+                      return DataRow(
+                        color: MaterialStateProperty.resolveWith<Color?>(
+                              (Set<MaterialState> states) {
+                            // Even rows will have a light grey color
+                            return index % 2 == 0 ? Colors.grey.withOpacity(0.1) : Colors.white;
+                          },
                         ),
-                      ),
-                    );
-                  },
+                        cells: [
+                          DataCell(SizedBox(
+                            width: 100,
+                            child: Text(
+                              data['displayName'] ?? data['email']?.split('@')[0] ?? 'User',
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          )),
+                          DataCell(Text(data['gender'] ?? 'N/A')),
+                          DataCell(SizedBox(
+                            width: 100,
+                            child: Text(
+                              data['goal'] ?? 'N/A',
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          )),
+                          DataCell(Text(data['height']?.toString() ?? 'N/A')),
+                          DataCell(Text(data['weight']?.toString() ?? 'N/A')),
+                          DataCell(Text(data['phoneNumber'] ?? 'N/A')),
+                          DataCell(Text(data['coachName'] ?? 'None')),
+                          DataCell(Text(data['role'] ?? 'User')),
+                          DataCell(SizedBox(
+                            width: 120,
+                            child: Text(
+                              diseases,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          )),
+                          DataCell(SizedBox(
+                            width: 150,
+                            child: Text(
+                              data['email'] ?? 'N/A',
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          )),
+                          DataCell(Text(
+                            dateOfBirth != null
+                                ? DateFormat('MMM dd, yyyy').format(dateOfBirth)
+                                : 'N/A',
+                          )),
+                          DataCell(
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.edit, color: Colors.black, size: 20),
+                                  onPressed: () => _showEditUserDialog(user),
+                                  constraints: const BoxConstraints(),
+                                  padding: const EdgeInsets.all(8),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.delete, color: Colors.black, size: 20),
+                                  onPressed: () => _deleteUser(user.id),
+                                  constraints: const BoxConstraints(),
+                                  padding: const EdgeInsets.all(8),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
                 ),
               ),
-            ],
+            ),
           );
         },
       ),
     );
+  }
+
+// Helper method to create table header cells
+  Widget _buildTableHeaderCell(String text, double width) {
+    return Container(
+      width: width,
+      child: Text(
+        text,
+        style: TextStyle(
+          color: Colors.black,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+// Helper method to create table data cells
+  Widget _buildTableCell(String text, double width) {
+    return Container(
+      width: width,
+      child: Text(
+        text,
+        style: const TextStyle(color: Colors.black),
+        overflow: TextOverflow.ellipsis,
+      ),
+    );
+  }
+
+  // Method to show edit user dialog
+  void _showEditUserDialog(DocumentSnapshot user) {
+    final data = user.data() as Map<String, dynamic>;
+    final TextEditingController nameController =
+    TextEditingController(text: data['displayName']);
+    final TextEditingController genderController =
+    TextEditingController(text: data['gender']);
+    final TextEditingController goalController =
+    TextEditingController(text: data['goal']);
+    final TextEditingController heightController =
+    TextEditingController(text: data['height']?.toString());
+    final TextEditingController weightController =
+    TextEditingController(text: data['weight']?.toString());
+    final TextEditingController phoneController =
+    TextEditingController(text: data['phoneNumber']);
+    final TextEditingController coachController =
+    TextEditingController(text: data['coachName']);
+    final TextEditingController roleController =
+    TextEditingController(text: data['role'] ?? 'User');
+    final TextEditingController diseasesController =
+    TextEditingController(text: data['diseases'] is String
+        ? data['diseases']
+        : (data['diseases'] as List?)?.join(', '));
+    final TextEditingController emailController =
+    TextEditingController(text: data['email']);
+    final TextEditingController dobController = TextEditingController(
+        text: data['dateOfBirth'] != null
+            ? (data['dateOfBirth'] is Timestamp
+            ? DateFormat('MMM dd, yyyy')
+            .format((data['dateOfBirth'] as Timestamp).toDate())
+            : data['dateOfBirth'])
+            : '');
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: darkColor,
+        title: Text('Edit User', style: TextStyle(color: purpleColor)),
+        content: SingleChildScrollView(
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: nameController,
+                  decoration: InputDecoration(
+                    labelText: 'Name',
+                    labelStyle: TextStyle(color: Colors.white70),
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: purpleColor),
+                    ),
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: purpleColor),
+                    ),
+                  ),
+                  style: const TextStyle(color: Colors.white),
+                  validator: (value) => value!.isEmpty ? 'Required' : null,
+                ),
+                TextFormField(
+                  controller: genderController,
+                  decoration: InputDecoration(
+                    labelText: 'Gender',
+                    labelStyle: TextStyle(color: Colors.white70),
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: purpleColor),
+                    ),
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: purpleColor),
+                    ),
+                  ),
+                  style: const TextStyle(color: Colors.white),
+                ),
+                TextFormField(
+                  controller: goalController,
+                  decoration: InputDecoration(
+                    labelText: 'Goal',
+                    labelStyle: TextStyle(color: Colors.white70),
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: purpleColor),
+                    ),
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: purpleColor),
+                    ),
+                  ),
+                  style: const TextStyle(color: Colors.white),
+                ),
+                TextFormField(
+                  controller: heightController,
+                  decoration: InputDecoration(
+                    labelText: 'Height (cm)',
+                    labelStyle: TextStyle(color: Colors.white70),
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: purpleColor),
+                    ),
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: purpleColor),
+                    ),
+                  ),
+                  style: const TextStyle(color: Colors.white),
+                  keyboardType: TextInputType.number,
+                ),
+                TextFormField(
+                  controller: weightController,
+                  decoration: InputDecoration(
+                    labelText: 'Weight (kg)',
+                    labelStyle: TextStyle(color: Colors.white70),
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: purpleColor),
+                    ),
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: purpleColor),
+                    ),
+                  ),
+                  style: const TextStyle(color: Colors.white),
+                  keyboardType: TextInputType.number,
+                ),
+                TextFormField(
+                  controller: phoneController,
+                  decoration: InputDecoration(
+                    labelText: 'Phone Number',
+                    labelStyle: TextStyle(color: Colors.white70),
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: purpleColor),
+                    ),
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: purpleColor),
+                    ),
+                  ),
+                  style: const TextStyle(color: Colors.white),
+                  keyboardType: TextInputType.phone,
+                ),
+                TextFormField(
+                  controller: coachController,
+                  decoration: InputDecoration(
+                    labelText: 'Coach Name (optional)',
+                    labelStyle: TextStyle(color: Colors.white70),
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: purpleColor),
+                    ),
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: purpleColor),
+                    ),
+                  ),
+                  style: const TextStyle(color: Colors.white),
+                ),
+                TextFormField(
+                  controller: roleController,
+                  decoration: InputDecoration(
+                    labelText: 'Role',
+                    labelStyle: TextStyle(color: Colors.white70),
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: purpleColor),
+                    ),
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: purpleColor),
+                    ),
+                  ),
+                  style: const TextStyle(color: Colors.white),
+                  validator: (value) => value!.isEmpty ? 'Required' : null,
+                ),
+                TextFormField(
+                  controller: diseasesController,
+                  decoration: InputDecoration(
+                    labelText: 'Diseases (comma-separated)',
+                    labelStyle: TextStyle(color: Colors.white70),
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: purpleColor),
+                    ),
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: purpleColor),
+                    ),
+                  ),
+                  style: const TextStyle(color: Colors.white),
+                ),
+                TextFormField(
+                  controller: emailController,
+                  decoration: InputDecoration(
+                    labelText: 'Email',
+                    labelStyle: TextStyle(color: Colors.white70),
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: purpleColor),
+                    ),
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: purpleColor),
+                    ),
+                  ),
+                  style: const TextStyle(color: Colors.white),
+                  keyboardType: TextInputType.emailAddress,
+                  validator: (value) => value!.isEmpty ? 'Required' : null,
+                ),
+                TextFormField(
+                  controller: dobController,
+                  decoration: InputDecoration(
+                    labelText: 'Date of Birth (MMM dd, yyyy)',
+                    labelStyle: TextStyle(color: Colors.white70),
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: purpleColor),
+                    ),
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: purpleColor),
+                    ),
+                  ),
+                  style: const TextStyle(color: Colors.white),
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel', style: TextStyle(color: purpleColor)),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (_formKey.currentState!.validate()) {
+                try {
+                  // Prepare update data
+                  Map<String, dynamic> updateData = {
+                    'displayName': nameController.text,
+                    'gender':
+                    genderController.text.isEmpty ? null : genderController.text,
+                    'goal': goalController.text.isEmpty ? null : goalController.text,
+                    'height': heightController.text.isEmpty
+                        ? null
+                        : double.tryParse(heightController.text),
+                    'weight': weightController.text.isEmpty
+                        ? null
+                        : double.tryParse(weightController.text),
+                    'phoneNumber':
+                    phoneController.text.isEmpty ? null : phoneController.text,
+                    'coachName':
+                    coachController.text.isEmpty ? null : coachController.text,
+                    'role': roleController.text,
+                    'diseases': diseasesController.text.isEmpty
+                        ? null
+                        : diseasesController.text,
+                    'email': emailController.text,
+                    'dateOfBirth': dobController.text.isEmpty
+                        ? null
+                        : DateTime.tryParse(dobController.text) != null
+                        ? Timestamp.fromDate(DateTime.parse(dobController.text))
+                        : dobController.text,
+                    'updatedAt': FieldValue.serverTimestamp(),
+                  };
+
+                  // Update the user
+                  await _firestore
+                      .collection('users')
+                      .doc(user.id)
+                      .update(updateData);
+
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text('User updated successfully'),
+                      backgroundColor: purpleColor,
+                    ),
+                  );
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error updating user: $e')),
+                  );
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: purpleColor,
+            ),
+            child: const Text('Update User'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Method to delete a user
+  Future<void> _deleteUser(String userId) async {
+    try {
+      await _firestore.collection('users').doc(userId).delete();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('User deleted successfully'),
+          backgroundColor: purpleColor,
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error deleting user: $e')),
+      );
+    }
   }
 
   Widget _buildPaymentsSection() {
