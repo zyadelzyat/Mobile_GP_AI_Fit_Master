@@ -24,7 +24,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
   File? _selectedImage;
   String? _currentImageUrl;
 
-  // Color constants - updated to match the new design
+  // Color constants
   final Color purpleColor = const Color(0xFFB3A0FF);
   final Color darkColor = const Color(0xFF232323);
   final Color yellowColor = const Color(0xFFE2F163);
@@ -92,7 +92,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Navigation tabs - updated to match new design with dividers
+          // Navigation tabs
           Container(
             padding: const EdgeInsets.symmetric(vertical: 16.0),
             child: Row(
@@ -115,10 +115,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
             ),
           ),
 
-          // Stats cards - redesigned with solid #B3A0FF background
+          // Stats cards
           Container(
             decoration: BoxDecoration(
-              color: purpleColor, // Changed to solid #B3A0FF
+              color: purpleColor,
               borderRadius: BorderRadius.zero,
             ),
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
@@ -135,7 +135,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
             ),
           ),
 
-          // Overview section - updated with yellow title
+          // Overview section
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
             child: Text(
@@ -224,7 +224,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFE0E0E0), // Light gray color for white appearance
+        color: lightGrayColor,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -279,7 +279,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     style: TextStyle(color: Colors.black)));
           }
 
-          // Scrollable data table
           return Scrollbar(
             thumbVisibility: true,
             thickness: 6.0,
@@ -290,14 +289,15 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 child: DataTable(
                   headingRowColor: MaterialStateProperty.all(Colors.grey[200]),
                   dataRowColor: MaterialStateProperty.resolveWith<Color?>(
-                        (Set<MaterialState> states) {
-                      // Even rows will have a grey color
-                      if (states.contains(MaterialState.selected)) {
-                        return Theme.of(context).colorScheme.primary.withOpacity(0.08);
-                      }
-                      return null; // Use default value for other states
-                    },
-                  ),
+                          (Set<MaterialState> states) {
+                        if (states.contains(MaterialState.selected)) {
+                          return Theme.of(context)
+                              .colorScheme
+                              .primary
+                              .withOpacity(0.08);
+                        }
+                        return null;
+                      }),
                   columnSpacing: 20,
                   horizontalMargin: 20,
                   headingRowHeight: 50,
@@ -305,18 +305,42 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   dataRowMaxHeight: 60,
                   showCheckboxColumn: false,
                   columns: const [
-                    DataColumn(label: Text('Name', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('Gender', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('Goal', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('Height', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('Weight', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('Phone', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('Coach', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('Role', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('Diseases', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('Email', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('DOB', style: TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text('Actions', style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(
+                        label: Text('Name',
+                            style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(
+                        label: Text('Gender',
+                            style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(
+                        label: Text('Goal',
+                            style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(
+                        label: Text('Height',
+                            style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(
+                        label: Text('Weight',
+                            style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(
+                        label: Text('Phone',
+                            style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(
+                        label: Text('Coach',
+                            style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(
+                        label: Text('Role',
+                            style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(
+                        label: Text('Diseases',
+                            style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(
+                        label: Text('Email',
+                            style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(
+                        label: Text('Date of Birth',
+                            style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(
+                        label: Text('Actions',
+                            style: TextStyle(fontWeight: FontWeight.bold))),
                   ],
                   rows: List<DataRow>.generate(
                     users.length,
@@ -326,10 +350,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       final dateOfBirth = data['dateOfBirth'] != null
                           ? (data['dateOfBirth'] is Timestamp
                           ? (data['dateOfBirth'] as Timestamp).toDate()
-                          : DateTime.parse(data['dateOfBirth'].toString()))
+                          : DateTime.tryParse(data['dateOfBirth'].toString()))
                           : null;
 
-                      // Fixed: Handle diseases with multiple field names (disease or diseases)
                       String diseases = 'N/A';
                       if (data['disease'] != null) {
                         diseases = data['disease'].toString();
@@ -343,7 +366,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         }
                       }
 
-                      // Fixed: Handle phone number with multiple field names (phone or phoneNumber)
                       String phoneNumber = 'N/A';
                       if (data['phone'] != null) {
                         phoneNumber = data['phone'].toString();
@@ -353,16 +375,19 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
                       return DataRow(
                         color: MaterialStateProperty.resolveWith<Color?>(
-                              (Set<MaterialState> states) {
-                            // Even rows will have a light grey color
-                            return index % 2 == 0 ? Colors.grey.withOpacity(0.1) : Colors.white;
-                          },
-                        ),
+                                (Set<MaterialState> states) {
+                              return index % 2 == 0
+                                  ? Colors.grey.withOpacity(0.1)
+                                  : Colors.white;
+                            }),
                         cells: [
                           DataCell(SizedBox(
                             width: 100,
                             child: Text(
-                              data['displayName'] ?? data['firstName'] ?? data['email']?.split('@')[0] ?? 'User',
+                              data['displayName'] ??
+                                  data['firstName'] ??
+                                  data['email']?.split('@')[0] ??
+                                  'User',
                               overflow: TextOverflow.ellipsis,
                             ),
                           )),
@@ -403,13 +428,15 @@ class _AdminDashboardState extends State<AdminDashboard> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 IconButton(
-                                  icon: const Icon(Icons.edit, color: Colors.black, size: 20),
+                                  icon: const Icon(Icons.edit,
+                                      color: Colors.black, size: 20),
                                   onPressed: () => _showEditUserDialog(user),
                                   constraints: const BoxConstraints(),
                                   padding: const EdgeInsets.all(8),
                                 ),
                                 IconButton(
-                                  icon: const Icon(Icons.delete, color: Colors.black, size: 20),
+                                  icon: const Icon(Icons.delete,
+                                      color: Colors.black, size: 20),
                                   onPressed: () => _deleteUser(user.id),
                                   constraints: const BoxConstraints(),
                                   padding: const EdgeInsets.all(8),
@@ -430,7 +457,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
-// Helper method to create table header cells
   Widget _buildTableHeaderCell(String text, double width) {
     return Container(
       width: width,
@@ -444,7 +470,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
-// Helper method to create table data cells
   Widget _buildTableCell(String text, double width) {
     return Container(
       width: width,
@@ -456,54 +481,56 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
-  // Method to show edit user dialog
   void _showEditUserDialog(DocumentSnapshot user) {
     final data = user.data() as Map<String, dynamic>;
 
-    // Fixed handling of user name
-    final String userName = data['displayName'] ?? data['firstName'] ?? data['email']?.split('@')[0] ?? 'User';
-    final TextEditingController nameController = TextEditingController(text: userName);
+    final String userName = data['displayName'] ??
+        data['firstName'] ??
+        data['email']?.split('@')[0] ??
+        'User';
+    final TextEditingController nameController =
+    TextEditingController(text: userName);
+    final TextEditingController genderController =
+    TextEditingController(text: data['gender']);
+    final TextEditingController goalController =
+    TextEditingController(text: data['goal']);
+    final TextEditingController heightController =
+    TextEditingController(text: data['height']?.toString());
+    final TextEditingController weightController =
+    TextEditingController(text: data['weight']?.toString());
 
-    final TextEditingController genderController = TextEditingController(text: data['gender']);
-    final TextEditingController goalController = TextEditingController(text: data['goal']);
-    final TextEditingController heightController = TextEditingController(text: data['height']?.toString());
-    final TextEditingController weightController = TextEditingController(text: data['weight']?.toString());
+    String phoneNumber = data['phone'] ?? data['phoneNumber'] ?? '';
+    final TextEditingController phoneController =
+    TextEditingController(text: phoneNumber);
 
-    // Fixed handling of phone number
-    String phoneNumber = '';
-    if (data['phone'] != null) {
-      phoneNumber = data['phone'].toString();
-    } else if (data['phoneNumber'] != null) {
-      phoneNumber = data['phoneNumber'].toString();
-    }
-    final TextEditingController phoneController = TextEditingController(text: phoneNumber);
+    final TextEditingController coachController =
+    TextEditingController(text: data['coachName']);
+    final TextEditingController roleController =
+    TextEditingController(text: data['role'] ?? 'User');
 
-    final TextEditingController coachController = TextEditingController(text: data['coachName']);
-    final TextEditingController roleController = TextEditingController(text: data['role'] ?? 'User');
-
-    // Fixed handling of diseases
     String diseases = '';
     if (data['disease'] != null) {
       diseases = data['disease'].toString();
     } else if (data['diseases'] != null) {
-      if (data['diseases'] is String) {
-        diseases = data['diseases'];
-      } else if (data['diseases'] is List) {
-        diseases = (data['diseases'] as List).join(', ');
-      } else {
-        diseases = data['diseases'].toString();
-      }
+      diseases = data['diseases'] is List
+          ? (data['diseases'] as List).join(', ')
+          : data['diseases'].toString();
     }
-    final TextEditingController diseasesController = TextEditingController(text: diseases);
+    final TextEditingController diseasesController =
+    TextEditingController(text: diseases);
 
-    final TextEditingController emailController = TextEditingController(text: data['email']);
+    final TextEditingController emailController =
+    TextEditingController(text: data['email']);
+
+    DateTime? selectedDate;
+    if (data['dateOfBirth'] != null) {
+      selectedDate = data['dateOfBirth'] is Timestamp
+          ? (data['dateOfBirth'] as Timestamp).toDate()
+          : DateTime.tryParse(data['dateOfBirth'].toString());
+    }
     final TextEditingController dobController = TextEditingController(
-        text: data['dateOfBirth'] != null
-            ? (data['dateOfBirth'] is Timestamp
-            ? DateFormat('MMM dd, yyyy')
-            .format((data['dateOfBirth'] as Timestamp).toDate())
-            : data['dateOfBirth'].toString())
-            : '');
+      text: selectedDate != null ? DateFormat('MMM dd, yyyy').format(selectedDate) : '',
+    );
 
     showDialog(
       context: context,
@@ -521,12 +548,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   decoration: InputDecoration(
                     labelText: 'Name',
                     labelStyle: TextStyle(color: Colors.white70),
-                    enabledBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: purpleColor),
-                    ),
-                    focusedBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: purpleColor),
-                    ),
+                    enabledBorder:
+                    UnderlineInputBorder(borderSide: BorderSide(color: purpleColor)),
+                    focusedBorder:
+                    UnderlineInputBorder(borderSide: BorderSide(color: purpleColor)),
                   ),
                   style: const TextStyle(color: Colors.white),
                   validator: (value) => value!.isEmpty ? 'Required' : null,
@@ -536,12 +561,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   decoration: InputDecoration(
                     labelText: 'Gender',
                     labelStyle: TextStyle(color: Colors.white70),
-                    enabledBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: purpleColor),
-                    ),
-                    focusedBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: purpleColor),
-                    ),
+                    enabledBorder:
+                    UnderlineInputBorder(borderSide: BorderSide(color: purpleColor)),
+                    focusedBorder:
+                    UnderlineInputBorder(borderSide: BorderSide(color: purpleColor)),
                   ),
                   style: const TextStyle(color: Colors.white),
                 ),
@@ -550,12 +573,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   decoration: InputDecoration(
                     labelText: 'Goal',
                     labelStyle: TextStyle(color: Colors.white70),
-                    enabledBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: purpleColor),
-                    ),
-                    focusedBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: purpleColor),
-                    ),
+                    enabledBorder:
+                    UnderlineInputBorder(borderSide: BorderSide(color: purpleColor)),
+                    focusedBorder:
+                    UnderlineInputBorder(borderSide: BorderSide(color: purpleColor)),
                   ),
                   style: const TextStyle(color: Colors.white),
                 ),
@@ -564,12 +585,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   decoration: InputDecoration(
                     labelText: 'Height (cm)',
                     labelStyle: TextStyle(color: Colors.white70),
-                    enabledBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: purpleColor),
-                    ),
-                    focusedBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: purpleColor),
-                    ),
+                    enabledBorder:
+                    UnderlineInputBorder(borderSide: BorderSide(color: purpleColor)),
+                    focusedBorder:
+                    UnderlineInputBorder(borderSide: BorderSide(color: purpleColor)),
                   ),
                   style: const TextStyle(color: Colors.white),
                   keyboardType: TextInputType.number,
@@ -579,12 +598,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   decoration: InputDecoration(
                     labelText: 'Weight (kg)',
                     labelStyle: TextStyle(color: Colors.white70),
-                    enabledBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: purpleColor),
-                    ),
-                    focusedBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: purpleColor),
-                    ),
+                    enabledBorder:
+                    UnderlineInputBorder(borderSide: BorderSide(color: purpleColor)),
+                    focusedBorder:
+                    UnderlineInputBorder(borderSide: BorderSide(color: purpleColor)),
                   ),
                   style: const TextStyle(color: Colors.white),
                   keyboardType: TextInputType.number,
@@ -594,12 +611,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   decoration: InputDecoration(
                     labelText: 'Phone Number',
                     labelStyle: TextStyle(color: Colors.white70),
-                    enabledBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: purpleColor),
-                    ),
-                    focusedBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: purpleColor),
-                    ),
+                    enabledBorder:
+                    UnderlineInputBorder(borderSide: BorderSide(color: purpleColor)),
+                    focusedBorder:
+                    UnderlineInputBorder(borderSide: BorderSide(color: purpleColor)),
                   ),
                   style: const TextStyle(color: Colors.white),
                   keyboardType: TextInputType.phone,
@@ -609,12 +624,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   decoration: InputDecoration(
                     labelText: 'Coach Name (optional)',
                     labelStyle: TextStyle(color: Colors.white70),
-                    enabledBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: purpleColor),
-                    ),
-                    focusedBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: purpleColor),
-                    ),
+                    enabledBorder:
+                    UnderlineInputBorder(borderSide: BorderSide(color: purpleColor)),
+                    focusedBorder:
+                    UnderlineInputBorder(borderSide: BorderSide(color: purpleColor)),
                   ),
                   style: const TextStyle(color: Colors.white),
                 ),
@@ -623,12 +636,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   decoration: InputDecoration(
                     labelText: 'Role',
                     labelStyle: TextStyle(color: Colors.white70),
-                    enabledBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: purpleColor),
-                    ),
-                    focusedBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: purpleColor),
-                    ),
+                    enabledBorder:
+                    UnderlineInputBorder(borderSide: BorderSide(color: purpleColor)),
+                    focusedBorder:
+                    UnderlineInputBorder(borderSide: BorderSide(color: purpleColor)),
                   ),
                   style: const TextStyle(color: Colors.white),
                   validator: (value) => value!.isEmpty ? 'Required' : null,
@@ -638,12 +649,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   decoration: InputDecoration(
                     labelText: 'Diseases (comma-separated)',
                     labelStyle: TextStyle(color: Colors.white70),
-                    enabledBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: purpleColor),
-                    ),
-                    focusedBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: purpleColor),
-                    ),
+                    enabledBorder:
+                    UnderlineInputBorder(borderSide: BorderSide(color: purpleColor)),
+                    focusedBorder:
+                    UnderlineInputBorder(borderSide: BorderSide(color: purpleColor)),
                   ),
                   style: const TextStyle(color: Colors.white),
                 ),
@@ -652,12 +661,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   decoration: InputDecoration(
                     labelText: 'Email',
                     labelStyle: TextStyle(color: Colors.white70),
-                    enabledBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: purpleColor),
-                    ),
-                    focusedBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: purpleColor),
-                    ),
+                    enabledBorder:
+                    UnderlineInputBorder(borderSide: BorderSide(color: purpleColor)),
+                    focusedBorder:
+                    UnderlineInputBorder(borderSide: BorderSide(color: purpleColor)),
                   ),
                   style: const TextStyle(color: Colors.white),
                   keyboardType: TextInputType.emailAddress,
@@ -665,17 +672,49 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 ),
                 TextFormField(
                   controller: dobController,
+                  readOnly: true,
                   decoration: InputDecoration(
-                    labelText: 'Date of Birth (MMM dd, yyyy)',
+                    labelText: 'Date of Birth',
                     labelStyle: TextStyle(color: Colors.white70),
-                    enabledBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: purpleColor),
-                    ),
-                    focusedBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: purpleColor),
-                    ),
+                    enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: purpleColor)),
+                    focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: purpleColor)),
+                    prefixIcon: Icon(Icons.calendar_today, color: purpleColor),
+                    hintText: 'Select your date of birth',
+                    hintStyle: TextStyle(color: Colors.white54),
                   ),
                   style: const TextStyle(color: Colors.white),
+                  onTap: () async {
+                    final DateTime? picked = await showDatePicker(
+                      context: context,
+                      initialDate: selectedDate ?? DateTime.now(),
+                      firstDate: DateTime(1900),
+                      lastDate: DateTime.now(),
+                      builder: (context, child) {
+                        return Theme(
+                          data: ThemeData.dark().copyWith(
+                            colorScheme: ColorScheme.dark(
+                              primary: purpleColor,
+                              onPrimary: Colors.white,
+                              surface: darkColor,
+                              onSurface: Colors.white,
+                            ),
+                            dialogBackgroundColor: darkColor,
+                          ),
+                          child: child!,
+                        );
+                      },
+                    );
+                    if (picked != null) {
+                      setState(() {
+                        selectedDate = picked;
+                        dobController.text = DateFormat('MMM dd, yyyy').format(picked);
+                      });
+                    }
+                  },
+                  validator: (value) {
+                    if (value!.isEmpty) return 'Date of birth is required';
+                    return null;
+                  },
                 ),
               ],
             ),
@@ -690,7 +729,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
             onPressed: () async {
               if (_formKey.currentState!.validate()) {
                 try {
-                  // Prepare update data
                   Map<String, dynamic> updateData = {
                     'displayName': nameController.text,
                     'gender':
@@ -702,25 +740,25 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     'weight': weightController.text.isEmpty
                         ? null
                         : double.tryParse(weightController.text),
-                    // Fixed: Update both possible phone field names
-                    'phone': phoneController.text.isEmpty ? null : phoneController.text,
-                    'phoneNumber': phoneController.text.isEmpty ? null : phoneController.text,
+                    'phone':
+                    phoneController.text.isEmpty ? null : phoneController.text,
+                    'phoneNumber':
+                    phoneController.text.isEmpty ? null : phoneController.text,
                     'coachName':
                     coachController.text.isEmpty ? null : coachController.text,
                     'role': roleController.text,
-                    // Fixed: Update both possible disease field names
-                    'disease': diseasesController.text.isEmpty ? null : diseasesController.text,
-                    'diseases': diseasesController.text.isEmpty ? null : diseasesController.text,
+                    'disease':
+                    diseasesController.text.isEmpty ? null : diseasesController.text,
+                    'diseases':
+                    diseasesController.text.isEmpty ? null : diseasesController.text,
                     'email': emailController.text,
                     'dateOfBirth': dobController.text.isEmpty
                         ? null
-                        : DateTime.tryParse(dobController.text) != null
-                        ? Timestamp.fromDate(DateTime.parse(dobController.text))
-                        : dobController.text,
+                        : Timestamp.fromDate(
+                        DateFormat('MMM dd, yyyy').parseStrict(dobController.text)),
                     'updatedAt': FieldValue.serverTimestamp(),
                   };
 
-                  // Update the user
                   await _firestore
                       .collection('users')
                       .doc(user.id)
@@ -740,9 +778,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 }
               }
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: purpleColor,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: purpleColor),
             child: const Text('Update User'),
           ),
         ],
@@ -750,7 +786,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
-  // Method to delete a user
   Future<void> _deleteUser(String userId) async {
     try {
       await _firestore.collection('users').doc(userId).delete();
@@ -803,9 +838,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () => _showAddProductDialog(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: purpleColor,
-                ),
+                style: ElevatedButton.styleFrom(backgroundColor: purpleColor),
                 child: const Text('Add New Product'),
               ),
             ],
@@ -818,9 +851,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
               padding: const EdgeInsets.all(16.0),
               child: ElevatedButton(
                 onPressed: () => _showAddProductDialog(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: purpleColor,
-                ),
+                style: ElevatedButton.styleFrom(backgroundColor: purpleColor),
                 child: const Text('Add New Product'),
               ),
             ),
@@ -865,8 +896,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                     Icon(Icons.image_not_supported,
                                         color: purpleColor),
                               )
-                                  : Icon(Icons.image,
-                                  size: 50, color: purpleColor),
+                                  : Icon(Icons.image, size: 50, color: purpleColor),
                             ),
                           ),
                           Padding(
@@ -899,8 +929,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                     IconButton(
                                       icon: const Icon(Icons.edit,
                                           color: Colors.white, size: 20),
-                                      onPressed: () =>
-                                          _showEditProductDialog(product),
+                                      onPressed: () => _showEditProductDialog(product),
                                     ),
                                     IconButton(
                                       icon: const Icon(Icons.delete,
@@ -927,26 +956,20 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   Future<void> _pickImage() async {
     try {
-      // Request necessary permissions first
       if (Platform.isAndroid) {
-        // For Android 13+ (SDK 33+) we need photos permission
         if (await Permission.photos.status.isDenied) {
           await Permission.photos.request();
         }
-
-        // For older Android versions, we need storage permission
         if (await Permission.storage.status.isDenied) {
           await Permission.storage.request();
         }
       }
 
-      // Check if we have the permissions we need
       bool canProceed = false;
       if (Platform.isAndroid) {
-        canProceed = await Permission.photos.isGranted ||
-            await Permission.storage.isGranted;
+        canProceed =
+            await Permission.photos.isGranted || await Permission.storage.isGranted;
       } else {
-        // For iOS or other platforms
         canProceed = true;
       }
 
@@ -994,7 +1017,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
     final TextEditingController priceController = TextEditingController();
     final TextEditingController descController = TextEditingController();
 
-    // Reset image selection
     setState(() {
       _selectedImage = null;
       _currentImageUrl = null;
@@ -1017,12 +1039,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     decoration: InputDecoration(
                       labelText: 'Product Name',
                       labelStyle: TextStyle(color: Colors.white70),
-                      enabledBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: purpleColor),
-                      ),
-                      focusedBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: purpleColor),
-                      ),
+                      enabledBorder:
+                      UnderlineInputBorder(borderSide: BorderSide(color: purpleColor)),
+                      focusedBorder:
+                      UnderlineInputBorder(borderSide: BorderSide(color: purpleColor)),
                     ),
                     style: const TextStyle(color: Colors.white),
                     validator: (value) => value!.isEmpty ? 'Required' : null,
@@ -1032,19 +1052,16 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     decoration: InputDecoration(
                       labelText: 'Price',
                       labelStyle: TextStyle(color: Colors.white70),
-                      enabledBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: purpleColor),
-                      ),
-                      focusedBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: purpleColor),
-                      ),
+                      enabledBorder:
+                      UnderlineInputBorder(borderSide: BorderSide(color: purpleColor)),
+                      focusedBorder:
+                      UnderlineInputBorder(borderSide: BorderSide(color: purpleColor)),
                     ),
                     style: const TextStyle(color: Colors.white),
                     keyboardType: TextInputType.number,
                     validator: (value) {
                       if (value!.isEmpty) return 'Required';
-                      if (double.tryParse(value) == null)
-                        return 'Enter a valid number';
+                      if (double.tryParse(value) == null) return 'Enter a valid number';
                       return null;
                     },
                   ),
@@ -1053,17 +1070,14 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     decoration: InputDecoration(
                       labelText: 'Description',
                       labelStyle: TextStyle(color: Colors.white70),
-                      enabledBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: purpleColor),
-                      ),
-                      focusedBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: purpleColor),
-                      ),
+                      enabledBorder:
+                      UnderlineInputBorder(borderSide: BorderSide(color: purpleColor)),
+                      focusedBorder:
+                      UnderlineInputBorder(borderSide: BorderSide(color: purpleColor)),
                     ),
                     style: const TextStyle(color: Colors.white),
                     maxLines: 3,
                   ),
-                  // Image picker
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -1089,11 +1103,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
                             child: _selectedImage != null
                                 ? ClipRRect(
                               borderRadius: BorderRadius.circular(8),
-                              child: Image.file(_selectedImage!,
-                                  fit: BoxFit.cover),
+                              child: Image.file(_selectedImage!, fit: BoxFit.cover),
                             )
-                                : Icon(Icons.image,
-                                size: 50, color: purpleColor),
+                                : Icon(Icons.image, size: 50, color: purpleColor),
                           ),
                           const SizedBox(width: 10),
                           Column(
@@ -1101,12 +1113,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
                               ElevatedButton(
                                 onPressed: () async {
                                   await _pickImage();
-                                  // Update dialog UI
                                   setDialogState(() {});
                                 },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: purpleColor,
-                                ),
+                                style:
+                                ElevatedButton.styleFrom(backgroundColor: purpleColor),
                                 child: const Text('Pick Image'),
                               ),
                               if (_selectedImage != null)
@@ -1140,7 +1150,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
               onPressed: () async {
                 if (_formKey.currentState!.validate()) {
                   try {
-                    // First add document to get an ID
                     final docRef = await _firestore.collection('products').add({
                       'name': nameController.text,
                       'price': double.parse(priceController.text),
@@ -1148,7 +1157,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       'createdAt': FieldValue.serverTimestamp(),
                     });
 
-                    // Then upload image if available
                     if (_selectedImage != null) {
                       final imageUrl = await _uploadImage(docRef.id);
                       if (imageUrl != null) {
@@ -1170,9 +1178,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   }
                 }
               },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: purpleColor,
-              ),
+              style: ElevatedButton.styleFrom(backgroundColor: purpleColor),
               child: const Text('Add Product'),
             ),
           ],
@@ -1183,22 +1189,18 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   Future<void> _deleteProduct(String productId) async {
     try {
-      // Get product data to check if it has an image
       final productDoc =
       await _firestore.collection('products').doc(productId).get();
       final data = productDoc.data();
 
-      // Delete the image from storage if it exists
       if (data != null && data['imageUrl'] != null) {
         try {
           await _storage.refFromURL(data['imageUrl']).delete();
         } catch (e) {
-          // Log error but continue with document deletion
           print('Error deleting image: $e');
         }
       }
 
-      // Delete the product document
       await _firestore.collection('products').doc(productId).delete();
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1223,7 +1225,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
     final TextEditingController descController =
     TextEditingController(text: data['description'] ?? '');
 
-    // Set current image URL if available
     setState(() {
       _selectedImage = null;
       _currentImageUrl = data['imageUrl'];
@@ -1246,12 +1247,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     decoration: InputDecoration(
                       labelText: 'Product Name',
                       labelStyle: TextStyle(color: Colors.white70),
-                      enabledBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: purpleColor),
-                      ),
-                      focusedBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: purpleColor),
-                      ),
+                      enabledBorder:
+                      UnderlineInputBorder(borderSide: BorderSide(color: purpleColor)),
+                      focusedBorder:
+                      UnderlineInputBorder(borderSide: BorderSide(color: purpleColor)),
                     ),
                     style: const TextStyle(color: Colors.white),
                     validator: (value) => value!.isEmpty ? 'Required' : null,
@@ -1261,19 +1260,16 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     decoration: InputDecoration(
                       labelText: 'Price',
                       labelStyle: TextStyle(color: Colors.white70),
-                      enabledBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: purpleColor),
-                      ),
-                      focusedBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: purpleColor),
-                      ),
+                      enabledBorder:
+                      UnderlineInputBorder(borderSide: BorderSide(color: purpleColor)),
+                      focusedBorder:
+                      UnderlineInputBorder(borderSide: BorderSide(color: purpleColor)),
                     ),
                     style: const TextStyle(color: Colors.white),
                     keyboardType: TextInputType.number,
                     validator: (value) {
                       if (value!.isEmpty) return 'Required';
-                      if (double.tryParse(value) == null)
-                        return 'Enter a valid number';
+                      if (double.tryParse(value) == null) return 'Enter a valid number';
                       return null;
                     },
                   ),
@@ -1282,17 +1278,14 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     decoration: InputDecoration(
                       labelText: 'Description',
                       labelStyle: TextStyle(color: Colors.white70),
-                      enabledBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: purpleColor),
-                      ),
-                      focusedBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: purpleColor),
-                      ),
+                      enabledBorder:
+                      UnderlineInputBorder(borderSide: BorderSide(color: purpleColor)),
+                      focusedBorder:
+                      UnderlineInputBorder(borderSide: BorderSide(color: purpleColor)),
                     ),
                     style: const TextStyle(color: Colors.white),
                     maxLines: 3,
                   ),
-                  // Image picker
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -1318,8 +1311,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                             child: _selectedImage != null
                                 ? ClipRRect(
                               borderRadius: BorderRadius.circular(8),
-                              child: Image.file(_selectedImage!,
-                                  fit: BoxFit.cover),
+                              child: Image.file(_selectedImage!, fit: BoxFit.cover),
                             )
                                 : _currentImageUrl != null
                                 ? ClipRRect(
@@ -1327,15 +1319,12 @@ class _AdminDashboardState extends State<AdminDashboard> {
                               child: Image.network(
                                 _currentImageUrl!,
                                 fit: BoxFit.cover,
-                                errorBuilder:
-                                    (context, error, stackTrace) =>
+                                errorBuilder: (context, error, stackTrace) =>
                                     Icon(Icons.image,
-                                        size: 50,
-                                        color: purpleColor),
+                                        size: 50, color: purpleColor),
                               ),
                             )
-                                : Icon(Icons.image,
-                                size: 50, color: purpleColor),
+                                : Icon(Icons.image, size: 50, color: purpleColor),
                           ),
                           const SizedBox(width: 10),
                           Column(
@@ -1343,12 +1332,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
                               ElevatedButton(
                                 onPressed: () async {
                                   await _pickImage();
-                                  // Update dialog UI
                                   setDialogState(() {});
                                 },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: purpleColor,
-                                ),
+                                style:
+                                ElevatedButton.styleFrom(backgroundColor: purpleColor),
                                 child: const Text('Pick Image'),
                               ),
                               if (_selectedImage != null || _currentImageUrl != null)
@@ -1383,7 +1370,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
               onPressed: () async {
                 if (_formKey.currentState!.validate()) {
                   try {
-                    // Prepare update data
                     Map<String, dynamic> updateData = {
                       'name': nameController.text,
                       'price': double.parse(priceController.text),
@@ -1391,17 +1377,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       'updatedAt': FieldValue.serverTimestamp(),
                     };
 
-                    // Handle image update if new image selected
                     if (_selectedImage != null) {
                       final imageUrl = await _uploadImage(product.id);
                       if (imageUrl != null) {
                         updateData['imageUrl'] = imageUrl;
                       }
                     } else if (_currentImageUrl == null) {
-                      // Image was cleared
                       updateData['imageUrl'] = FieldValue.delete();
-
-                      // Also try to delete the old image from storage if it exists
                       try {
                         final oldImageUrl = data['imageUrl'];
                         if (oldImageUrl != null) {
@@ -1412,7 +1394,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       }
                     }
 
-                    // Update the product
                     await _firestore
                         .collection('products')
                         .doc(product.id)
@@ -1432,9 +1413,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   }
                 }
               },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: purpleColor,
-              ),
+              style: ElevatedButton.styleFrom(backgroundColor: purpleColor),
               child: const Text('Update Product'),
             ),
           ],
