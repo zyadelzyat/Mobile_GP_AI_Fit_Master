@@ -6,7 +6,7 @@ import 'package:untitled/theme_provider.dart';
 import '08 activity_level_screen.dart';
 
 class GoalSelectionScreen extends StatefulWidget {
-  const GoalSelectionScreen({super.key});
+  const GoalSelectionScreen({super.key, required String gender});
 
   @override
   _GoalSelectionScreenState createState() => _GoalSelectionScreenState();

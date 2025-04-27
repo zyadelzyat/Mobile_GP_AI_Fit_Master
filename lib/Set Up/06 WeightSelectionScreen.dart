@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -17,12 +18,19 @@ class WeightSelectionScreen extends StatefulWidget {
 
 class _WeightSelectionScreenState extends State<WeightSelectionScreen> {
   bool isKg = true;
-  double selectedWeight = 58;
-  double minWeight = 50;
-  double maxWeight = 300;
+  double selectedWeight = 75;
+  double minWeightKg = 40;
+  double maxWeightKg = 150;
+  double minWeightLb = 88;
+  double maxWeightLb = 330;
   late ScrollController _scrollController;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final double itemWidth = 60;
+  DateTime? _lastScrollUpdate;
+
+  double get minWeight => isKg ? minWeightKg : minWeightLb;
+  double get maxWeight => isKg ? maxWeightKg : maxWeightLb;
 
   Future<void> _saveWeight() async {
     try {
@@ -32,16 +40,19 @@ class _WeightSelectionScreenState extends State<WeightSelectionScreen> {
       await _firestore.collection('users').doc(user.uid).set({
         'weight': selectedWeight,
         'weightUnit': isKg ? 'kg' : 'lb',
+        'gender': widget.gender,
         'lastUpdated': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
 
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => const GoalSelectionScreen()),
+        MaterialPageRoute(
+          builder: (context) => GoalSelectionScreen(gender: widget.gender),
+        ),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error saving weight: ${e.toString()}')),
+        const SnackBar(content: Text('Failed to save weight. Please try again.')),
       );
     }
   }
@@ -51,27 +62,56 @@ class _WeightSelectionScreenState extends State<WeightSelectionScreen> {
     super.initState();
     _scrollController = ScrollController();
     _scrollController.addListener(_scrollListener);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _updateScrollPosition(selectedWeight);
+    });
   }
 
   void _updateScrollPosition(double weight) {
-    double offset = (weight - minWeight) * 30;
-    offset = offset.clamp(0.0, _scrollController.position.maxScrollExtent);
-    _scrollController.animateTo(
-      offset,
-      duration: const Duration(milliseconds: 10),
-      curve: Curves.easeInOut,
-    );
+    double offset = (weight - minWeight) * itemWidth;
+    if (_scrollController.hasClients) {
+      offset = offset.clamp(0.0, _scrollController.position.maxScrollExtent);
+      _scrollController.animateTo(
+        offset,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOutQuad,
+      );
+    }
   }
 
   void _scrollListener() {
+    if (!_scrollController.hasClients) return;
+
+    final now = DateTime.now();
+    if (_lastScrollUpdate != null &&
+        now.difference(_lastScrollUpdate!).inMilliseconds < 100) {
+      return;
+    }
+    _lastScrollUpdate = now;
+
     double currentOffset = _scrollController.offset;
-    double weight = (minWeight + currentOffset / 30).roundToDouble();
+    int weightIndex = (currentOffset / itemWidth).round();
+    double weight = minWeight + weightIndex;
     weight = weight.clamp(minWeight, maxWeight);
     if (weight != selectedWeight) {
       setState(() {
         selectedWeight = weight;
+        HapticFeedback.selectionClick();
       });
+      _updateScrollPosition(weight);
     }
+  }
+
+  void _toggleUnit(int index) {
+    setState(() {
+      final oldWeight = selectedWeight;
+      isKg = index == 0;
+      selectedWeight = isKg
+          ? (oldWeight / 2.20462).roundToDouble()
+          : (oldWeight * 2.20462).roundToDouble();
+      selectedWeight = selectedWeight.clamp(minWeight, maxWeight);
+      _updateScrollPosition(selectedWeight);
+    });
   }
 
   @override
@@ -85,6 +125,10 @@ class _WeightSelectionScreenState extends State<WeightSelectionScreen> {
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDarkMode = themeProvider.themeMode == ThemeMode.dark;
+    const highlightColor = Color(0xFFE2F163);
+    final nonSelectedColor = isDarkMode
+        ? highlightColor.withOpacity(0.5) // Dimmed #E2F163 for dark mode
+        : const Color(0xFFB3A0FF); // Purple for light mode
 
     return Scaffold(
       backgroundColor: isDarkMode ? const Color(0xFF232323) : Colors.white,
@@ -92,18 +136,17 @@ class _WeightSelectionScreenState extends State<WeightSelectionScreen> {
         backgroundColor: isDarkMode ? const Color(0xFF232323) : Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: isDarkMode ? Colors.yellow : Colors.black),
-          onPressed: () => Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (context) => const HeightSelectionScreen()),
-                (Route<dynamic> route) => false,
+          icon: Icon(
+            Icons.arrow_back,
+            color: isDarkMode ? highlightColor : Colors.black,
           ),
+          onPressed: () => Navigator.pop(context),
         ),
         actions: [
           IconButton(
             icon: Icon(
               isDarkMode ? Icons.light_mode : Icons.dark_mode,
-              color: isDarkMode ? Colors.yellow : Colors.black,
+              color: isDarkMode ? highlightColor : Colors.black,
             ),
             onPressed: () => themeProvider.toggleTheme(),
           ),
@@ -137,11 +180,11 @@ class _WeightSelectionScreenState extends State<WeightSelectionScreen> {
             const SizedBox(height: 30),
             ToggleButtons(
               isSelected: [isKg, !isKg],
-              onPressed: (index) => setState(() => isKg = index == 0),
+              onPressed: _toggleUnit,
               borderRadius: BorderRadius.circular(30),
-              fillColor: const Color(0xFFE2F163),
+              fillColor: isDarkMode ? highlightColor.withOpacity(0.3) : highlightColor,
               selectedColor: Colors.black,
-              color: isDarkMode ? Colors.white54 : Colors.black54,
+              color: nonSelectedColor, // Colorful non-selected state
               children: const [
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -166,6 +209,11 @@ class _WeightSelectionScreenState extends State<WeightSelectionScreen> {
                   child: ListView.builder(
                     controller: _scrollController,
                     scrollDirection: Axis.horizontal,
+                    clipBehavior: Clip.none,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: MediaQuery.of(context).size.width / 2 - itemWidth / 2,
+                    ),
+                    physics: const BouncingScrollPhysics(),
                     itemCount: (maxWeight - minWeight).toInt() + 1,
                     itemBuilder: (context, index) {
                       final weight = minWeight + index;
@@ -173,30 +221,25 @@ class _WeightSelectionScreenState extends State<WeightSelectionScreen> {
                         onTap: () {
                           setState(() {
                             selectedWeight = weight;
+                            HapticFeedback.selectionClick();
                             _updateScrollPosition(weight);
                           });
                         },
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: SizedBox(
+                          width: itemWidth,
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
                                 weight.toStringAsFixed(0),
                                 style: TextStyle(
-                                  fontSize: selectedWeight == weight ? 24 : 18,
+                                  fontSize: selectedWeight == weight ? 28 : 18,
                                   fontWeight: FontWeight.bold,
                                   color: selectedWeight == weight
-                                      ? (isDarkMode ? Colors.yellow : Colors.blue)
+                                      ? highlightColor
                                       : (isDarkMode ? Colors.white54 : Colors.black54),
                                 ),
                               ),
-                              if (index != (maxWeight - minWeight).toInt())
-                                Container(
-                                  height: 20,
-                                  width: 2,
-                                  color: isDarkMode ? Colors.white54 : Colors.black54,
-                                ),
                             ],
                           ),
                         ),
@@ -204,11 +247,11 @@ class _WeightSelectionScreenState extends State<WeightSelectionScreen> {
                     },
                   ),
                 ),
-                const Positioned(
-                  top: -10,
+                Positioned(
+                  top: 5, // Adjusted to center arrow above number
                   child: Icon(
                     Icons.arrow_drop_down,
-                    color: Colors.yellow,
+                    color: highlightColor,
                     size: 40,
                   ),
                 ),
