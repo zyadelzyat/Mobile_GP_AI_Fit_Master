@@ -291,15 +291,10 @@ class _HomePageState extends State<HomePage> {
               borderRadius: BorderRadius.circular(15),
             ),
             child: icon == null
-                ? Container(
-              width: 24,
-              height: 24,
-              decoration: const BoxDecoration(
-                image: DecorationImage(
-                  image: AssetImage('assets/images/youtube_logo.png'),
-                  fit: BoxFit.contain,
-                ),
-              ),
+                ? const Icon(
+              Icons.play_circle_fill, // YouTube-like play icon
+              color: Color(0xFF8E7AFE),
+              size: 24,
             )
                 : Icon(
               icon,
