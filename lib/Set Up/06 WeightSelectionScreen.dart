@@ -39,7 +39,7 @@ class WeightSelectionScreen extends StatefulWidget {
 class _WeightSelectionScreenState extends State<WeightSelectionScreen> {
   bool isKg = true;
   double selectedWeight = 75;
-  double minWeightKg = 40;
+  double minWeightKg = 30;
   double maxWeightKg = 150;
   double minWeightLb = 88;
   double maxWeightLb = 330;
