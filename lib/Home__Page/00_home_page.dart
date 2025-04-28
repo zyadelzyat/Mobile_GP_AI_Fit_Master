@@ -10,7 +10,7 @@ import 'CalorieCalculator.dart';
 import 'Store.dart';
 import 'trainer_trainees_page.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:untitled/Home__Page/NutritionMainPage.dart'; // Added import for Nutrition page
+import 'package:untitled/Home__Page/NutritionMainPage.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -29,10 +29,31 @@ class _HomePageState extends State<HomePage> {
 
   final List<Map<String, dynamic>> _categories = [
     {'icon': Icons.fitness_center, 'label': 'Workout', 'route': null},
-    {'icon': Icons.insert_chart, 'label': 'Nutrition', 'route': 'Nutrition'}, // Updated to have route
+    {'icon': Icons.insert_chart, 'label': 'Nutrition', 'route': 'Nutrition'},
     {'icon': Icons.shopping_bag, 'label': 'Products', 'route': 'SupplementsStore'},
     {'icon': Icons.calculate_outlined, 'label': 'Calories', 'route': 'CalorieCalculator'},
   ];
+
+  // Dynamic categories based on user role
+  List<Map<String, dynamic>> get _filteredCategories {
+    List<Map<String, dynamic>> categories = _categories;
+    if (_userData['role'] == 'Self-Trainee') {
+      // Exclude Nutrition and modify Workout for Self-Trainee
+      categories = categories
+          .where((category) => category['label'] != 'Nutrition')
+          .map((category) {
+        if (category['label'] == 'Workout') {
+          return {
+            'icon': null, // Use null to indicate custom image (YouTube logo)
+            'label': 'YT_Workout',
+            'route': 'YT_Channel',
+          };
+        }
+        return category;
+      }).toList();
+    }
+    return categories;
+  }
 
   final List<Map<String, dynamic>> _workouts = [
     {
@@ -109,10 +130,10 @@ class _HomePageState extends State<HomePage> {
         await _firestore.collection('favorites').doc(currentUser.uid).get();
 
         if (favoritesDoc.exists) {
-          Map<String, dynamic> favoritesData = favoritesDoc.data() as Map<String, dynamic>;
+          Map<String, dynamic> favoritesData =
+          favoritesDoc.data() as Map<String, dynamic>;
           List<dynamic> favoriteWorkouts = favoritesData['workouts'] ?? [];
 
-          // Update local workouts with saved favorites
           for (int i = 0; i < _workouts.length; i++) {
             String workoutTitle = _workouts[i]['title'];
             if (favoriteWorkouts.contains(workoutTitle)) {
@@ -155,8 +176,9 @@ class _HomePageState extends State<HomePage> {
     switch (routeName) {
       case 'Workout':
         break;
-      case 'Nutrition': // Added case for Nutrition
-        Navigator.push(context, MaterialPageRoute(builder: (context) => NutritionPage()));
+      case 'Nutrition':
+        Navigator.push(
+            context, MaterialPageRoute(builder: (context) => NutritionPage()));
         break;
       case 'ChatBot':
         Navigator.push(
@@ -180,6 +202,21 @@ class _HomePageState extends State<HomePage> {
             MaterialPageRoute(
                 builder: (context) => AllVideosPage(videos: _workouts)));
         break;
+      case 'YT_Channel':
+        _launchYouTubeChannel();
+        break;
+    }
+  }
+
+  Future<void> _launchYouTubeChannel() async {
+    const url = 'https://www.youtube.com/@yusufashraf17';
+    final Uri uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Could not launch $url")),
+      );
     }
   }
 
@@ -194,7 +231,8 @@ class _HomePageState extends State<HomePage> {
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("You need to be logged in to view your profile")),
+        const SnackBar(
+            content: Text("You need to be logged in to view your profile")),
       );
     }
   }
@@ -231,7 +269,7 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  Widget _buildCategoryIcon(IconData icon, String label, int index) {
+  Widget _buildCategoryIcon(dynamic icon, String label, int index) {
     bool isSelected = _selectedCategoryIndex == index;
 
     return GestureDetector(
@@ -240,8 +278,8 @@ class _HomePageState extends State<HomePage> {
           _selectedCategoryIndex = index;
         });
 
-        if (_categories[index]['route'] != null) {
-          _navigateToFeature(_categories[index]['route']);
+        if (_filteredCategories[index]['route'] != null) {
+          _navigateToFeature(_filteredCategories[index]['route']);
         }
       },
       child: Column(
@@ -252,7 +290,18 @@ class _HomePageState extends State<HomePage> {
               color: const Color(0xFF8E7AFE).withOpacity(0.2),
               borderRadius: BorderRadius.circular(15),
             ),
-            child: Icon(
+            child: icon == null
+                ? Container(
+              width: 24,
+              height: 24,
+              decoration: const BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage('assets/images/youtube_logo.png'),
+                  fit: BoxFit.contain,
+                ),
+              ),
+            )
+                : Icon(
               icon,
               color: const Color(0xFF8E7AFE),
               size: 24,
@@ -260,7 +309,7 @@ class _HomePageState extends State<HomePage> {
           ),
           const SizedBox(height: 8),
           Text(
-            label,
+            label == 'YT_Workout' ? 'Workout' : label,
             style: const TextStyle(
               color: Colors.white,
               fontSize: 12,
@@ -421,9 +470,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildFavoritesView() {
-    List<Map<String, dynamic>> favoriteWorkouts = _workouts
-        .where((workout) => workout['isFavorite'] == true)
-        .toList();
+    List<Map<String, dynamic>> favoriteWorkouts =
+    _workouts.where((workout) => workout['isFavorite'] == true).toList();
 
     if (favoriteWorkouts.isEmpty) {
       return Center(
@@ -462,8 +510,8 @@ class _HomePageState extends State<HomePage> {
       padding: const EdgeInsets.all(16),
       itemCount: favoriteWorkouts.length,
       itemBuilder: (context, index) {
-        final originalIndex = _workouts.indexWhere((workout) =>
-        workout['title'] == favoriteWorkouts[index]['title']);
+        final originalIndex = _workouts.indexWhere(
+                (workout) => workout['title'] == favoriteWorkouts[index]['title']);
 
         return Container(
           margin: const EdgeInsets.only(bottom: 16),
@@ -578,11 +626,9 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     String userName = _userData['firstName'] ?? 'Madison';
 
-    // Main content based on selected nav item
     Widget mainContent;
 
     if (_currentNavIndex == 0) {
-      // Home tab content
       mainContent = SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -630,10 +676,10 @@ class _HomePageState extends State<HomePage> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  for (int i = 0; i < _categories.length; i++)
+                  for (int i = 0; i < _filteredCategories.length; i++)
                     _buildCategoryIcon(
-                      _categories[i]['icon'],
-                      _categories[i]['label'],
+                      _filteredCategories[i]['icon'],
+                      _filteredCategories[i]['label'],
                       i,
                     ),
                 ],
@@ -762,50 +808,50 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             const SizedBox(height: 24),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: GestureDetector(
-                onTap: _navigateToTrainees,
-                child: Container(
-                  width: double.infinity,
-                  height: 60,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    color: const Color(0xFF8E7AFE).withOpacity(0.2),
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.group, color: Color(0xFF8E7AFE)),
-                      SizedBox(width: 10),
-                      Text(
-                        "View Assigned Trainees",
-                        style: TextStyle(
-                          color: Color(0xFF8E7AFE),
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
+            if (_userData['role'] != 'trainee' &&
+                _userData['role'] != 'Self-Trainee') ...[
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: GestureDetector(
+                  onTap: _navigateToTrainees,
+                  child: Container(
+                    width: double.infinity,
+                    height: 60,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      color: const Color(0xFF8E7AFE).withOpacity(0.2),
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.group, color: Color(0xFF8E7AFE)),
+                        SizedBox(width: 10),
+                        Text(
+                          "View Assigned Trainees",
+                          style: TextStyle(
+                            color: Color(0xFF8E7AFE),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
+            ],
             const SizedBox(height: 16),
           ],
         ),
       );
     } else if (_currentNavIndex == 1) {
-      // Favorites tab content
       mainContent = _buildFavoritesView();
     } else if (_currentNavIndex == 2) {
-      // Chatbot tab content
       mainContent = const Center(
         child: ChatPage(),
       );
     } else {
-      // Profile tab content (fallback)
       mainContent = const Center(
         child: CircularProgressIndicator(
           color: Color(0xFF8E7AFE),
@@ -959,7 +1005,8 @@ class AllVideosPage extends StatelessWidget {
       ),
     );
   }
-@override
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF232323),
