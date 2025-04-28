@@ -49,10 +49,10 @@ class _WeightSelectionScreenState extends State<WeightSelectionScreen> {
 
   // Item extent for each weight unit (1kg/1lb)
   final double itemExtent = 15.0;
-  final double rulerHeight = 180.0; // Increased from 120.0
-  final double selectorWidth = 4.0; // Increased from 3.0
-  final double selectorTriangleSize = 20.0; // Increased from 16.0
-  final double rulerWidth = 100.0; // Increased from 80.0
+  final double rulerHeight = 60.0; // Height of horizontal ruler
+  final double rulerWidth = 300.0; // Width of horizontal ruler
+  final double selectorWidth = 4.0; // Width of the selector line
+  final double selectorHeight = 60.0; // Height of the selector line
 
   // The step between each displayed label (5kg/5lb)
   final int labelStep = 5;
@@ -149,8 +149,6 @@ class _WeightSelectionScreenState extends State<WeightSelectionScreen> {
     final secondaryTextColor = isDarkMode ? AppColors.darkSecondaryText : AppColors.lightSecondaryText;
     final buttonBackgroundColor = isDarkMode ? AppColors.darkButtonBackground : AppColors.lightButtonBackground;
     final buttonBorderColor = isDarkMode ? AppColors.darkButtonBorder : AppColors.lightButtonBorder;
-
-    final rulerContainerWidth = MediaQuery.of(context).size.width - 48;
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -283,14 +281,14 @@ class _WeightSelectionScreenState extends State<WeightSelectionScreen> {
               ),
             ),
 
-            // Main content with weight display, ruler, and button
+            // Main content with weight display and horizontal ruler
             Expanded(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   // Weight value display
                   Padding(
-                    padding: const EdgeInsets.only(bottom: 30.0),
+                    padding: const EdgeInsets.only(bottom: 50.0),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -317,130 +315,97 @@ class _WeightSelectionScreenState extends State<WeightSelectionScreen> {
                     ),
                   ),
 
-                  // Weight ruler component
+                  // Horizontal weight ruler component
                   SizedBox(
-                    height: rulerHeight,
+                    height: 120, // Container height for ruler and labels
                     child: Stack(
                       alignment: Alignment.center,
                       children: [
-                        // Weight markers on the left
-                        Positioned(
-                          left: MediaQuery.of(context).size.width / 2 - (rulerWidth + 70),
-                          top: 0,
-                          bottom: 0,
-                          width: 60,
-                          child: LayoutBuilder(
-                            builder: (context, constraints) {
-                              final visibleCount = 11; // Increased for taller ruler
-                              final visibleWeights = List.generate(visibleCount, (i) {
-                                return selectedWeight.round() + (i - 5) * labelStep;
-                              }).where((weight) => weight >= minWeight && weight <= maxWeight).toList();
+                        // Horizontal Ruler
+                        Container(
+                          height: rulerHeight,
+                          width: double.infinity,
+                          color: AppColors.rulerColor,
+                          child: RotatedBox(
+                            quarterTurns: 3, // Rotate to make horizontal
+                            child: ListWheelScrollView.useDelegate(
+                              controller: _scrollController,
+                              itemExtent: itemExtent,
+                              onSelectedItemChanged: _onSelectedItemChanged,
+                              physics: const FixedExtentScrollPhysics(),
+                              perspective: 0.001,
+                              squeeze: 1.0,
+                              useMagnifier: false,
+                              childDelegate: ListWheelChildBuilderDelegate(
+                                builder: (context, index) {
+                                  final weight = minWeight + index;
+                                  if (weight < minWeight || weight > maxWeight) {
+                                    return const SizedBox.shrink();
+                                  }
 
-                              return Stack(
-                                children: visibleWeights.map((weight) {
-                                  final offset = (selectedWeight.round() - weight) / labelStep;
-                                  final position = offset * itemExtent * labelStep;
-                                  final top = constraints.maxHeight / 2 + position;
-                                  final isSelected = weight == selectedWeight.round();
+                                  final bool isLabeledWeight = weight % 5 == 0;
+                                  final lineColor = Colors.white;
 
-                                  return Positioned(
-                                    left: 0,
-                                    top: top - 14, // Adjust for text height
-                                    child: Text(
-                                      weight.toString(),
-                                      style: TextStyle(
-                                        color: isSelected ? primaryTextColor : secondaryTextColor,
-                                        fontSize: isSelected ? 24 : 20,
-                                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                  return Container(
+                                    width: itemExtent,
+                                    alignment: Alignment.center,
+                                    child: Center(
+                                      child: Container(
+                                        width: 1.0, // Line thickness
+                                        height: isLabeledWeight ? rulerHeight * 0.6 : rulerHeight * 0.3,
+                                        color: lineColor.withOpacity(isLabeledWeight ? 0.8 : 0.4),
                                       ),
                                     ),
                                   );
-                                }).toList(),
-                              );
-                            },
+                                },
+                                childCount: (maxWeight - minWeight).round() + 1,
+                              ),
+                            ),
                           ),
                         ),
 
-                        // Ruler and selector - centered
+                        // Yellow selector line
                         Positioned(
-                          left: MediaQuery.of(context).size.width / 2 - rulerWidth / 2,
-                          top: 0,
-                          bottom: 0,
-                          width: rulerWidth,
-                          child: Stack(
+                          left: 0,
+                          right: 0,
+                          child: Container(
+                            height: rulerHeight,
+                            width: selectorWidth,
                             alignment: Alignment.center,
-                            children: [
-                              // Ruler bar
-                              Container(
-                                width: rulerWidth,
-                                height: rulerHeight,
-                                decoration: BoxDecoration(
-                                  color: AppColors.rulerColor,
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(10),
-                                  child: ListWheelScrollView.useDelegate(
-                                    controller: _scrollController,
-                                    itemExtent: itemExtent,
-                                    onSelectedItemChanged: _onSelectedItemChanged,
-                                    physics: const FixedExtentScrollPhysics(),
-                                    perspective: 0.001,
-                                    squeeze: 0.8,
-                                    useMagnifier: false,
-                                    childDelegate: ListWheelChildBuilderDelegate(
-                                      builder: (context, index) {
-                                        final weight = minWeight + index;
-                                        if (weight < minWeight || weight > maxWeight) {
-                                          return const SizedBox.shrink();
-                                        }
-
-                                        final bool isLabeledWeight = weight % 5 == 0;
-                                        final lineColor = isDarkMode ? AppColors.darkPrimaryText : AppColors.lightPrimaryText;
-
-                                        return Container(
-                                          height: itemExtent,
-                                          alignment: Alignment.center,
-                                          child: Row(
-                                            mainAxisAlignment: MainAxisAlignment.center,
-                                            children: [
-                                              Container(
-                                                height: 1.0,
-                                                width: isLabeledWeight ? rulerWidth * 0.8 : rulerWidth * 0.5,
-                                                color: lineColor.withOpacity(isLabeledWeight ? 0.8 : 0.4),
-                                              ),
-                                            ],
-                                          ),
-                                        );
-                                      },
-                                      childCount: (maxWeight - minWeight).round() + 1,
-                                    ),
-                                  ),
-                                ),
-                              ),
-
-                              // Selector line
-                              Positioned(
-                                top: rulerHeight / 2 - selectorWidth / 2,
-                                left: 0,
-                                right: 0,
-                                child: Container(
-                                  height: selectorWidth,
-                                  color: AppColors.highlightColor,
-                                ),
-                              ),
-                            ],
+                            child: Container(
+                              width: 4,
+                              height: rulerHeight,
+                              color: AppColors.highlightColor,
+                            ),
                           ),
                         ),
 
-                        // Selector triangle
+                        // Weight labels below the ruler
                         Positioned(
-                          left: MediaQuery.of(context).size.width / 2 + rulerWidth / 2 + 4,
-                          top: rulerHeight / 2 - selectorTriangleSize / 2,
-                          child: Icon(
-                            Icons.play_arrow,
-                            color: AppColors.highlightColor,
-                            size: selectorTriangleSize,
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          height: 30,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: List.generate(7, (i) {
+                              final labelWeight = selectedWeight.round() + (i - 3) * 10;
+                              if (labelWeight < minWeight || labelWeight > maxWeight) {
+                                return const SizedBox.shrink();
+                              }
+                              return Text(
+                                labelWeight.toString(),
+                                style: TextStyle(
+                                  color: labelWeight == selectedWeight.round()
+                                      ? primaryTextColor
+                                      : secondaryTextColor,
+                                  fontSize: labelWeight == selectedWeight.round() ? 16 : 12,
+                                  fontWeight: labelWeight == selectedWeight.round()
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                                ),
+                              );
+                            }),
                           ),
                         ),
                       ],
@@ -483,29 +448,4 @@ class _WeightSelectionScreenState extends State<WeightSelectionScreen> {
       ),
     );
   }
-}
-
-// Custom painter for the yellow triangle indicator
-class TrianglePainter extends CustomPainter {
-  final Color color;
-
-  const TrianglePainter({required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
-
-    final path = Path();
-    path.moveTo(size.width / 2, 0); // Top center
-    path.lineTo(0, size.height); // Bottom left
-    path.lineTo(size.width, size.height); // Bottom right
-    path.close();
-
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

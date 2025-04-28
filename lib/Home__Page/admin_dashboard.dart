@@ -486,264 +486,292 @@ class _AdminDashboardState extends State<AdminDashboard> {
       margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.9),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(12), // Keep the rounded corners
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ], // Optional: Add shadow for better visual effect
       ),
-      child: StreamBuilder<QuerySnapshot>(
-        stream: _firestore.collection('users').snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return Center(
-                child: Text('Error: ${snapshot.error}',
-                    style: const TextStyle(color: Colors.black)));
-          }
+      child: ClipRRect(
+        // Add ClipRRect to clip the table content to the rounded corners
+        borderRadius: BorderRadius.circular(12),
+        child: StreamBuilder<QuerySnapshot>(
+          stream: _firestore.collection('users').snapshots(),
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return Center(
+                  child: Text('Error: ${snapshot.error}',
+                      style: const TextStyle(color: Colors.black)));
+            }
 
-          if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
-          }
+            if (!snapshot.hasData) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-          final users = snapshot.data!.docs;
+            final users = snapshot.data!.docs;
 
-          if (users.isEmpty) {
-            return const Center(
-                child: Text('No users found',
-                    style: TextStyle(color: Colors.black)));
-          }
+            if (users.isEmpty) {
+              return const Center(
+                  child: Text('No users found',
+                      style: TextStyle(color: Colors.black)));
+            }
 
-          return Scrollbar(
-            thumbVisibility: true,
-            thickness: 6.0,
-            radius: const Radius.circular(10),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
+            return Scrollbar(
+              thumbVisibility: true,
+              thickness: 6.0,
+              radius: const Radius.circular(10),
               child: SingleChildScrollView(
-                child: DataTable(
-                  headingRowColor: MaterialStateProperty.all(Colors.grey[200]),
-                  dataRowColor: MaterialStateProperty.resolveWith<Color?>(
-                          (Set<MaterialState> states) {
-                        if (states.contains(MaterialState.selected)) {
-                          return Theme.of(context)
-                              .colorScheme
-                              .primary
-                              .withOpacity(0.08);
+                scrollDirection: Axis.horizontal,
+                child: SingleChildScrollView(
+                  child: DataTable(
+                    headingRowColor: MaterialStateProperty.all(Colors.grey[200]),
+                    dataRowColor: MaterialStateProperty.resolveWith<Color?>(
+                            (Set<MaterialState> states) {
+                          if (states.contains(MaterialState.selected)) {
+                            return Theme.of(context)
+                                .colorScheme
+                                .primary
+                                .withOpacity(0.08);
+                          }
+                          return null;
+                        }),
+                    columnSpacing: 20,
+                    horizontalMargin: 20,
+                    headingRowHeight: 50,
+                    dataRowMinHeight: 60,
+                    dataRowMaxHeight: 60,
+                    showCheckboxColumn: false,
+                    columns: showFullDetails
+                        ? [
+                      const DataColumn(
+                          label: Text('Name',
+                              style:
+                              TextStyle(fontWeight: FontWeight.bold))),
+                      const DataColumn(
+                          label: Text('Gender',
+                              style:
+                              TextStyle(fontWeight: FontWeight.bold))),
+                      const DataColumn(
+                          label: Text('Goal',
+                              style:
+                              TextStyle(fontWeight: FontWeight.bold))),
+                      const DataColumn(
+                          label: Text('Height',
+                              style:
+                              TextStyle(fontWeight: FontWeight.bold))),
+                      const DataColumn(
+                          label: Text('Weight',
+                              style:
+                              TextStyle(fontWeight: FontWeight.bold))),
+                      const DataColumn(
+                          label: Text('Phone',
+                              style:
+                              TextStyle(fontWeight: FontWeight.bold))),
+                      const DataColumn(
+                          label: Text('Coach',
+                              style:
+                              TextStyle(fontWeight: FontWeight.bold))),
+                      const DataColumn(
+                          label: Text('Role',
+                              style:
+                              TextStyle(fontWeight: FontWeight.bold))),
+                      const DataColumn(
+                          label: Text('Diseases',
+                              style:
+                              TextStyle(fontWeight: FontWeight.bold))),
+                      const DataColumn(
+                          label: Text('Email',
+                              style:
+                              TextStyle(fontWeight: FontWeight.bold))),
+                      const DataColumn(
+                          label: Text('Date of Birth',
+                              style:
+                              TextStyle(fontWeight: FontWeight.bold))),
+                      const DataColumn(
+                          label: Text('Creation Date',
+                              style:
+                              TextStyle(fontWeight: FontWeight.bold))),
+                      const DataColumn(
+                          label: Text('Actions',
+                              style:
+                              TextStyle(fontWeight: FontWeight.bold))),
+                    ]
+                        : [
+                      const DataColumn(
+                          label: Text('Name',
+                              style:
+                              TextStyle(fontWeight: FontWeight.bold))),
+                      const DataColumn(
+                          label: Text('Role',
+                              style:
+                              TextStyle(fontWeight: FontWeight.bold))),
+                      const DataColumn(
+                          label: Text('Date',
+                              style:
+                              TextStyle(fontWeight: FontWeight.bold))),
+                      const DataColumn(
+                          label: Text('Email',
+                              style:
+                              TextStyle(fontWeight: FontWeight.bold))),
+                    ],
+                    rows: List<DataRow>.generate(
+                      users.length,
+                          (index) {
+                        final user = users[index];
+                        final data = user.data() as Map<String, dynamic>;
+
+                        // --- Get Date of Birth ---
+                        final dateOfBirth = data['dateOfBirth'] != null
+                            ? (data['dateOfBirth'] is Timestamp
+                            ? (data['dateOfBirth'] as Timestamp).toDate()
+                            : DateTime.tryParse(
+                            data['dateOfBirth'].toString()))
+                            : null;
+                        final formattedFullDob = dateOfBirth != null
+                            ? DateFormat('MMM dd,yyyy').format(dateOfBirth)
+                            : 'N/A';
+
+                        // --- Get Creation Date ---
+                        final creationDate = data['createdAt'] != null
+                            ? (data['createdAt'] is Timestamp
+                            ? (data['createdAt'] as Timestamp).toDate()
+                            : null)
+                            : null;
+                        final formattedCreationDate = creationDate != null
+                            ? DateFormat('yyyy-MM-dd HH:mm')
+                            .format(creationDate)
+                            : 'N/A';
+
+                        String diseases = 'N/A';
+                        if (data['disease'] != null) {
+                          diseases = data['disease'].toString();
+                        } else if (data['diseases'] != null) {
+                          if (data['diseases'] is String) {
+                            diseases = data['diseases'];
+                          } else if (data['diseases'] is List) {
+                            diseases = (data['diseases'] as List).join(', ');
+                          } else {
+                            diseases = data['diseases'].toString();
+                          }
                         }
-                        return null;
-                      }),
-                  columnSpacing: 20,
-                  horizontalMargin: 20,
-                  headingRowHeight: 50,
-                  dataRowMinHeight: 60,
-                  dataRowMaxHeight: 60,
-                  showCheckboxColumn: false,
-                  columns: showFullDetails ? [
-                    const DataColumn(
-                        label: Text('Name',
-                            style: TextStyle(fontWeight: FontWeight.bold))),
-                    const DataColumn(
-                        label: Text('Gender',
-                            style: TextStyle(fontWeight: FontWeight.bold))),
-                    const DataColumn(
-                        label: Text('Goal',
-                            style: TextStyle(fontWeight: FontWeight.bold))),
-                    const DataColumn(
-                        label: Text('Height',
-                            style: TextStyle(fontWeight: FontWeight.bold))),
-                    const DataColumn(
-                        label: Text('Weight',
-                            style: TextStyle(fontWeight: FontWeight.bold))),
-                    const DataColumn(
-                        label: Text('Phone',
-                            style: TextStyle(fontWeight: FontWeight.bold))),
-                    const DataColumn(
-                        label: Text('Coach',
-                            style: TextStyle(fontWeight: FontWeight.bold))),
-                    const DataColumn(
-                        label: Text('Role',
-                            style: TextStyle(fontWeight: FontWeight.bold))),
-                    const DataColumn(
-                        label: Text('Diseases',
-                            style: TextStyle(fontWeight: FontWeight.bold))),
-                    const DataColumn(
-                        label: Text('Email',
-                            style: TextStyle(fontWeight: FontWeight.bold))),
-                    const DataColumn(
-                        label: Text('Date of Birth', // Keep Date of Birth
-                            style: TextStyle(fontWeight: FontWeight.bold))),
-                    const DataColumn(
-                        label: Text('Creation Date', // Added Creation Date column
-                            style: TextStyle(fontWeight: FontWeight.bold))),
-                    const DataColumn(
-                        label: Text('Actions',
-                            style: TextStyle(fontWeight: FontWeight.bold))),
-                  ] : [
-                    // Simplified columns: Name, Role, Date (Creation), Email
-                    const DataColumn(
-                        label: Text('Name',
-                            style: TextStyle(fontWeight: FontWeight.bold))),
-                    const DataColumn(
-                        label: Text('Role',
-                            style: TextStyle(fontWeight: FontWeight.bold))),
-                    const DataColumn(
-                        label: Text('Date', // This will show Creation Date
-                            style: TextStyle(fontWeight: FontWeight.bold))),
-                    const DataColumn(
-                      // Using 'Email' as requested originally
-                        label: Text('Email',
-                            style: TextStyle(fontWeight: FontWeight.bold))),
-                  ],
-                  rows: List<DataRow>.generate(
-                    users.length,
-                        (index) {
-                      final user = users[index];
-                      final data = user.data() as Map<String, dynamic>;
 
-                      // --- Get Date of Birth ---
-                      final dateOfBirth = data['dateOfBirth'] != null
-                          ? (data['dateOfBirth'] is Timestamp
-                          ? (data['dateOfBirth'] as Timestamp).toDate()
-                          : DateTime.tryParse(data['dateOfBirth'].toString()))
-                          : null;
-                      final formattedFullDob = dateOfBirth != null
-                          ? DateFormat('MMM dd,yyyy').format(dateOfBirth)
-                          : 'N/A';
+                        String phoneNumber = 'N/A';
+                        if (data['phone'] != null) {
+                          phoneNumber = data['phone'].toString();
+                        } else if (data['phoneNumber'] != null) {
+                          phoneNumber = data['phoneNumber'].toString();
+                        }
 
-                      // --- Get Creation Date ---
-                      // Assuming 'createdAt' field exists and is a Timestamp
-                      final creationDate = data['createdAt'] != null
-                          ? (data['createdAt'] is Timestamp
-                          ? (data['createdAt'] as Timestamp).toDate()
-                          : null) // Handle cases where it might not be a Timestamp
-                          : null;
-                      final formattedCreationDate = creationDate != null
-                          ? DateFormat('yyyy-MM-dd HH:mm').format(creationDate) // Format for creation date
-                          : 'N/A';
+                        final userName = data['displayName'] ??
+                            data['firstName'] ??
+                            data['email']?.split('@')[0] ??
+                            'User';
 
+                        final userEmail = data['email'] ?? 'N/A';
+                        final userRole = data['role'] ?? 'User';
 
-                      String diseases = 'N/A';
-                      if (data['disease'] != null) {
-                        diseases = data['disease'].toString();
-                      } else if (data['diseases'] != null) {
-                        if (data['diseases'] is String) {
-                          diseases = data['diseases'];
-                        } else if (data['diseases'] is List) {
-                          diseases = (data['diseases'] as List).join(', ');
+                        if (showFullDetails) {
+                          // Full table row with all columns for User Management
+                          return DataRow(
+                            color: MaterialStateProperty.resolveWith<Color?>(
+                                    (Set<MaterialState> states) {
+                                  return index % 2 == 0
+                                      ? Colors.grey.withOpacity(0.1)
+                                      : Colors.white;
+                                }),
+                            cells: [
+                              DataCell(SizedBox(
+                                width: 100,
+                                child: Text(
+                                  userName,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              )),
+                              DataCell(Text(data['gender'] ?? 'N/A')),
+                              DataCell(SizedBox(
+                                width: 100,
+                                child: Text(
+                                  data['goal'] ?? 'N/A',
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              )),
+                              DataCell(
+                                  Text(data['height']?.toString() ?? 'N/A')),
+                              DataCell(
+                                  Text(data['weight']?.toString() ?? 'N/A')),
+                              DataCell(Text(phoneNumber)),
+                              DataCell(Text(data['coachName'] ?? 'None')),
+                              DataCell(Text(userRole)),
+                              DataCell(SizedBox(
+                                width: 120,
+                                child: Text(
+                                  diseases,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              )),
+                              DataCell(SizedBox(
+                                width: 150,
+                                child: Text(
+                                  userEmail,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              )),
+                              DataCell(Text(formattedFullDob)),
+                              DataCell(Text(formattedCreationDate)),
+                              DataCell(
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.edit,
+                                          color: Colors.black, size: 20),
+                                      onPressed: () => _showEditUserDialog(user),
+                                      constraints: const BoxConstraints(),
+                                      padding: const EdgeInsets.all(8),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.delete,
+                                          color: Colors.black, size: 20),
+                                      onPressed: () => _deleteUser(user.id),
+                                      constraints: const BoxConstraints(),
+                                      padding: const EdgeInsets.all(8),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          );
                         } else {
-                          diseases = data['diseases'].toString();
+                          // Simplified row for Home page
+                          return DataRow(
+                            color: MaterialStateProperty.resolveWith<Color?>(
+                                    (Set<MaterialState> states) {
+                                  return index % 2 == 0
+                                      ? Colors.grey.withOpacity(0.1)
+                                      : Colors.white;
+                                }),
+                            cells: [
+                              DataCell(Text(userName)),
+                              DataCell(Text(userRole)),
+                              DataCell(Text(formattedCreationDate)),
+                              DataCell(Text(userEmail)),
+                            ],
+                          );
                         }
-                      }
-
-                      String phoneNumber = 'N/A';
-                      if (data['phone'] != null) {
-                        phoneNumber = data['phone'].toString();
-                      } else if (data['phoneNumber'] != null) {
-                        phoneNumber = data['phoneNumber'].toString();
-                      }
-
-                      final userName = data['displayName'] ??
-                          data['firstName'] ??
-                          data['email']?.split('@')[0] ??
-                          'User';
-
-                      final userEmail = data['email'] ?? 'N/A';
-                      final userRole = data['role'] ?? 'User';
-
-
-                      if (showFullDetails) {
-                        // Full table row with all columns for User Management
-                        return DataRow(
-                          color: MaterialStateProperty.resolveWith<Color?>(
-                                  (Set<MaterialState> states) {
-                                return index % 2 == 0
-                                    ? Colors.grey.withOpacity(0.1)
-                                    : Colors.white;
-                              }),
-                          cells: [
-                            DataCell(SizedBox(
-                              width: 100,
-                              child: Text(
-                                userName,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            )),
-                            DataCell(Text(data['gender'] ?? 'N/A')),
-                            DataCell(SizedBox(
-                              width: 100,
-                              child: Text(
-                                data['goal'] ?? 'N/A',
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            )),
-                            DataCell(Text(data['height']?.toString() ?? 'N/A')),
-                            DataCell(Text(data['weight']?.toString() ?? 'N/A')),
-                            DataCell(Text(phoneNumber)),
-                            DataCell(Text(data['coachName'] ?? 'None')),
-                            DataCell(Text(userRole)),
-                            DataCell(SizedBox(
-                              width: 120,
-                              child: Text(
-                                diseases,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            )),
-                            DataCell(SizedBox(
-                              width: 150,
-                              child: Text(
-                                userEmail,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            )),
-                            DataCell(Text(formattedFullDob)), // Full Date of Birth format
-                            DataCell(Text(formattedCreationDate)), // Creation Date column
-                            DataCell(
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  IconButton(
-                                    icon: const Icon(Icons.edit,
-                                        color: Colors.black, size: 20),
-                                    onPressed: () => _showEditUserDialog(user),
-                                    constraints: const BoxConstraints(),
-                                    padding: const EdgeInsets.all(8),
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.delete,
-                                        color: Colors.black, size: 20),
-                                    onPressed: () => _deleteUser(user.id),
-                                    constraints: const BoxConstraints(),
-                                    padding: const EdgeInsets.all(8),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        );
-                      } else {
-                        // Simplified row for Home page (Name, Role, Date (Creation), Email)
-                        return DataRow(
-                          color: MaterialStateProperty.resolveWith<Color?>(
-                                  (Set<MaterialState> states) {
-                                return index % 2 == 0
-                                    ? Colors.grey.withOpacity(0.1)
-                                    : Colors.white;
-                              }),
-                          cells: [
-                            DataCell(Text(userName)),
-                            DataCell(Text(userRole)),
-                            DataCell(Text(formattedCreationDate)), // Simplified "Date" is Creation Date
-                            DataCell(Text(userEmail)), // Email column
-                          ],
-                        );
-                      }
-                    },
+                      },
+                    ),
                   ),
                 ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }
-
 
   Widget _buildPaymentsSection() {
     // Placeholder for Product Payment section
