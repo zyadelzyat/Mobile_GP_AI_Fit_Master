@@ -48,10 +48,11 @@ class _WeightSelectionScreenState extends State<WeightSelectionScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   // Item extent for each weight unit (1kg/1lb)
-  final double itemExtent = 15.0; // Increased size
-  final double rulerHeight = 120.0; // Increased height
-  final double selectorWidth = 3.0; // Made selector line thicker
-  final double selectorTriangleSize = 16.0; // Increased triangle size
+  final double itemExtent = 15.0;
+  final double rulerHeight = 180.0; // Increased from 120.0
+  final double selectorWidth = 4.0; // Increased from 3.0
+  final double selectorTriangleSize = 20.0; // Increased from 16.0
+  final double rulerWidth = 100.0; // Increased from 80.0
 
   // The step between each displayed label (5kg/5lb)
   final int labelStep = 5;
@@ -150,7 +151,6 @@ class _WeightSelectionScreenState extends State<WeightSelectionScreen> {
     final buttonBorderColor = isDarkMode ? AppColors.darkButtonBorder : AppColors.lightButtonBorder;
 
     final rulerContainerWidth = MediaQuery.of(context).size.width - 48;
-    final rulerWidth = 80.0; // Increased ruler width
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -331,9 +331,9 @@ class _WeightSelectionScreenState extends State<WeightSelectionScreen> {
                           width: 60,
                           child: LayoutBuilder(
                             builder: (context, constraints) {
-                              final visibleCount = 9; // Total visible markers
+                              final visibleCount = 11; // Increased for taller ruler
                               final visibleWeights = List.generate(visibleCount, (i) {
-                                return selectedWeight.round() + (i - 4) * labelStep;
+                                return selectedWeight.round() + (i - 5) * labelStep;
                               }).where((weight) => weight >= minWeight && weight <= maxWeight).toList();
 
                               return Stack(
