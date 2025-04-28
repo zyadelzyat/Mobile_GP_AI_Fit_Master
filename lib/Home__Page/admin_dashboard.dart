@@ -1176,23 +1176,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
     if (confirmDelete) {
       try {
-        // Optional: Delete the image from storage before deleting the document
-        // You would need to fetch the document first to get the image URL/path
-        // final productDoc = await _firestore.collection('products').doc(productId).get();
-        // final imageUrlToDelete = productDoc.data()?['imageUrl'];
-        // if (imageUrlToDelete != null && imageUrlToDelete.isNotEmpty) {
-        //    try {
-        //       // Assuming the URL is a direct download URL, extract the path
-        //       final imageRef = FirebaseStorage.instance.refFromURL(imageUrlToDelete);
-        //       await imageRef.delete();
-        //       print('Deleted image from storage: ${imageRef.fullPath}');
-        //    } catch (e) {
-        //       print('Error deleting old image from storage: $e');
-        //       // Continue with document deletion even if image deletion fails
-        //    }
-        // }
-
-
         await _firestore.collection('products').doc(productId).delete();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Product deleted successfully!')),
@@ -1205,8 +1188,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
     }
   }
 
-
-  // --- User Action Methods ---
   void _showEditUserDialog(DocumentSnapshot user) {
     final data = user.data() as Map<String, dynamic>;
 
