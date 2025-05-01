@@ -1,196 +1,287 @@
 import 'package:flutter/material.dart';
-// Adjust the path as needed
+import '00_home_page.dart';
+import 'Store.dart';
 
-class CalorieCalculatorPage extends StatefulWidget {
-  const CalorieCalculatorPage({super.key});
+class CalorieCalculator extends StatefulWidget {
+  const CalorieCalculator({super.key});
 
   @override
-  _CalorieCalculatorPageState createState() => _CalorieCalculatorPageState();
+  State<CalorieCalculator> createState() => _CalorieCalculatorState();
 }
 
-class _CalorieCalculatorPageState extends State<CalorieCalculatorPage> {
-  // Controllers for input fields
-  final _ageController = TextEditingController();
-  final _heightController = TextEditingController();
-  final _weightController = TextEditingController();
+class _CalorieCalculatorState extends State<CalorieCalculator> {
+  final _weightController = TextEditingController(text: "95");
+  final _heightController = TextEditingController(text: "166");
+  final _ageController = TextEditingController(text: "21");
 
-  // Variables for storing selected values and the result
-  String _gender = 'male'; // Default: male
-  String _activityLevel = 'Sedentary'; // Default activity level
-  double? _calories; // Will store the calculated daily calories
+  String _gender = 'male';
+  String _activityLevel = 'active';
 
-  // Function to calculate calories based on the Mifflin-St Jeor equation
+  int proteins = 0, maxProteins = 0;
+  int fats = 0, maxFats = 0;
+  int carbs = 0, maxCarbs = 0;
+  int calories = 0, maxCalories = 0;
+
+  int _selectedIndex = 2;
+
   void _calculateCalories() {
-    final int age = int.tryParse(_ageController.text) ?? 0;
-    final double height = double.tryParse(_heightController.text) ?? 0.0;
-    final double weight = double.tryParse(_weightController.text) ?? 0.0;
-
-    double bmr;
-    if (_gender == 'male') {
-      // Mifflin-St Jeor for males
-      bmr = 10 * weight + 6.25 * height - 5 * age + 5;
-    } else {
-      // Mifflin-St Jeor for females
-      bmr = 10 * weight + 6.25 * height - 5 * age - 161;
-    }
-
-    // Determine activity factor
-    double activityFactor;
-    switch (_activityLevel) {
-      case 'Lightly Active':
-        activityFactor = 1.375;
-        break;
-      case 'Moderately Active':
-        activityFactor = 1.55;
-        break;
-      case 'Very Active':
-        activityFactor = 1.725;
-        break;
-      case 'Extra Active':
-        activityFactor = 1.9;
-        break;
-      default: // Sedentary
-        activityFactor = 1.2;
-    }
-
-    // Calculate final daily calories
-    double finalCalories = bmr * activityFactor;
-
     setState(() {
-      _calories = finalCalories;
+      final double weight = double.tryParse(_weightController.text) ?? 0;
+      final double height = double.tryParse(_heightController.text) ?? 0;
+      final int age = int.tryParse(_ageController.text) ?? 0;
+
+      double bmr;
+      if (_gender == 'male') {
+        bmr = 10 * weight + 6.25 * height - 5 * age + 5;
+      } else {
+        bmr = 10 * weight + 6.25 * height - 5 * age - 161;
+      }
+
+      final activityMultipliers = {
+        'sedentary': 1.2,
+        'lightly active': 1.375,
+        'active': 1.55,
+        'very active': 1.725,
+        'extra active': 1.9,
+      };
+      final multiplier = activityMultipliers[_activityLevel] ?? 1.2;
+
+      maxCalories = (bmr * multiplier).round();
+      calories = 0; // Reset display
+
+      maxProteins = ((maxCalories * 0.3) / 4).round();
+      maxFats = ((maxCalories * 0.3) / 9).round();
+      maxCarbs = ((maxCalories * 0.4) / 4).round();
+
+      proteins = 0;
+      fats = 0;
+      carbs = 0;
     });
   }
 
   Widget _buildTextField({
     required TextEditingController controller,
     required String label,
-    required IconData icon,
-    required TextInputType keyboardType,
+    IconData? icon,
+    TextInputType keyboardType = TextInputType.text,
+    Widget? suffix,
   }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF2A2A2A),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: TextField(
-        controller: controller,
-        keyboardType: keyboardType,
-        style: const TextStyle(color: Colors.white),
-        decoration: InputDecoration(
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          labelText: label,
-          labelStyle: const TextStyle(color: Colors.grey),
-          border: InputBorder.none,
-          prefixIcon: Icon(icon, color: const Color(0xFF8E7AFE)),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: Color(0xFF8E7AFE), width: 1),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label,
+            style: const TextStyle(
+                color: Color(0xFF8E7AFE),
+                fontWeight: FontWeight.w600,
+                fontSize: 15)),
+        const SizedBox(height: 4),
+        TextField(
+          controller: controller,
+          keyboardType: keyboardType,
+          style: const TextStyle(color: Colors.black),
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: Colors.white,
+            contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            suffixIcon: suffix,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide.none,
+            ),
           ),
         ),
-      ),
+        const SizedBox(height: 12),
+      ],
     );
   }
 
-  Widget _buildActivityLevelDropdown() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      decoration: BoxDecoration(
-        color: const Color(0xFF2A2A2A),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.fitness_center, color: Color(0xFF8E7AFE)),
-          const SizedBox(width: 12),
-          Expanded(
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                dropdownColor: const Color(0xFF2A2A2A),
-                isExpanded: true,
-                value: _activityLevel,
-                items: <String>[
-                  'Sedentary',
-                  'Lightly Active',
-                  'Moderately Active',
-                  'Very Active',
-                  'Extra Active'
-                ].map((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(
-                      value,
-                      style: const TextStyle(color: Colors.white),
-                    ),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _activityLevel = value!;
-                  });
-                },
-                icon: const Icon(Icons.arrow_drop_down, color: Color(0xFF8E7AFE)),
-                style: const TextStyle(color: Colors.white),
-              ),
+  Widget _buildActivityDropdown() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Activity Level',
+            style: TextStyle(
+                color: Color(0xFF8E7AFE),
+                fontWeight: FontWeight.w600,
+                fontSize: 15)),
+        const SizedBox(height: 4),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: _activityLevel,
+              isExpanded: true,
+              icon: const Icon(Icons.arrow_drop_down),
+              items: [
+                'sedentary',
+                'lightly active',
+                'active',
+                'very active',
+                'extra active'
+              ]
+                  .map((level) => DropdownMenuItem(
+                value: level,
+                child: Text(level,
+                    style: const TextStyle(color: Colors.black)),
+              ))
+                  .toList(),
+              onChanged: (value) {
+                setState(() {
+                  _activityLevel = value!;
+                });
+              },
             ),
           ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 12),
+      ],
     );
   }
 
   Widget _buildGenderSelector() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Gender',
+            style: TextStyle(
+                color: Color(0xFF8E7AFE),
+                fontWeight: FontWeight.w600,
+                fontSize: 15)),
+        const SizedBox(height: 4),
+        Row(
+          children: [
+            Row(
+              children: [
+                Radio<String>(
+                  value: 'male',
+                  groupValue: _gender,
+                  activeColor: Colors.grey,
+                  onChanged: (value) {
+                    setState(() {
+                      _gender = value!;
+                    });
+                  },
+                ),
+                const Text('Male',
+                    style: TextStyle(color: Colors.white, fontSize: 15)),
+              ],
+            ),
+            const SizedBox(width: 12),
+            Row(
+              children: [
+                Radio<String>(
+                  value: 'female',
+                  groupValue: _gender,
+                  activeColor: Color(0xFFEFFF4B),
+                  onChanged: (value) {
+                    setState(() {
+                      _gender = value!;
+                    });
+                  },
+                ),
+                const Text('Female',
+                    style: TextStyle(color: Colors.white, fontSize: 15)),
+              ],
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+      ],
+    );
+  }
+
+  Widget _buildMacrosCard() {
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: const Color(0xFF2A2A2A),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
       ),
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
       child: Row(
         children: [
-          const SizedBox(width: 16),
-          const Icon(Icons.person, color: Color(0xFF8E7AFE)),
-          const SizedBox(width: 12),
-          const Text(
-            'Gender:',
-            style: TextStyle(color: Colors.grey),
+          Expanded(
+            child: Column(
+              children: [
+                Text('$maxProteins g',
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 13)),
+                const SizedBox(height: 2),
+                LinearProgressIndicator(
+                  value: maxProteins == 0 ? 0 : proteins / maxProteins,
+                  color: Colors.orange,
+                  backgroundColor: Colors.grey.shade300,
+                  minHeight: 5,
+                ),
+                const SizedBox(height: 2),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: const [
+                    Text('🥩', style: TextStyle(fontSize: 16)),
+                    SizedBox(width: 4),
+                    Text('Proteins',
+                        style: TextStyle(
+                            fontWeight: FontWeight.w500, fontSize: 13)),
+                  ],
+                )
+              ],
+            ),
           ),
           Expanded(
-            child: Row(
+            child: Column(
               children: [
-                Expanded(
-                  child: RadioListTile<String>(
-                    activeColor: const Color(0xFF8E7AFE),
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text('Male', style: TextStyle(color: Colors.white, fontSize: 14)),
-                    value: 'male',
-                    groupValue: _gender,
-                    onChanged: (value) {
-                      setState(() {
-                        _gender = value!;
-                      });
-                    },
-                  ),
+                Text('$maxFats g',
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 13)),
+                const SizedBox(height: 2),
+                LinearProgressIndicator(
+                  value: maxFats == 0 ? 0 : fats / maxFats,
+                  color: Color(0xFFEFFF4B),
+                  backgroundColor: Colors.grey.shade300,
+                  minHeight: 5,
                 ),
-                Expanded(
-                  child: RadioListTile<String>(
-                    activeColor: const Color(0xFF8E7AFE),
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text('Female', style: TextStyle(color: Colors.white, fontSize: 14)),
-                    value: 'female',
-                    groupValue: _gender,
-                    onChanged: (value) {
-                      setState(() {
-                        _gender = value!;
-                      });
-                    },
-                  ),
+                const SizedBox(height: 2),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: const [
+                    Text('🥑', style: TextStyle(fontSize: 16)),
+                    SizedBox(width: 4),
+                    Text('Fats',
+                        style: TextStyle(
+                            fontWeight: FontWeight.w500, fontSize: 13)),
+                  ],
+                )
+              ],
+            ),
+          ),
+          Expanded(
+            child: Column(
+              children: [
+                Text('$maxCarbs g',
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 13)),
+                const SizedBox(height: 2),
+                LinearProgressIndicator(
+                  value: maxCarbs == 0 ? 0 : carbs / maxCarbs,
+                  color: Color(0xFF8E7AFE),
+                  backgroundColor: Colors.grey.shade300,
+                  minHeight: 5,
                 ),
+                const SizedBox(height: 2),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: const [
+                    Text('🍚', style: TextStyle(fontSize: 16)),
+                    SizedBox(width: 4),
+                    Text('Carbs',
+                        style: TextStyle(
+                            fontWeight: FontWeight.w500, fontSize: 13)),
+                  ],
+                )
               ],
             ),
           ),
@@ -199,85 +290,101 @@ class _CalorieCalculatorPageState extends State<CalorieCalculatorPage> {
     );
   }
 
-  Widget _buildResultCard() {
-    if (_calories == null) return const SizedBox.shrink();
-
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 24),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF8E7AFE), Color(0xFF6A5AE0)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF8E7AFE).withOpacity(0.3),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+  Widget _buildCalculateButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 48,
+      child: ElevatedButton(
+        onPressed: _calculateCalories,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFFEFFF4B),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(32),
           ),
-        ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: const [
+            Text(
+              "Calculate Now",
+              style: TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18),
+            ),
+            SizedBox(width: 8),
+            Icon(Icons.refresh, color: Colors.black),
+          ],
+        ),
       ),
+    );
+  }
+
+  Widget _buildCaloriesCard() {
+    return Container(
+      margin: const EdgeInsets.only(top: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
       child: Column(
         children: [
-          const Text(
-            'Your Daily Calorie Needs',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+          LinearProgressIndicator(
+            value: maxCalories == 0 ? 0 : calories / maxCalories,
+            color: Color(0xFF8E7AFE),
+            backgroundColor: Colors.grey.shade300,
+            minHeight: 7,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 6),
+          Text(
+            "$calories / $maxCalories kcal",
+            style: const TextStyle(
+                fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black),
+          ),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.local_fire_department, color: Colors.white, size: 36),
-              const SizedBox(width: 8),
-              Text(
-                _calories!.toStringAsFixed(0),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 36,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const Text(
-                ' kcal',
-                style: TextStyle(
-                  color: Colors.white70,
-                  fontSize: 20,
-                ),
-              ),
+            children: const [
+              Text('🔥', style: TextStyle(fontSize: 16)),
+              SizedBox(width: 4),
+              Text('Calories',
+                  style: TextStyle(
+                      fontWeight: FontWeight.w500,
+                      fontSize: 14,
+                      color: Colors.black)),
             ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            _getCalorieMessage(),
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 14,
-            ),
           ),
         ],
       ),
     );
   }
 
-  String _getCalorieMessage() {
-    if (_calories == null) return '';
-
-    final double weight = double.tryParse(_weightController.text) ?? 0.0;
-
-    if (_activityLevel == 'Sedentary') {
-      return 'Based on your sedentary lifestyle, try to stay active throughout the day to reach your fitness goals.';
-    } else if (_activityLevel == 'Very Active' || _activityLevel == 'Extra Active') {
-      return 'Your active lifestyle requires significant energy. Make sure to fuel properly with protein and complex carbs.';
-    } else {
-      return 'This is your maintenance calorie need. Adjust by 300-500 calories for weight goals.';
+  void _onItemTapped(int index) {
+    if (index == _selectedIndex) return;
+    switch (index) {
+      case 0: // Home
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomePage()),
+        );
+        break;
+      case 1: // Store
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const SupplementsStorePage()),
+        );
+        break;
+      case 2: // Calculator (Current Page)
+        setState(() {
+          _selectedIndex = index;
+        });
+        break;
+      case 3: // Profile or Support
+      // TODO: Implement navigation for the fourth item if needed
+        setState(() {
+          _selectedIndex = index;
+        });
+        break;
     }
   }
 
@@ -285,110 +392,87 @@ class _CalorieCalculatorPageState extends State<CalorieCalculatorPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF232323),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF232323),
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
-        title: const Text(
-          'Calorie Calculator',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        centerTitle: true,
-      ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.fromLTRB(18, 18, 18, 0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Calculate Your Daily Calorie Needs',
-                style: TextStyle(
-                  color: Color(0xFF8E7AFE),
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Fill in your details to get an accurate estimation',
-                style: TextStyle(
-                  color: Colors.grey,
-                  fontSize: 14,
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              _buildGenderSelector(),
-
-              _buildTextField(
-                controller: _ageController,
-                label: 'Age (years)',
-                icon: Icons.cake,
-                keyboardType: TextInputType.number,
-              ),
-
-              _buildTextField(
-                controller: _heightController,
-                label: 'Height (cm)',
-                icon: Icons.height,
-                keyboardType: TextInputType.number,
-              ),
-
-              _buildTextField(
-                controller: _weightController,
-                label: 'Weight (kg)',
-                icon: Icons.fitness_center,
-                keyboardType: TextInputType.number,
-              ),
-
-              const SizedBox(height: 8),
-              const Text(
-                'Activity Level',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(height: 8),
-
-              _buildActivityLevelDropdown(),
-
-              const SizedBox(height: 32),
-
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: _calculateCalories,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF8E7AFE),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
+              Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back, color: Colors.white, size: 22),
+                    onPressed: () => Navigator.pop(context),
                   ),
-                  child: const Text(
-                    'CALCULATE',
+                  const SizedBox(width: 8),
+                  const Text(
+                    "Calorie Calculator",
                     style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+                        color: Color(0xFF8E7AFE),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20),
                   ),
-                ),
+                  const SizedBox(width: 6),
+                  const Text("🍏", style: TextStyle(fontSize: 20)),
+                ],
               ),
-
-              _buildResultCard(),
+              const SizedBox(height: 20),
+              _buildTextField(
+                  controller: _weightController,
+                  label: "Weight (kg)",
+                  keyboardType: TextInputType.number),
+              _buildTextField(
+                  controller: _heightController,
+                  label: "Height (cm)",
+                  keyboardType: TextInputType.number),
+              _buildTextField(
+                  controller: _ageController,
+                  label: "Age",
+                  keyboardType: TextInputType.number,
+                  suffix: const Icon(Icons.calendar_today, color: Colors.grey)),
+              _buildActivityDropdown(),
+              _buildGenderSelector(),
+              _buildMacrosCard(),
+              const SizedBox(height: 18),
+              _buildCalculateButton(),
+              _buildCaloriesCard(),
+              const SizedBox(height: 18),
             ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20.0),
+          child: BottomNavigationBar(
+            items: const <BottomNavigationBarItem>[
+              BottomNavigationBarItem(
+                icon: Icon(Icons.home),
+                label: 'Home',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.shopping_cart),
+                label: 'Store',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.star),
+                label: 'Calculator',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.person),
+                label: 'Profile',
+              ),
+            ],
+            currentIndex: _selectedIndex,
+            onTap: _onItemTapped,
+            backgroundColor: const Color(0xFF8E7AFE),
+            selectedItemColor: Colors.white,
+            unselectedItemColor: Colors.white70,
+            showSelectedLabels: false,
+            showUnselectedLabels: false,
+            type: BottomNavigationBarType.fixed,
+            elevation: 0,
           ),
         ),
       ),

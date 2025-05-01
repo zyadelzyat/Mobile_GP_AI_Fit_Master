@@ -186,9 +186,9 @@ class _HomePageState extends State<HomePage> {
         break;
       case 'CalorieCalculator':
         Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (context) => const CalorieCalculatorPage()));
+          context,
+          MaterialPageRoute(
+              builder: (context) => const CalorieCalculator()));
         break;
       case 'SupplementsStore':
         Navigator.push(
