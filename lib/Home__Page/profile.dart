@@ -7,8 +7,10 @@ import 'package:intl/intl.dart'; // For date formatting
 import 'package:untitled/Login___Signup/01_signin_screen.dart';
 // Import the detailed profile page
 import 'detailed_profile_page.dart'; // Make sure this path is correct
-// *** IMPORT FOR CHATBOT - Check this path and project name 'untitled' ***
-import 'package:untitled/AI/chatbot.dart'; // Replace 'untitled' if needed
+// Import for Chatbot - Check path and project name 'untitled'
+import 'package:untitled/AI/chatbot.dart'; // Replace 'untitled' if needed. Ensure 'ChatPage' (or your class name) is defined here.
+// Import Favorite Page - Make sure this path is correct
+import 'favorite_page.dart'; // Ensure 'FavoritePage' (or your actual class name) is defined in this file.
 
 class ProfilePage extends StatefulWidget {
   final String userId;
@@ -270,18 +272,30 @@ class _ProfilePageState extends State<ProfilePage> {
                 _buildProfileMenuItem(
                   icon: Icons.star_outline,
                   title: 'Favorite',
-                  onTap: () { print("Navigate to Favorite"); }, // Placeholder
+                  onTap: () {
+                    // *** VERIFY CLASS NAME HERE ***
+                    // Check your 'favorite_page.dart' file.
+                    // Replace 'FavoritePage' with the actual class name defined in that file.
+                    // Example: If the class is 'MyFavoriteScreen', use 'const MyFavoriteScreen()'
+                    try {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => FavoritesPage(favoriteRecipes: [])),
+                      );
+                    } catch (e) {
+                      print("Error navigating to Favorites: $e");
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Could not open Favorites. Check class name."), backgroundColor: Colors.red),
+                      );
+                    }
+                  },
                 ),
                 _buildProfileMenuItem(
                   icon: Icons.list_alt_outlined,
                   title: 'My Plan',
                   onTap: () { print("Navigate to My Plan"); }, // Placeholder
                 ),
-                _buildProfileMenuItem(
-                  icon: Icons.lock_outline,
-                  title: 'Privacy Policy',
-                  onTap: () { print("Navigate to Privacy Policy"); }, // Placeholder
-                ),
+                // Privacy Policy item removed
                 _buildProfileMenuItem(
                   icon: Icons.settings_outlined,
                   title: 'Settings',
@@ -291,19 +305,17 @@ class _ProfilePageState extends State<ProfilePage> {
                   icon: Icons.support_agent_outlined,
                   title: 'Chatbot',
                   onTap: () {
-                    // *** UPDATED NAVIGATION - TRYING 'ChatPage' ***
-                    // *** PLEASE VERIFY: Check your AI/chatbot.dart file for the correct class name ***
-                    // *** If it's not 'ChatPage', replace it here. ***
+                    // *** VERIFY CLASS NAME HERE ***
+                    // Ensure 'ChatPage' class is defined in 'AI/chatbot.dart'
+                    // Replace 'ChatPage' if your class has a different name.
                     try {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          // Attempting navigation with ChatPage, common in examples [4][5]
-                          builder: (context) => const ChatPage(),
+                          builder: (context) => const ChatPage(), // <-- CHANGE 'ChatPage' IF NEEDED
                         ),
                       );
                     } catch (e) {
-                      // Basic error handling if navigation fails (e.g., class not found)
                       print("Error navigating to Chatbot: $e");
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text("Could not open Chatbot. Check class name."), backgroundColor: Colors.red),
@@ -325,8 +337,6 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 }
 
-// *** IMPORTANT: Ensure your AI/chatbot.dart file defines a class named 'ChatPage' ***
-// If your class has a different name (e.g., MyChatScreen), use that name instead:
-// builder: (context) => const MyChatScreen(),
-// Also, ensure the import at the top correctly points to your chatbot file:
-// import 'package:YOUR_PROJECT_NAME/AI/chatbot.dart';
+// Placeholders were removed in the previous step.
+// Ensure your actual classes ('ChatPage', 'FavoritePage', etc.)
+// are correctly defined in their respective files and imported properly.
