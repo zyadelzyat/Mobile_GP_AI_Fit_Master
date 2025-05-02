@@ -1241,60 +1241,61 @@ class _HomePageState extends State {
       body: SafeArea( // Ensure content avoids notches and system bars
         child: mainContent, // Display the selected content widget
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentNavIndex, // Highlight the current tab
-        onTap: (index) {
-          if (!mounted) return;
-          // Handle tab taps
-          if (index == 3) { // Profile Tab (Index 3)
-            _navigateToProfile(); // Navigate to profile page
-            // NOTE: We don't update _currentNavIndex here because Profile is a separate page,
-            // not just a different view within the main Scaffold body controlled by the index.
-            // The visual selection will remain on the previous tab until the user navigates back.
-          } else {
-            // For Home, Favorites, AI Coach tabs, just update the state
-            setState(() {
-              _currentNavIndex = index;
-            });
-          }
-        },
-        backgroundColor: const Color(0xFF232323), // Match background
-        selectedItemColor: const Color(0xFF8E7AFE), // Accent color for selected item
-        unselectedItemColor: Colors.grey, // Color for unselected items
-        type: BottomNavigationBarType.fixed, // Keep items fixed, labels always visible
-        showUnselectedLabels: true, // Ensure labels are always shown
-        selectedFontSize: 12, // Font size for labels
-        unselectedFontSize: 12,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home), // Filled icon when active
-            label: 'Home',
+        bottomNavigationBar: Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFF8E7AFE), // Purple background color
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(15),
+              topRight: Radius.circular(15),
+            ),
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.star_border_outlined),
-            activeIcon: Icon(Icons.star), // Filled star when active
-            label: 'Favorites',
+          child: BottomNavigationBar(
+            currentIndex: _currentNavIndex,
+            onTap: (index) {
+              if (!mounted) return;
+              if (index == 3) {
+                _navigateToChatbot(); // Navigate to chatbot page
+              } else if (index == 1) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const SupplementsStorePage()),
+                );
+              } else {
+                setState(() {
+                  _currentNavIndex = index;
+                });
+              }
+            },
+            backgroundColor: Colors.transparent, // Transparent to show the container color
+            selectedItemColor: Colors.white, // White for selected items
+            unselectedItemColor: Colors.white.withOpacity(0.7), // Slightly transparent white for unselected
+            type: BottomNavigationBarType.fixed,
+            showSelectedLabels: false, // Hide labels for cleaner look
+            showUnselectedLabels: false, // Hide labels for cleaner look
+            elevation: 0, // Remove shadow
+            items: const [
+              BottomNavigationBarItem(
+                icon: Icon(Icons.home_outlined),
+                activeIcon: Icon(Icons.home),
+                label: 'Home',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.shopping_cart_outlined),
+                activeIcon: Icon(Icons.shopping_cart),
+                label: 'Store',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.chat_bubble_outline),
+                activeIcon: Icon(Icons.chat_bubble),
+                label: 'Chat',
+              ),
+            ],
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.chat_bubble_outline),
-            activeIcon: Icon(Icons.chat_bubble), // Filled chat bubble when active
-            label: 'AI Coach',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            activeIcon: Icon(Icons.person), // Filled person icon when active
-            label: 'Profile',
-          ),
-        ],
-      ),
+        )
     );
   }
 }
 
-// -----------------------------------------------------------------------------
-// Helper class for displaying all videos page (navigated from "See All")
-// -----------------------------------------------------------------------------
 class AllVideosPage extends StatelessWidget {
   final List<Map<String, dynamic>> videos; // Receive list of videos
   const AllVideosPage({Key? key, required this.videos}) : super(key: key);
