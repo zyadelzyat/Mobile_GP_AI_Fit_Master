@@ -11,6 +11,7 @@ import 'Set Up/06 WeightSelectionScreen.dart';
 import 'Set Up/03 GenderSelectionScreen.dart';
 import 'Home__Page/Store.dart';
 import 'Home__Page/00_home_page.dart';
+import 'package:untitled/Home__Page/AddRatingPage.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -63,6 +64,7 @@ class _GenderSelectionAppState extends State<GenderSelectionApp> {
       //  home: const SignInScreen(),
       // home : AdminDashboard(),
       home : const HomePage(),
+      // home : const AddRatingPage(),
       debugShowCheckedModeBanner: false,
     );
   }
