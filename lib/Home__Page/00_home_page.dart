@@ -21,12 +21,12 @@ class HomePage extends StatefulWidget {
   _HomePageState createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State {
   int _selectedCategoryIndex = 0;
   int _currentNavIndex = 0; // 0: Home, 1: Favorites, 2: AI Coach, 3: Profile
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  Map<String, dynamic> _userData = {}; // Use specific type
+  Map _userData = {}; // Use specific type
   bool _isLoadingUserData = true; // Start as true
 
   // Static categories definitions
@@ -82,7 +82,7 @@ class _HomePageState extends State<HomePage> {
     // Add more workouts if needed
   ];
 
-  final List<Map<String, String>> _healthAndFitItems = [
+  final List<Map<String, dynamic>> _healthAndFitItems = [
     {
       'title': 'Supplement Guide',
       'description': '',
@@ -105,14 +105,12 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  Future<void> _fetchCurrentUserData() async {
+  Future _fetchCurrentUserData() async {
     // Ensure widget is still mounted before state changes
     if (!mounted) return;
-
     setState(() {
       _isLoadingUserData = true;
     });
-
     try {
       User? currentUser = _auth.currentUser;
       if (currentUser != null) {
@@ -120,7 +118,7 @@ class _HomePageState extends State<HomePage> {
         await _firestore.collection('users').doc(currentUser.uid).get();
         if (userDoc.exists && mounted) { // Check if mounted before setting state
           setState(() {
-            _userData = userDoc.data() as Map<String, dynamic>;
+            _userData = userDoc.data() as Map;
           });
         } else {
           print("User document does not exist for UID: ${currentUser.uid}");
@@ -146,28 +144,24 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  Future<void> _loadFavorites() async {
+  Future _loadFavorites() async {
     if (!mounted) return; // Check if component is still mounted
-
     try {
       User? currentUser = _auth.currentUser;
       if (currentUser != null) {
         DocumentSnapshot favoritesDoc =
         await _firestore.collection('favorites').doc(currentUser.uid).get();
-
         if (favoritesDoc.exists && mounted) {
-          Map<String, dynamic> favoritesData =
-          favoritesDoc.data() as Map<String, dynamic>;
-          List<dynamic> favoriteWorkoutsTitlesDynamic = favoritesData['workouts'] ?? [];
-          List<String> favoriteWorkoutsTitles = favoriteWorkoutsTitlesDynamic.cast<String>();
-
+          Map favoritesData =
+          favoritesDoc.data() as Map;
+          List favoriteWorkoutsTitlesDynamic = favoritesData['workouts'] ?? [];
+          List favoriteWorkoutsTitles = favoriteWorkoutsTitlesDynamic.cast();
           // Update the 'isFavorite' status in the local _workouts list
           List<Map<String, dynamic>> updatedWorkouts = List.from(_workouts); // Create copy
           for (int i = 0; i < updatedWorkouts.length; i++) {
             String workoutTitle = updatedWorkouts[i]['title'];
             updatedWorkouts[i]['isFavorite'] = favoriteWorkoutsTitles.contains(workoutTitle);
           }
-
           if (mounted) {
             setState(() {
               _workouts = updatedWorkouts; // Assign the updated list back
@@ -195,27 +189,23 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-
-  Future<void> _saveFavorites() async {
+  Future _saveFavorites() async {
     if (!mounted) return; // Check if component is still mounted
-
     try {
       User? currentUser = _auth.currentUser;
       if (currentUser != null) {
         // Collect titles of favorite workouts
-        List<String> favoriteWorkoutsTitles = [];
+        List favoriteWorkoutsTitles = [];
         for (var workout in _workouts) {
           if (workout['isFavorite'] == true) {
             favoriteWorkoutsTitles.add(workout['title']);
           }
         }
-
         // Save to Firestore
         await _firestore.collection('favorites').doc(currentUser.uid).set({
           'workouts': favoriteWorkoutsTitles,
           'lastUpdated': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true)); // Use merge to avoid overwriting other potential fields
-
         print("Favorites saved successfully.");
       }
     } catch (e) {
@@ -231,7 +221,6 @@ class _HomePageState extends State<HomePage> {
   // --- Navigation ---
   void _navigateToFeature(String? routeName) {
     if (routeName == null || !mounted) return; // Check context validity
-
     switch (routeName) {
       case 'Workout':
       // Default workout section is part of the main screen, do nothing
@@ -275,7 +264,7 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  Future<void> _launchUrlHelper(String url) async {
+  Future _launchUrlHelper(String url) async {
     final Uri uri = Uri.parse(url);
     if (!mounted) return;
     try {
@@ -300,11 +289,11 @@ class _HomePageState extends State<HomePage> {
   }
 
   // Specific launch functions
-  Future<void> _launchYouTubeChannel() async {
+  Future _launchYouTubeChannel() async {
     await _launchUrlHelper('https://www.youtube.com/@yusufashraf17');
   }
 
-  Future<void> _launchVideo(String url) async {
+  Future _launchVideo(String url) async {
     await _launchUrlHelper(url);
   }
 
@@ -347,7 +336,6 @@ class _HomePageState extends State<HomePage> {
   // --- State Management ---
   void _toggleFavorite(int index) {
     if (!mounted) return;
-
     setState(() {
       // Check index bounds before accessing _workouts
       if (index >= 0 && index < _workouts.length) {
@@ -367,11 +355,9 @@ class _HomePageState extends State<HomePage> {
   }
 
   // --- WIDGET BUILDERS ---
-
   Widget _buildCategoryIcon(dynamic icon, String label, int index) {
     // Determine the display label (show "Workout" even if label is "YT_Workout")
     String displayLabel = (label == 'YT_Workout') ? 'Workout' : label;
-
     return GestureDetector(
       onTap: () {
         if (!mounted) return;
@@ -425,15 +411,13 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildWorkoutCard(Map<String, dynamic> workout, int index) {
+  Widget _buildWorkoutCard(Map workout, int index) {
     final videoUrl = workout['videoUrl'] as String?;
     final isFavorite = workout['isFavorite'] as bool? ?? false; // Safely handle null
     final imageUrl = workout['image'] as String? ?? 'assets/placeholder.png'; // Provide a default
     final title = workout['title'] as String? ?? 'No Title';
     final duration = workout['duration'] as String? ?? '-';
     final calories = workout['calories'] as String? ?? '-';
-
-
     return GestureDetector(
       onTap: () {
         if (videoUrl != null && videoUrl.isNotEmpty) {
@@ -565,11 +549,9 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-
-  Widget _buildHealthAndFitCard(Map<String, String> item) {
+  Widget _buildHealthAndFitCard(Map item) {
     final imageUrl = item['image'] ?? 'assets/placeholder.png'; // Default image
     final title = item['title'] ?? 'No Title'; // Default title
-
     return Container(
       width: MediaQuery.of(context).size.width * 0.44, // Responsive width
       margin: const EdgeInsets.only(right: 10),
@@ -616,14 +598,12 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // **** START: UPDATED Rating Section Widget Builder ****
   Widget _buildRatingSection() {
     // --- Placeholder Data ---
     String coachName = "Coach";
     String coachImageUrl = "assets/coach_placeholder.png";
     double currentRating = 4.0;
     String lastComment = "Good effort but ..........";
-
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -669,7 +649,6 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ],
                 ),
-
                 // Add Rating button
                 InkWell(
                   onTap: () {
@@ -709,9 +688,7 @@ class _HomePageState extends State<HomePage> {
                 ),
               ],
             ),
-
             const SizedBox(height: 16),
-
             // Coach info, stars and comment
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -725,9 +702,7 @@ class _HomePageState extends State<HomePage> {
                     print('Error loading coach image: $exception');
                   },
                 ),
-
                 const SizedBox(width: 12),
-
                 // Rating and comment column
                 Expanded(
                   child: Column(
@@ -745,9 +720,7 @@ class _HomePageState extends State<HomePage> {
                           );
                         }),
                       ),
-
                       const SizedBox(height: 4),
-
                       // Comment text
                       Text(
                         lastComment,
@@ -758,7 +731,6 @@ class _HomePageState extends State<HomePage> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-
                       // Coach name
                       Text(
                         coachName,
@@ -777,15 +749,14 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
+
   // **** END: UPDATED Rating Section Widget Builder ****
 
   Widget _buildFavoritesView() {
     if (!mounted) return const SizedBox.shrink(); // Handle component unmounting
-
     // Filter workouts marked as favorite
     List<Map<String, dynamic>> favoriteWorkouts =
     _workouts.where((workout) => workout['isFavorite'] == true).toList();
-
     // Display a message if no favorites exist
     if (favoriteWorkouts.isEmpty) {
       return Center(
@@ -832,26 +803,23 @@ class _HomePageState extends State<HomePage> {
         // This is important because _toggleFavorite uses the index from the main list
         final originalIndex = _workouts.indexWhere(
                 (workout) => workout['title'] == favoriteWorkouts[index]['title']);
-
         if (originalIndex == -1) {
           // Handle edge case where workout might not be found (shouldn't happen usually)
           print("Warning: Could not find original index for favorite workout: ${favoriteWorkouts[index]['title']}");
           return const SizedBox.shrink(); // Return an empty widget
         }
-
         return _buildFavoriteWorkoutCard(favoriteWorkouts[index], originalIndex);
       },
     );
   }
 
   // Helper widget for displaying a favorite workout card
-  Widget _buildFavoriteWorkoutCard(Map<String, dynamic> workout, int originalIndex) {
+  Widget _buildFavoriteWorkoutCard(Map workout, int originalIndex) {
     final videoUrl = workout['videoUrl'] as String?;
     final imageUrl = workout['image'] as String? ?? 'assets/placeholder.png';
     final title = workout['title'] as String? ?? 'No Title';
     final duration = workout['duration'] as String? ?? '-';
     final calories = workout['calories'] as String? ?? '-';
-
     return Container(
       margin: const EdgeInsets.only(bottom: 16), // Space between cards
       decoration: BoxDecoration(
@@ -972,7 +940,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
     // Determine user name, show 'User' while loading or if name is missing
@@ -980,7 +947,6 @@ class _HomePageState extends State<HomePage> {
 
     // Determine which content to show based on the selected navigation index
     Widget mainContent;
-
     if (_isLoadingUserData) {
       // Show loading indicator while fetching user data
       mainContent = const Center(
@@ -1053,7 +1019,6 @@ class _HomePageState extends State<HomePage> {
                 ],
               ),
             ),
-
             // --- Category Icons Section ---
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -1069,7 +1034,6 @@ class _HomePageState extends State<HomePage> {
                 }),
               ),
             ),
-
             // --- Workouts Section ---
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -1121,79 +1085,81 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(height: 24), // Spacing before next section
 
             // --- Promotional Banner ---
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Container(
-                width: double.infinity, // Full width banner
-                height: 120, // Fixed height
-                decoration: BoxDecoration(
-                  color: const Color(0xFF8E7AFE).withOpacity(0.2), // Light accent background
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: Row(
-                  children: [
-                    Expanded( // Text section takes available space
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center, // Center text vertically
-                          children: const [
-                            Text(
-                              "Don't Give Up", // Banner title
-                              style: TextStyle(
-                                color: Colors.yellow, // Highlight color
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
+            // Only show the "Don't Give Up" banner if user role is NOT 'Trainee'
+            if (!(_userData.containsKey('role') && _userData['role'] == 'Trainee')) ...[
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Container(
+                  width: double.infinity, // Full width banner
+                  height: 120, // Fixed height
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF8E7AFE).withOpacity(0.2), // Light accent background
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded( // Text section takes available space
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center, // Center text vertically
+                            children: const [
+                              Text(
+                                "Don't Give Up", // Banner title
+                                style: TextStyle(
+                                  color: Colors.yellow, // Highlight color
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                            ),
-                            SizedBox(height: 8),
-                            Text(
-                              "Explore Plans with Pro Tips!", // Banner subtitle
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
+                              SizedBox(height: 8),
+                              Text(
+                                "Explore Plans with Pro Tips!", // Banner subtitle
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                    // Banner Image
-                    ClipRRect( // Clip image to match container radius
-                      borderRadius: const BorderRadius.horizontal(
-                          right: Radius.circular(15)), // Only round right corners
-                      child: Image.asset(
-                        'assets/workout1.jpg', // Use a relevant banner image
-                        width: 150, // Fixed image width
-                        height: 120, // Match container height
-                        fit: BoxFit.cover, // Cover the area
-                        errorBuilder: (context, error, stackTrace) {
-                          print("Error loading banner image: $error");
-                          return Container( // Placeholder on error
-                            width: 150, height: 120, color: Colors.grey[800],
-                            child: const Center(child: Icon(Icons.broken_image, color: Colors.grey)),
-                          );
-                        },
+                      // Banner Image
+                      ClipRRect( // Clip image to match container radius
+                        borderRadius: const BorderRadius.horizontal(
+                            right: Radius.circular(15)), // Only round right corners
+                        child: Image.asset(
+                          'assets/workout1.jpg', // Use a relevant banner image
+                          width: 150, // Fixed image width
+                          height: 120, // Match container height
+                          fit: BoxFit.cover, // Cover the area
+                          errorBuilder: (context, error, stackTrace) {
+                            print("Error loading banner image: $error");
+                            return Container( // Placeholder on error
+                              width: 150, height: 120, color: Colors.grey[800],
+                              child: const Center(child: Icon(Icons.broken_image, color: Colors.grey)),
+                            );
+                          },
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 24), // Spacing
+              const SizedBox(height: 24), // Spacing
+            ],
 
             // **** START: Conditional Rating Section ****
             // Conditionally display the updated rating section only if the user role is 'Trainee'
             if (_userData.containsKey('role') && _userData['role'] == 'Trainee') ...[
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: _buildRatingSection(), // Calls the updated widget [1][2]
+                child: _buildRatingSection(),
               ),
               const SizedBox(height: 24), // Spacing after rating section
             ],
             // **** END: Conditional Rating Section ****
-
 
             // --- Health & Fit Section ---
             Padding(
@@ -1255,7 +1221,6 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ],
-
             const SizedBox(height: 16), // Bottom padding inside scroll view
           ],
         ),
@@ -1327,21 +1292,17 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-
 // -----------------------------------------------------------------------------
 // Helper class for displaying all videos page (navigated from "See All")
 // -----------------------------------------------------------------------------
 class AllVideosPage extends StatelessWidget {
   final List<Map<String, dynamic>> videos; // Receive list of videos
-
   const AllVideosPage({Key? key, required this.videos}) : super(key: key);
 
-
   // Helper to launch video URL safely
-  Future<void> _launchVideo(BuildContext context, String url) async {
+  Future _launchVideo(BuildContext context, String url) async {
     final Uri uri = Uri.parse(url);
     if (!context.mounted) return; // Check if context is still valid
-
     try {
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri, mode: LaunchMode.externalApplication); // Open externally
@@ -1364,13 +1325,12 @@ class AllVideosPage extends StatelessWidget {
   }
 
   // Builder for individual video cards in the list
-  Widget _buildVideoCard(BuildContext context, Map<String, dynamic> video) {
+  Widget _buildVideoCard(BuildContext context, Map video) {
     final videoUrl = video['videoUrl'] as String?;
     final imageUrl = video['image'] as String? ?? 'assets/placeholder.png';
     final title = video['title'] as String? ?? 'No Title';
     final duration = video['duration'] as String? ?? '-';
     final calories = video['calories'] as String? ?? '-';
-
     return GestureDetector(
       onTap: () {
         if (videoUrl != null && videoUrl.isNotEmpty) {
@@ -1476,7 +1436,6 @@ class AllVideosPage extends StatelessWidget {
       ),
     );
   }
-
 
   @override
   Widget build(BuildContext context) {
