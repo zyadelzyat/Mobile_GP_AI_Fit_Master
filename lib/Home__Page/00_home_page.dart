@@ -1,21 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:provider/provider.dart'; // Assuming needed for ThemeProvider if used
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart'; // Import Rating Bar
-
-import 'package:untitled/AI/chatbot.dart';
-import 'package:untitled/profile.dart';
-import 'package:untitled/theme_provider.dart';
-import 'package:untitled/videos_page.dart';
-import 'CalorieCalculator.dart';
-import 'Store.dart';
-import 'trainer_trainees_page.dart';
+import 'package:untitled/AI/chatbot.dart'; // Replace 'untitled' with your project name
+import 'package:untitled/profile.dart'; // Replace 'untitled'
+// import 'package:untitled/theme_provider.dart'; // Uncomment if needed
+import 'package:untitled/videos_page.dart'; // Replace 'untitled'
+import 'CalorieCalculator.dart'; // Replace 'untitled' if needed
+import 'Store.dart'; // Replace 'untitled' if needed
+import 'trainer_trainees_page.dart'; // Replace 'untitled' if needed
 import 'package:url_launcher/url_launcher.dart';
-import 'package:untitled/Home__Page/NutritionMainPage.dart';
-
-// Import the Add Rating Page (ensure this file exists)
-import 'AddRatingPage.dart'; // Import Add Rating Page
+import 'package:untitled/Home__Page/NutritionMainPage.dart'; // Replace 'untitled'
+import 'AddRatingPage.dart'; // Replace 'untitled' if needed
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -26,14 +23,15 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _selectedCategoryIndex = 0;
-  int _currentNavIndex = 0;
+  int _currentNavIndex = 0; // 0: Home, 1: Favorites, 2: AI Coach, 3: Profile
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  Map<String, dynamic> _userData = {}; // Specify type
+  Map<String, dynamic> _userData = {}; // Use specific type
   bool _isLoadingUserData = true; // Start as true
 
+  // Static categories definitions
   final List<Map<String, dynamic>> _categories = [
-    {'icon': Icons.fitness_center, 'label': 'Workout', 'route': null},
+    {'icon': Icons.fitness_center, 'label': 'Workout', 'route': null}, // Route null for default workout section
     {'icon': Icons.insert_chart, 'label': 'Nutrition', 'route': 'Nutrition'},
     {'icon': Icons.shopping_bag, 'label': 'Products', 'route': 'SupplementsStore'},
     {'icon': Icons.calculate_outlined, 'label': 'Calories', 'route': 'CalorieCalculator'},
@@ -42,7 +40,8 @@ class _HomePageState extends State<HomePage> {
   // Dynamic categories based on user role
   List<Map<String, dynamic>> get _filteredCategories {
     List<Map<String, dynamic>> categories = List.from(_categories); // Create a modifiable copy
-    if (_userData['role'] == 'Self-Trainee') {
+
+    if (_userData.containsKey('role') && _userData['role'] == 'Self-Trainee') {
       // Exclude Nutrition and modify Workout for Self-Trainee
       categories = categories
           .where((category) => category['label'] != 'Nutrition')
@@ -50,8 +49,8 @@ class _HomePageState extends State<HomePage> {
         if (category['label'] == 'Workout') {
           return {
             'icon': null, // Use null to indicate custom image (YouTube logo)
-            'label': 'YT_Workout',
-            'route': 'YT_Channel',
+            'label': 'YT_Workout', // Special label to identify YouTube workout
+            'route': 'YT_Channel', // Route to launch YouTube channel
           };
         }
         return category;
@@ -60,7 +59,6 @@ class _HomePageState extends State<HomePage> {
     return categories;
   }
 
-  // Ensure consistent typing for maps
   // Made _workouts mutable for favorite state changes
   List<Map<String, dynamic>> _workouts = [
     {
@@ -70,7 +68,7 @@ class _HomePageState extends State<HomePage> {
       'videoUrl': 'https://youtube.com/shorts/ajWEUdlbMOA?si=2N01glDn192AaGv6',
       'duration': '8 Minutes',
       'calories': '90 kcal',
-      'isFavorite': false,
+      'isFavorite': false, // Initialize as false, load state later
     },
     {
       'title': 'Best Bulking Drink For Skinny Guys!',
@@ -84,8 +82,7 @@ class _HomePageState extends State<HomePage> {
     // Add more workouts if needed
   ];
 
-
-  final List<Map<String, dynamic>> _healthAndFitItems = [
+  final List<Map<String, String>> _healthAndFitItems = [
     {
       'title': 'Supplement Guide',
       'description': '',
@@ -102,6 +99,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    // Fetch user data first, then load favorites which might depend on user ID
     _fetchCurrentUserData().then((_) {
       _loadFavorites(); // Load favorites after user data is fetched
     });
@@ -110,9 +108,11 @@ class _HomePageState extends State<HomePage> {
   Future<void> _fetchCurrentUserData() async {
     // Ensure widget is still mounted before state changes
     if (!mounted) return;
+
     setState(() {
       _isLoadingUserData = true;
     });
+
     try {
       User? currentUser = _auth.currentUser;
       if (currentUser != null) {
@@ -122,11 +122,16 @@ class _HomePageState extends State<HomePage> {
           setState(() {
             _userData = userDoc.data() as Map<String, dynamic>;
           });
+        } else {
+          print("User document does not exist for UID: ${currentUser.uid}");
+          // Handle case where user doc doesn't exist (e.g., show error or default values)
         }
+      } else {
+        print("No current user logged in.");
+        // Handle case where no user is logged in (e.g., navigate to login)
       }
     } catch (e) {
       print("Error fetching user data: $e");
-      // Optionally show an error message to the user
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Error loading profile: ${e.toString()}'))
@@ -142,17 +147,19 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _loadFavorites() async {
-    if (!mounted) return;
+    if (!mounted) return; // Check if component is still mounted
+
     try {
       User? currentUser = _auth.currentUser;
       if (currentUser != null) {
         DocumentSnapshot favoritesDoc =
         await _firestore.collection('favorites').doc(currentUser.uid).get();
+
         if (favoritesDoc.exists && mounted) {
           Map<String, dynamic> favoritesData =
           favoritesDoc.data() as Map<String, dynamic>;
-          // Ensure 'workouts' exists and is a list, default to empty list if null
-          List<dynamic> favoriteWorkoutsTitles = favoritesData['workouts'] as List<dynamic>? ?? [];
+          List<dynamic> favoriteWorkoutsTitlesDynamic = favoritesData['workouts'] ?? [];
+          List<String> favoriteWorkoutsTitles = favoriteWorkoutsTitlesDynamic.cast<String>();
 
           // Update the 'isFavorite' status in the local _workouts list
           List<Map<String, dynamic>> updatedWorkouts = List.from(_workouts); // Create copy
@@ -161,10 +168,19 @@ class _HomePageState extends State<HomePage> {
             updatedWorkouts[i]['isFavorite'] = favoriteWorkoutsTitles.contains(workoutTitle);
           }
 
-          // Update state only if component is still mounted
           if (mounted) {
             setState(() {
               _workouts = updatedWorkouts; // Assign the updated list back
+            });
+          }
+        } else {
+          print("No favorites document found for user ${currentUser.uid}");
+          // Ensure all workouts are marked as not favorite if no document exists
+          if (mounted) {
+            setState(() {
+              for (var workout in _workouts) {
+                workout['isFavorite'] = false;
+              }
             });
           }
         }
@@ -181,10 +197,12 @@ class _HomePageState extends State<HomePage> {
 
 
   Future<void> _saveFavorites() async {
-    if (!mounted) return;
+    if (!mounted) return; // Check if component is still mounted
+
     try {
       User? currentUser = _auth.currentUser;
       if (currentUser != null) {
+        // Collect titles of favorite workouts
         List<String> favoriteWorkoutsTitles = [];
         for (var workout in _workouts) {
           if (workout['isFavorite'] == true) {
@@ -192,10 +210,13 @@ class _HomePageState extends State<HomePage> {
           }
         }
 
+        // Save to Firestore
         await _firestore.collection('favorites').doc(currentUser.uid).set({
           'workouts': favoriteWorkoutsTitles,
           'lastUpdated': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true)); // Use merge to avoid overwriting other potential favorite types
+        }, SetOptions(merge: true)); // Use merge to avoid overwriting other potential fields
+
+        print("Favorites saved successfully.");
       }
     } catch (e) {
       print("Error saving favorites: $e");
@@ -207,12 +228,13 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  // --- Navigation ---
   void _navigateToFeature(String? routeName) {
-    if (routeName == null || !mounted) return;
+    if (routeName == null || !mounted) return; // Check context validity
 
     switch (routeName) {
       case 'Workout':
-      // Maybe navigate to a general workout page or do nothing if handled by categories
+      // Default workout section is part of the main screen, do nothing
         break;
       case 'Nutrition':
         Navigator.push(
@@ -243,24 +265,41 @@ class _HomePageState extends State<HomePage> {
       case 'YT_Channel':
         _launchYouTubeChannel();
         break;
-    // Add other cases if needed
+      default:
+        print("Unknown route: $routeName");
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Navigation for '$routeName' not implemented.")),
+          );
+        }
     }
   }
 
   Future<void> _launchUrlHelper(String url) async {
     final Uri uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else {
-      if (mounted) { // Check context validity
+    if (!mounted) return;
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        print("Could not launch $url");
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Could not launch $url")),
+          );
+        }
+      }
+    } catch (e) {
+      print("Error launching URL $url: $e");
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Could not launch $url")),
+          SnackBar(content: Text("Error launching URL: ${e.toString()}")),
         );
       }
-      print("Could not launch $url");
     }
   }
 
+  // Specific launch functions
   Future<void> _launchYouTubeChannel() async {
     await _launchUrlHelper('https://www.youtube.com/@yusufashraf17');
   }
@@ -270,7 +309,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _navigateToProfile() {
-    if (!mounted) return; // Check context validity
+    if (!mounted) return;
     User? currentUser = _auth.currentUser;
     if (currentUser != null) {
       Navigator.push(
@@ -280,7 +319,6 @@ class _HomePageState extends State<HomePage> {
         ),
       );
     } else {
-      // Avoid showing snackbar if not mounted
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -291,7 +329,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _navigateToTrainees() {
-    if (!mounted) return; // Check context validity
+    if (!mounted) return;
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const TrainerTraineesPage()),
@@ -299,21 +337,30 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _navigateToChatbot() {
-    if (!mounted) return; // Check context validity
+    if (!mounted) return;
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const ChatPage()),
     );
   }
 
+  // --- State Management ---
   void _toggleFavorite(int index) {
-    if (!mounted) return; // Check context validity
+    if (!mounted) return;
+
     setState(() {
-      // Ensure index is valid before accessing
+      // Check index bounds before accessing _workouts
       if (index >= 0 && index < _workouts.length) {
         _workouts[index]['isFavorite'] = !_workouts[index]['isFavorite'];
       } else {
+        // Handle error: Index out of bounds
         print("Error: Invalid index $index for toggling favorite.");
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Error updating favorite status.")),
+          );
+        }
+        return; // Exit if index is invalid
       }
     });
     _saveFavorites(); // Save changes to Firestore
@@ -322,21 +369,24 @@ class _HomePageState extends State<HomePage> {
   // --- WIDGET BUILDERS ---
 
   Widget _buildCategoryIcon(dynamic icon, String label, int index) {
-    bool isSelected = _selectedCategoryIndex == index; // Not currently used, but kept
+    // Determine the display label (show "Workout" even if label is "YT_Workout")
+    String displayLabel = (label == 'YT_Workout') ? 'Workout' : label;
+
     return GestureDetector(
       onTap: () {
         if (!mounted) return;
         setState(() {
           _selectedCategoryIndex = index;
         });
-        // Use _filteredCategories to get the correct route based on role
-        if (_filteredCategories[index]['route'] != null) {
-          _navigateToFeature(_filteredCategories[index]['route']);
+        // Navigate if a route is defined
+        String? route = _filteredCategories[index]['route'];
+        if (route != null) {
+          _navigateToFeature(route);
         }
-        // Handle 'Workout' tap specifically if needed (currently route is null)
-        else if (_filteredCategories[index]['label'] == 'Workout') {
-          // Maybe open a workout section within home or navigate somewhere else
+        // If it's the default 'Workout' category (which has route null), do nothing extra on tap here.
+        else if (_filteredCategories[index]['label'] == 'Workout'){
           print("Workout category tapped (no specific route assigned)");
+          // Optionally handle this case, e.g., scroll to workout section
         }
       },
       child: Column(
@@ -348,53 +398,60 @@ class _HomePageState extends State<HomePage> {
               color: const Color(0xFF8E7AFE).withOpacity(0.2),
               borderRadius: BorderRadius.circular(15),
             ),
-            child: icon == null // Handle custom YouTube icon case
+            // Use play icon if icon is null (for YT_Workout), otherwise use the provided icon
+            child: icon == null
                 ? const Icon(
               Icons.play_circle_fill, // YouTube-like play icon
               color: Color(0xFF8E7AFE),
               size: 24,
             )
-                : Icon( // Handle standard icon case
-              icon as IconData, // Assuming icon is IconData if not null
+                : Icon(
+              icon as IconData,
               color: const Color(0xFF8E7AFE),
               size: 24,
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            label == 'YT_Workout' ? 'Workout' : label, // Display 'Workout' for YT_Workout
+            displayLabel, // Use the adjusted display label
             style: const TextStyle(
               color: Colors.white,
               fontSize: 12,
             ),
-            textAlign: TextAlign.center, // Ensure text centers if it wraps
+            textAlign: TextAlign.center,
           ),
         ],
       ),
     );
   }
 
-
   Widget _buildWorkoutCard(Map<String, dynamic> workout, int index) {
-    // Added null check for safety, although data structure implies non-null
     final videoUrl = workout['videoUrl'] as String?;
-    final isFavorite = workout['isFavorite'] as bool? ?? false;
-    final imageUrl = workout['image'] as String? ?? 'assets/placeholder.png'; // Default placeholder
+    final isFavorite = workout['isFavorite'] as bool? ?? false; // Safely handle null
+    final imageUrl = workout['image'] as String? ?? 'assets/placeholder.png'; // Provide a default
     final title = workout['title'] as String? ?? 'No Title';
     final duration = workout['duration'] as String? ?? '-';
     final calories = workout['calories'] as String? ?? '-';
+
 
     return GestureDetector(
       onTap: () {
         if (videoUrl != null && videoUrl.isNotEmpty) {
           _launchVideo(videoUrl);
+        } else {
+          print("No video URL for workout: $title");
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("No video available for this workout.")),
+            );
+          }
         }
       },
       child: Container(
-        width: MediaQuery.of(context).size.width * 0.44, // Card width
+        width: MediaQuery.of(context).size.width * 0.44, // Responsive width
         margin: const EdgeInsets.only(right: 10),
         decoration: BoxDecoration(
-          color: const Color(0xFF2A2A2A), // Card background
+          color: const Color(0xFF2A2A2A), // Dark card background
           borderRadius: BorderRadius.circular(15),
         ),
         child: Column(
@@ -407,27 +464,27 @@ class _HomePageState extends State<HomePage> {
                   borderRadius:
                   const BorderRadius.vertical(top: Radius.circular(15)),
                   child: Image.asset(
-                      imageUrl,
-                      height: 100,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      // Error builder for image loading issues
-                      errorBuilder: (context, error, stackTrace) {
-                        print("Error loading workout image '$imageUrl': $error");
-                        return Container(
-                          height: 100,
-                          color: Colors.grey[800],
-                          child: const Center(child: Icon(Icons.image_not_supported, color: Colors.grey)),
-                        );
-                      }
+                    imageUrl,
+                    height: 100,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      // Log error and show placeholder
+                      print("Error loading workout image '$imageUrl': $error");
+                      return Container(
+                        height: 100,
+                        color: Colors.grey[800],
+                        child: const Center(child: Icon(Icons.image_not_supported, color: Colors.grey)),
+                      );
+                    },
                   ),
                 ),
-                // Play button overlay only if videoUrl exists
+                // Show play button overlay if video exists
                 if (videoUrl != null && videoUrl.isNotEmpty)
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: const BoxDecoration(
-                      color: Colors.black45,
+                      color: Colors.black45, // Semi-transparent background
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
@@ -436,12 +493,12 @@ class _HomePageState extends State<HomePage> {
                       size: 30,
                     ),
                   ),
-                // Favorite (Star) button overlay
+                // Favorite (Star) Icon
                 Positioned(
-                  top: 8, // Adjusted position
-                  right: 8, // Adjusted position
+                  top: 8,
+                  right: 8,
                   child: GestureDetector(
-                    onTap: () => _toggleFavorite(index),
+                    onTap: () => _toggleFavorite(index), // Use the passed index
                     child: Container(
                       padding: const EdgeInsets.all(4),
                       decoration: const BoxDecoration(
@@ -449,8 +506,8 @@ class _HomePageState extends State<HomePage> {
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
-                        isFavorite ? Icons.star : Icons.star_border,
-                        color: Colors.yellow, // Use yellow for star
+                        isFavorite ? Icons.star : Icons.star_border, // Reflect favorite state
+                        color: Colors.yellow, // Star color
                         size: 18,
                       ),
                     ),
@@ -474,35 +531,31 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                   const SizedBox(height: 6),
-                  // **** START: RenderFlex Overflow Fix ****
                   Row(
                     children: [
                       const Icon(Icons.timer, color: Colors.grey, size: 14),
                       const SizedBox(width: 4),
-                      // Wrap Text with Expanded
-                      Expanded(
+                      Expanded( // Use Expanded to prevent overflow
                         child: Text(
                           duration,
                           style: const TextStyle(color: Colors.grey, fontSize: 12),
-                          overflow: TextOverflow.ellipsis, // Prevent overflow within Expanded
+                          overflow: TextOverflow.ellipsis,
                           maxLines: 1,
                         ),
                       ),
                       const SizedBox(width: 8), // Space between duration and calories
                       const Icon(Icons.local_fire_department, color: Colors.grey, size: 14),
                       const SizedBox(width: 4),
-                      // Wrap Text with Expanded
-                      Expanded(
+                      Expanded( // Use Expanded
                         child: Text(
                           calories,
                           style: const TextStyle(color: Colors.grey, fontSize: 12),
-                          overflow: TextOverflow.ellipsis, // Prevent overflow within Expanded
+                          overflow: TextOverflow.ellipsis,
                           maxLines: 1,
                         ),
                       ),
                     ],
                   ),
-                  // **** END: RenderFlex Overflow Fix ****
                 ],
               ),
             ),
@@ -513,15 +566,15 @@ class _HomePageState extends State<HomePage> {
   }
 
 
-  Widget _buildHealthAndFitCard(Map<String, dynamic> item) {
-    final imageUrl = item['image'] as String? ?? 'assets/placeholder.png';
-    final title = item['title'] as String? ?? 'No Title';
+  Widget _buildHealthAndFitCard(Map<String, String> item) {
+    final imageUrl = item['image'] ?? 'assets/placeholder.png'; // Default image
+    final title = item['title'] ?? 'No Title'; // Default title
 
     return Container(
-      width: MediaQuery.of(context).size.width * 0.44,
+      width: MediaQuery.of(context).size.width * 0.44, // Responsive width
       margin: const EdgeInsets.only(right: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFF2A2A2A), // Card background
+        color: const Color(0xFF2A2A2A), // Dark card background
         borderRadius: BorderRadius.circular(15),
       ),
       child: Column(
@@ -530,18 +583,19 @@ class _HomePageState extends State<HomePage> {
           ClipRRect(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
             child: Image.asset(
-                imageUrl,
-                height: 100,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  print("Error loading health/fit image '$imageUrl': $error");
-                  return Container(
-                    height: 100,
-                    color: Colors.grey[800],
-                    child: const Center(child: Icon(Icons.image_not_supported, color: Colors.grey)),
-                  );
-                }
+              imageUrl,
+              height: 100,
+              width: double.infinity,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                // Log error and show placeholder
+                print("Error loading health/fit image '$imageUrl': $error");
+                return Container(
+                  height: 100,
+                  color: Colors.grey[800],
+                  child: const Center(child: Icon(Icons.image_not_supported, color: Colors.grey)),
+                );
+              },
             ),
           ),
           Padding(
@@ -562,142 +616,186 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // **** START: Added Rating Section Widget Builder ****
+  // **** START: UPDATED Rating Section Widget Builder ****
   Widget _buildRatingSection() {
-    // TODO: Fetch ACTUAL trainer info and rating for the current trainee from Firestore.
-    // This likely involves querying the 'ratings' collection based on traineeId (currentUser.uid)
-    // and potentially fetching the associated trainer's details from the 'users' collection.
-    // For now, using placeholders.
-    String coachName = "Coach John"; // Placeholder - Replace with actual data
-    String coachImageUrl = "assets/coach_placeholder.png"; // Placeholder - ENSURE THIS ASSET EXISTS AND IS DECLARED
-    double currentRating = 4.0; // Placeholder - Replace with actual data
-    String lastComment = "Good effort but keep pushing!"; // Placeholder - Replace with actual data
+    // --- Placeholder Data ---
+    String coachName = "Coach";
+    String coachImageUrl = "assets/coach_placeholder.png";
+    double currentRating = 4.0;
+    String lastComment = "Good effort but ..........";
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF2A2A2A), // Dark background like other cards
+        color: const Color(0xFFB3A0FF), // Outer container with light purple #B3A0FF
         borderRadius: BorderRadius.circular(15),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                "My Rate",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              InkWell( // Make "Add Rating" tappable
-                onTap: () {
-                  if (!mounted) return; // Check context validity
-                  // Navigate to the Add Rating page
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const AddRatingPage()), // Navigate to the AddRatingPage
-                  ).then((_) {
-                    // Optional: Refresh rating data here if needed after rating is submitted
-                    print("Returned from AddRatingPage");
-                  });
-                },
-                child: Row(
-                  children: const [
-                    Icon(Icons.star, color: Colors.yellow, size: 20), // Use yellow star
-                    SizedBox(width: 4),
-                    Text(
-                      "Add Rating",
-                      style: TextStyle(
-                        color: Color(0xFF8E7AFE), // Accent color
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 25,
-                // Use AssetImage for local assets
-                backgroundImage: AssetImage(coachImageUrl),
-                backgroundColor: Colors.grey[800], // Fallback color
-                // Handle image errors for CircleAvatar
-                onBackgroundImageError: (exception, stackTrace) {
-                  // Log error - this is where the "Unable to load asset" comes from
-                  print('Error loading coach image: $exception');
-                },
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1E1E1E), // Inner dark container
+          borderRadius: BorderRadius.circular(15),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Top Row: My Rate and Add Rating
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // My Rate with star icon
+                Row(
                   children: [
-                    Text(
-                      coachName,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.black,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    // Use RatingBarIndicator to DISPLAY the rating
-                    RatingBarIndicator(
-                      rating: currentRating,
-                      itemBuilder: (context, index) => const Icon(
+                      child: const Icon(
                         Icons.star,
-                        color: Colors.amber, // Use amber/yellow for filled stars
+                        color: Colors.yellow,
+                        size: 16,
                       ),
-                      itemCount: 5,
-                      itemSize: 20.0,
-                      unratedColor: Colors.amber.withAlpha(50), // Lighter color for unrated
-                      direction: Axis.horizontal,
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      lastComment,
-                      style: const TextStyle(color: Colors.grey, fontSize: 12),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    const SizedBox(width: 8),
+                    const Text(
+                      "My Rate",
+                      style: TextStyle(
+                        color: Colors.yellow,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ],
                 ),
-              ),
-            ],
-          ),
-        ],
+
+                // Add Rating button
+                InkWell(
+                  onTap: () {
+                    if (!mounted) return;
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const AddRatingPage()),
+                    ).then((_) {
+                      print("Returned from AddRatingPage");
+                    });
+                  },
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.black,
+                        ),
+                        child: const Icon(
+                          Icons.star,
+                          color: Colors.yellow,
+                          size: 16,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        "Add Rating",
+                        style: TextStyle(
+                          color: Colors.yellow,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 16),
+
+            // Coach info, stars and comment
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Coach avatar
+                CircleAvatar(
+                  radius: 20,
+                  backgroundImage: AssetImage(coachImageUrl),
+                  backgroundColor: Colors.grey[800],
+                  onBackgroundImageError: (exception, stackTrace) {
+                    print('Error loading coach image: $exception');
+                  },
+                ),
+
+                const SizedBox(width: 12),
+
+                // Rating and comment column
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Star rating
+                      Row(
+                        children: List.generate(5, (index) {
+                          return Icon(
+                            Icons.star,
+                            color: index < currentRating.floor()
+                                ? Colors.yellow
+                                : Colors.grey[800],
+                            size: 20,
+                          );
+                        }),
+                      ),
+
+                      const SizedBox(height: 4),
+
+                      // Comment text
+                      Text(
+                        lastComment,
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 14,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+
+                      // Coach name
+                      Text(
+                        coachName,
+                        style: TextStyle(
+                          color: Colors.grey[500],
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
-  // **** END: Added Rating Section Widget Builder ****
-
+  // **** END: UPDATED Rating Section Widget Builder ****
 
   Widget _buildFavoritesView() {
-    if (!mounted) return const SizedBox.shrink(); // Handle disposed state
+    if (!mounted) return const SizedBox.shrink(); // Handle component unmounting
 
+    // Filter workouts marked as favorite
     List<Map<String, dynamic>> favoriteWorkouts =
     _workouts.where((workout) => workout['isFavorite'] == true).toList();
 
+    // Display a message if no favorites exist
     if (favoriteWorkouts.isEmpty) {
       return Center(
-        child: Padding( // Add padding for better spacing
-          padding: const EdgeInsets.all(32.0),
+        child: Padding(
+          padding: const EdgeInsets.all(32.0), // Add padding around the message
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center, // Center content vertically
             children: const [
               Icon(
-                Icons.star_border,
+                Icons.star_border, // Empty star icon
                 color: Colors.grey,
                 size: 60,
               ),
@@ -717,7 +815,7 @@ class _HomePageState extends State<HomePage> {
                   color: Colors.grey,
                   fontSize: 14,
                 ),
-                textAlign: TextAlign.center,
+                textAlign: TextAlign.center, // Center align the description
               ),
             ],
           ),
@@ -725,23 +823,22 @@ class _HomePageState extends State<HomePage> {
       );
     }
 
-    // Display favorites in a ListView
+    // Build a list view of favorite workout cards
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16), // Padding around the list
       itemCount: favoriteWorkouts.length,
       itemBuilder: (context, index) {
         // Find the original index in the main _workouts list to allow toggling
-        // This assumes titles are unique identifiers within _workouts
+        // This is important because _toggleFavorite uses the index from the main list
         final originalIndex = _workouts.indexWhere(
                 (workout) => workout['title'] == favoriteWorkouts[index]['title']);
 
-        // Check if originalIndex is valid before building the card
         if (originalIndex == -1) {
+          // Handle edge case where workout might not be found (shouldn't happen usually)
           print("Warning: Could not find original index for favorite workout: ${favoriteWorkouts[index]['title']}");
-          return const SizedBox.shrink(); // Don't build card if index is invalid
+          return const SizedBox.shrink(); // Return an empty widget
         }
 
-        // Reuse a card structure similar to AllVideosPage or create a dedicated one
         return _buildFavoriteWorkoutCard(favoriteWorkouts[index], originalIndex);
       },
     );
@@ -755,11 +852,10 @@ class _HomePageState extends State<HomePage> {
     final duration = workout['duration'] as String? ?? '-';
     final calories = workout['calories'] as String? ?? '-';
 
-
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 16), // Space between cards
       decoration: BoxDecoration(
-        color: const Color(0xFF2A2A2A),
+        color: const Color(0xFF2A2A2A), // Dark card background
         borderRadius: BorderRadius.circular(15),
       ),
       child: Column(
@@ -772,25 +868,25 @@ class _HomePageState extends State<HomePage> {
                 borderRadius:
                 const BorderRadius.vertical(top: Radius.circular(15)),
                 child: Image.asset(
-                    imageUrl,
-                    height: 180, // Larger image for favorites view
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      print("Error loading favorite image '$imageUrl': $error");
-                      return Container(
-                        height: 180,
-                        color: Colors.grey[800],
-                        child: const Center(child: Icon(Icons.image_not_supported, color: Colors.grey)),
-                      );
-                    }
+                  imageUrl,
+                  height: 180, // Larger image for favorite view
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    print("Error loading favorite image '$imageUrl': $error");
+                    return Container(
+                      height: 180,
+                      color: Colors.grey[800],
+                      child: const Center(child: Icon(Icons.image_not_supported, color: Colors.grey)),
+                    );
+                  },
                 ),
               ),
-              // Play Button Overlay
+              // Play button overlay
               if (videoUrl != null && videoUrl.isNotEmpty)
                 GestureDetector(
                   onTap: () {
-                    if (videoUrl.isNotEmpty) { // Double check not empty
+                    if (videoUrl.isNotEmpty) {
                       _launchVideo(videoUrl);
                     }
                   },
@@ -807,12 +903,12 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                 ),
-              // Favorite Toggle Button
+              // Favorite (Star) Icon - Always filled for favorites tab
               Positioned(
                 top: 10,
                 right: 10,
                 child: GestureDetector(
-                  onTap: () => _toggleFavorite(originalIndex), // Use original index
+                  onTap: () => _toggleFavorite(originalIndex), // Use original index to toggle
                   child: Container(
                     padding: const EdgeInsets.all(6),
                     decoration: const BoxDecoration(
@@ -830,7 +926,7 @@ class _HomePageState extends State<HomePage> {
             ],
           ),
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16), // More padding for details
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -839,16 +935,15 @@ class _HomePageState extends State<HomePage> {
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
-                    fontSize: 16,
+                    fontSize: 16, // Slightly larger title
                   ),
                 ),
                 const SizedBox(height: 8),
-                // Apply Expanded fix here too for consistency if needed, though less likely to overflow
                 Row(
                   children: [
                     const Icon(Icons.timer, color: Colors.grey, size: 16),
                     const SizedBox(width: 4),
-                    Expanded( // Apply fix here too
+                    Expanded(
                       child: Text(
                         duration,
                         style: const TextStyle(color: Colors.grey, fontSize: 14),
@@ -859,7 +954,7 @@ class _HomePageState extends State<HomePage> {
                     const SizedBox(width: 12),
                     const Icon(Icons.local_fire_department, color: Colors.grey, size: 16),
                     const SizedBox(width: 4),
-                    Expanded( // Apply fix here too
+                    Expanded(
                       child: Text(
                         calories,
                         style: const TextStyle(color: Colors.grey, fontSize: 14),
@@ -880,26 +975,26 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    // Use null-aware operator and provide a default name
-    // Ensure _userData is accessed safely, especially during loading
+    // Determine user name, show 'User' while loading or if name is missing
     String userName = _isLoadingUserData ? 'User' : (_userData['firstName'] as String? ?? 'User');
 
-    // Determine the main content based on the selected navigation index
+    // Determine which content to show based on the selected navigation index
     Widget mainContent;
+
     if (_isLoadingUserData) {
-      // Show loading indicator centered on the screen
+      // Show loading indicator while fetching user data
       mainContent = const Center(
-        child: CircularProgressIndicator(color: Color(0xFF8E7AFE)),
+        child: CircularProgressIndicator(color: Color(0xFF8E7AFE)), // Use theme color
       );
-    } else if (_currentNavIndex == 0) { // Home Tab
+    } else if (_currentNavIndex == 0) { // Home Tab Content
       mainContent = SingleChildScrollView(
-        physics: const BouncingScrollPhysics(), // Give slight bounce effect
+        physics: const BouncingScrollPhysics(), // Nice scroll effect
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // --- Top Header Section ---
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8), // Adjust padding
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8), // Standard padding
               child: Row(
                 children: [
                   Expanded( // Allow text column to take available space
@@ -907,18 +1002,18 @@ class _HomePageState extends State<HomePage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "Hi, $userName",
+                          "Hi, $userName", // Display user's first name
                           style: const TextStyle(
                             color: Color(0xFF8E7AFE), // Accent color
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
                           ),
                           maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                          overflow: TextOverflow.ellipsis, // Handle long names
                         ),
-                        const SizedBox(height: 4), // Space between lines
+                        const SizedBox(height: 4),
                         const Text(
-                          "It's time to challenge your limits.",
+                          "It's time to challenge your limits.", // Subtitle
                           style: TextStyle(
                             color: Colors.grey,
                             fontSize: 14,
@@ -929,11 +1024,11 @@ class _HomePageState extends State<HomePage> {
                       ],
                     ),
                   ),
-                  // Keep icons on the right
+                  // Action Icons (Search, Notifications)
                   IconButton(
                     icon: const Icon(Icons.search, color: Colors.white),
                     onPressed: () {
-                      // TODO: Implement Search functionality
+                      // TODO: Implement search functionality
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text('Search not implemented yet.'))
@@ -946,7 +1041,7 @@ class _HomePageState extends State<HomePage> {
                     icon: const Icon(Icons.notifications_outlined,
                         color: Colors.white),
                     onPressed: () {
-                      // TODO: Implement Notifications functionality
+                      // TODO: Implement notifications functionality
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text('Notifications not implemented yet.'))
@@ -963,8 +1058,7 @@ class _HomePageState extends State<HomePage> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                // Ensure filtered categories are used
+                mainAxisAlignment: MainAxisAlignment.spaceAround, // Distribute icons evenly
                 children: List.generate(_filteredCategories.length, (index) {
                   final category = _filteredCategories[index];
                   return _buildCategoryIcon(
@@ -980,7 +1074,7 @@ class _HomePageState extends State<HomePage> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween, // Align title left, 'See All' right
                 children: [
                   const Text(
                     "Workouts",
@@ -990,12 +1084,12 @@ class _HomePageState extends State<HomePage> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  GestureDetector(
+                  GestureDetector( // Make 'See All' tappable
                     onTap: () {
-                      _navigateToFeature('VideosPage'); // Navigate to see all videos
+                      _navigateToFeature('VideosPage'); // Navigate to all videos page
                     },
                     child: Row(
-                      mainAxisSize: MainAxisSize.min, // Keep row tight
+                      mainAxisSize: MainAxisSize.min, // Prevent row taking full width
                       children: const [
                         Text(
                           "See All",
@@ -1004,7 +1098,7 @@ class _HomePageState extends State<HomePage> {
                             fontSize: 14,
                           ),
                         ),
-                        SizedBox(width: 4), // Space before icon
+                        SizedBox(width: 4),
                         Icon(Icons.arrow_forward_ios,
                             color: Color(0xFF8E7AFE), size: 12),
                       ],
@@ -1014,40 +1108,39 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             const SizedBox(height: 12),
-            SizedBox(
-              height: 200, // Fixed height for horizontal list
+            SizedBox( // Constrain the height of the horizontal list
+              height: 200, // Adjust height as needed for workout cards
               child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16), // Padding for list items
+                scrollDirection: Axis.horizontal, // Make list scroll horizontally
                 itemCount: _workouts.length,
                 itemBuilder: (context, index) =>
-                    _buildWorkoutCard(_workouts[index], index),
+                    _buildWorkoutCard(_workouts[index], index), // Pass index
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 24), // Spacing before next section
 
             // --- Promotional Banner ---
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Container(
-                width: double.infinity,
-                height: 120,
+                width: double.infinity, // Full width banner
+                height: 120, // Fixed height
                 decoration: BoxDecoration(
-                  color: const Color(0xFF8E7AFE).withOpacity(0.2), // Semi-transparent accent
+                  color: const Color(0xFF8E7AFE).withOpacity(0.2), // Light accent background
                   borderRadius: BorderRadius.circular(15),
-                  // Optional: Add gradient or border if desired
                 ),
                 child: Row(
                   children: [
-                    Expanded(
+                    Expanded( // Text section takes available space
                       child: Padding(
                         padding: const EdgeInsets.all(16),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisAlignment: MainAxisAlignment.center, // Center text vertically
                           children: const [
                             Text(
-                              "Don't Give Up",
+                              "Don't Give Up", // Banner title
                               style: TextStyle(
                                 color: Colors.yellow, // Highlight color
                                 fontSize: 18,
@@ -1056,7 +1149,7 @@ class _HomePageState extends State<HomePage> {
                             ),
                             SizedBox(height: 8),
                             Text(
-                              "Explore Plans with Pro Tips!",
+                              "Explore Plans with Pro Tips!", // Banner subtitle
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 14,
@@ -1066,17 +1159,18 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ),
                     ),
-                    ClipRRect(
+                    // Banner Image
+                    ClipRRect( // Clip image to match container radius
                       borderRadius: const BorderRadius.horizontal(
-                          right: Radius.circular(15)),
+                          right: Radius.circular(15)), // Only round right corners
                       child: Image.asset(
-                        'assets/workout1.jpg', // Use a relevant banner image asset
-                        width: 150, // Adjust width as needed
-                        height: 120,
-                        fit: BoxFit.cover,
+                        'assets/workout1.jpg', // Use a relevant banner image
+                        width: 150, // Fixed image width
+                        height: 120, // Match container height
+                        fit: BoxFit.cover, // Cover the area
                         errorBuilder: (context, error, stackTrace) {
                           print("Error loading banner image: $error");
-                          return Container(
+                          return Container( // Placeholder on error
                             width: 150, height: 120, color: Colors.grey[800],
                             child: const Center(child: Icon(Icons.broken_image, color: Colors.grey)),
                           );
@@ -1087,16 +1181,14 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ),
-            const SizedBox(height: 24),
-
+            const SizedBox(height: 24), // Spacing
 
             // **** START: Conditional Rating Section ****
-            // Check if the user role is 'Trainee' (Case sensitive - adjust if needed)
-            // Ensure _userData['role'] is fetched and not null before checking
+            // Conditionally display the updated rating section only if the user role is 'Trainee'
             if (_userData.containsKey('role') && _userData['role'] == 'Trainee') ...[
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: _buildRatingSection(), // Display the rating section
+                child: _buildRatingSection(), // Calls the updated widget [1][2]
               ),
               const SizedBox(height: 24), // Spacing after rating section
             ],
@@ -1116,8 +1208,8 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             const SizedBox(height: 12),
-            SizedBox(
-              height: 180, // Adjust height if needed
+            SizedBox( // Horizontal list for health/fit items
+              height: 180, // Adjust height as needed
               child: ListView.builder(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 scrollDirection: Axis.horizontal,
@@ -1126,29 +1218,28 @@ class _HomePageState extends State<HomePage> {
                     _buildHealthAndFitCard(_healthAndFitItems[index]),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 24), // Spacing
 
             // --- Conditional Trainer Button ---
-            // Ensure _userData['role'] exists before checking
-            // Use lowercase 'trainee' as per original logic check? Verify role casing in Firestore.
+            // Show this button only if the user role is NOT 'Trainee' and NOT 'Self-Trainee' (e.g., 'Trainer')
             if (_userData.containsKey('role') &&
-                _userData['role'] != 'Trainee' && // Adjust casing if needed
+                _userData['role'] != 'Trainee' &&
                 _userData['role'] != 'Self-Trainee') ...[
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0), // Adjusted padding
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                 child: GestureDetector(
-                  onTap: _navigateToTrainees,
+                  onTap: _navigateToTrainees, // Navigate to trainees page
                   child: Container(
-                    width: double.infinity,
-                    height: 60,
+                    width: double.infinity, // Full width
+                    height: 60, // Fixed height
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
-                      color: const Color(0xFF8E7AFE).withOpacity(0.2), // Use consistent styling
+                      color: const Color(0xFF8E7AFE).withOpacity(0.2), // Accent background
                     ),
                     child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.center, // Center content
                       children: [
-                        Icon(Icons.group, color: Color(0xFF8E7AFE)),
+                        Icon(Icons.group, color: Color(0xFF8E7AFE)), // Group icon
                         SizedBox(width: 10),
                         Text(
                           "View Assigned Trainees",
@@ -1164,67 +1255,70 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ],
-            const SizedBox(height: 16), // Bottom padding before nav bar
+
+            const SizedBox(height: 16), // Bottom padding inside scroll view
           ],
         ),
       );
-    } else if (_currentNavIndex == 1) { // Favorites Tab
+    } else if (_currentNavIndex == 1) { // Favorites Tab Content
       mainContent = _buildFavoritesView();
-    } else if (_currentNavIndex == 2) { // AI Coach Tab
-      // Assuming ChatPage is a full screen/widget itself
-      mainContent = const ChatPage();
-    } else { // Should not happen with current nav bar setup, but good fallback
+    } else if (_currentNavIndex == 2) { // AI Coach Tab Content
+      mainContent = const ChatPage(); // Show ChatPage directly
+    } else { // Fallback for invalid index (shouldn't normally happen)
       mainContent = const Center(
-        child: Text("Invalid Tab", style: TextStyle(color: Colors.white)),
+        child: Text("Invalid Tab Index", style: TextStyle(color: Colors.white)),
       );
     }
 
     // --- Scaffold Structure ---
     return Scaffold(
-      backgroundColor: const Color(0xFF232323), // Main background color
-      body: SafeArea( // Ensure content avoids notches/status bars
-        child: mainContent, // Display the determined content
+      backgroundColor: const Color(0xFF232323), // Main background color for the app
+      body: SafeArea( // Ensure content avoids notches and system bars
+        child: mainContent, // Display the selected content widget
       ),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentNavIndex,
+        currentIndex: _currentNavIndex, // Highlight the current tab
         onTap: (index) {
-          if (!mounted) return; // Check context validity
-          if (index == 3) { // Profile Tab
-            _navigateToProfile();
-            // Keep the current index visually selected until profile page pops
+          if (!mounted) return;
+          // Handle tab taps
+          if (index == 3) { // Profile Tab (Index 3)
+            _navigateToProfile(); // Navigate to profile page
+            // NOTE: We don't update _currentNavIndex here because Profile is a separate page,
+            // not just a different view within the main Scaffold body controlled by the index.
+            // The visual selection will remain on the previous tab until the user navigates back.
           } else {
-            // For Home (0), Favorites (1), AI Coach (2)
+            // For Home, Favorites, AI Coach tabs, just update the state
             setState(() {
               _currentNavIndex = index;
             });
           }
         },
         backgroundColor: const Color(0xFF232323), // Match background
-        selectedItemColor: const Color(0xFF8E7AFE), // Accent color for selected
+        selectedItemColor: const Color(0xFF8E7AFE), // Accent color for selected item
         unselectedItemColor: Colors.grey, // Color for unselected items
-        type: BottomNavigationBarType.fixed, // Keep items fixed width
-        showUnselectedLabels: true, // Optionally show labels for unselected items
-        selectedFontSize: 12, // Standard sizes
+        type: BottomNavigationBarType.fixed, // Keep items fixed, labels always visible
+        showUnselectedLabels: true, // Ensure labels are always shown
+        selectedFontSize: 12, // Font size for labels
         unselectedFontSize: 12,
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined), // Use outlined icons
-            activeIcon: Icon(Icons.home), // Use filled icon when active
+            icon: Icon(Icons.home_outlined),
+            activeIcon: Icon(Icons.home), // Filled icon when active
             label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.star_border_outlined), // Use outlined icons
-            activeIcon: Icon(Icons.star), // Use filled icon when active
+            icon: Icon(Icons.star_border_outlined),
+            activeIcon: Icon(Icons.star), // Filled star when active
             label: 'Favorites',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.chat_bubble_outline), // Use outlined icons
-            activeIcon: Icon(Icons.chat_bubble), // Use filled icon when active
+            icon: Icon(Icons.chat_bubble_outline),
+            activeIcon: Icon(Icons.chat_bubble), // Filled chat bubble when active
             label: 'AI Coach',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline), // Use outlined icons
-            activeIcon: Icon(Icons.person), // Use filled icon when active
+            icon: Icon(Icons.person_outline),
+            activeIcon: Icon(Icons.person), // Filled person icon when active
             label: 'Profile',
           ),
         ],
@@ -1234,25 +1328,30 @@ class _HomePageState extends State<HomePage> {
 }
 
 
-// Helper class for displaying all videos (remains mostly unchanged)
-// Added error handling for image loading and context checks for launchUrl
+// -----------------------------------------------------------------------------
+// Helper class for displaying all videos page (navigated from "See All")
+// -----------------------------------------------------------------------------
 class AllVideosPage extends StatelessWidget {
-  final List<Map<String, dynamic>> videos;
+  final List<Map<String, dynamic>> videos; // Receive list of videos
+
   const AllVideosPage({Key? key, required this.videos}) : super(key: key);
 
+
+  // Helper to launch video URL safely
   Future<void> _launchVideo(BuildContext context, String url) async {
     final Uri uri = Uri.parse(url);
+    if (!context.mounted) return; // Check if context is still valid
+
     try {
       if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
+        await launchUrl(uri, mode: LaunchMode.externalApplication); // Open externally
       } else {
-        // Check context validity before showing SnackBar
+        print("Could not launch $url");
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text("Could not launch $url")),
           );
         }
-        print("Could not launch $url");
       }
     } catch (e) {
       print("Error launching URL $url: $e");
@@ -1264,7 +1363,7 @@ class AllVideosPage extends StatelessWidget {
     }
   }
 
-
+  // Builder for individual video cards in the list
   Widget _buildVideoCard(BuildContext context, Map<String, dynamic> video) {
     final videoUrl = video['videoUrl'] as String?;
     final imageUrl = video['image'] as String? ?? 'assets/placeholder.png';
@@ -1278,7 +1377,7 @@ class AllVideosPage extends StatelessWidget {
           _launchVideo(context, videoUrl);
         } else {
           print("No video URL for: $title");
-          if (context.mounted) { // Check mounted before showing SnackBar
+          if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text("No video available for this item.")),
             );
@@ -1286,9 +1385,9 @@ class AllVideosPage extends StatelessWidget {
         }
       },
       child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
+        margin: const EdgeInsets.only(bottom: 16), // Space between cards
         decoration: BoxDecoration(
-          color: const Color(0xFF2A2A2A),
+          color: const Color(0xFF2A2A2A), // Dark card background
           borderRadius: BorderRadius.circular(15),
         ),
         child: Column(
@@ -1302,19 +1401,19 @@ class AllVideosPage extends StatelessWidget {
                   const BorderRadius.vertical(top: Radius.circular(15)),
                   child: Image.asset(
                     imageUrl,
-                    height: 180,
+                    height: 180, // Consistent image height
                     width: double.infinity,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) {
                       print("Error loading video image '$imageUrl': $error");
-                      return Container(
+                      return Container( // Placeholder on error
                         height: 180, color: Colors.grey[800],
                         child: const Center(child: Icon(Icons.image_not_supported, color: Colors.grey)),
                       );
                     },
                   ),
                 ),
-                // Play Button Overlay only if videoUrl exists
+                // Play button overlay
                 if (videoUrl != null && videoUrl.isNotEmpty)
                   Container(
                     padding: const EdgeInsets.all(12),
@@ -1344,12 +1443,11 @@ class AllVideosPage extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  // Apply Expanded fix here as well for consistency
                   Row(
                     children: [
                       const Icon(Icons.timer, color: Colors.grey, size: 16),
                       const SizedBox(width: 4),
-                      Expanded( // Apply fix
+                      Expanded(
                         child: Text(
                           duration,
                           style: const TextStyle(color: Colors.grey, fontSize: 14),
@@ -1360,7 +1458,7 @@ class AllVideosPage extends StatelessWidget {
                       const SizedBox(width: 12),
                       const Icon(Icons.local_fire_department, color: Colors.grey, size: 16),
                       const SizedBox(width: 4),
-                      Expanded( // Apply fix
+                      Expanded(
                         child: Text(
                           calories,
                           style: const TextStyle(color: Colors.grey, fontSize: 14),
@@ -1379,27 +1477,35 @@ class AllVideosPage extends StatelessWidget {
     );
   }
 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF232323), // Match theme
+      backgroundColor: const Color(0xFF232323), // Match theme background
       appBar: AppBar(
-        backgroundColor: const Color(0xFF232323), // Match theme
+        backgroundColor: const Color(0xFF232323), // Match theme background
         title: const Text(
           "All Workouts",
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(color: Colors.white), // White title
         ),
-        iconTheme: const IconThemeData(color: Colors.white), // Back button color
-        elevation: 0, // No shadow
+        leading: IconButton( // Explicit back button for clarity
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+          onPressed: () {
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context); // Go back to the previous screen
+            }
+          },
+          tooltip: 'Back',
+        ),
+        elevation: 0, // No shadow for a flatter look
       ),
       body: videos.isEmpty
           ? const Center(child: Text("No workouts available.", style: TextStyle(color: Colors.grey)))
           : ListView.builder(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16), // Padding for the list view
         itemCount: videos.length,
         itemBuilder: (context, index) => _buildVideoCard(context, videos[index]),
       ),
     );
   }
 }
-
