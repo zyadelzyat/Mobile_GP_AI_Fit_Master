@@ -1,92 +1,57 @@
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../Home__Page/00_home_page.dart';
-import '../theme.dart';
-import '../theme_provider.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
-
-  runApp(
-    ChangeNotifierProvider(
-      create: (_) => ThemeProvider(),
-      child: const MyApp(),
-    ),
-  );
+void main() {
+  runApp(const MyApp());
 }
 
-class MyApp extends StatefulWidget {
-  const MyApp({super.key});
-
-  @override
-  _MyAppState createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> {
-  bool? firstLaunch;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadOnboardingStatus();
-
-    // Set system UI overlay style for fullscreen
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-    // Set status bar to be transparent
-    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-    ));
-  }
-
-  @override
-  void dispose() {
-    // Restore system UI when app is closed
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-    super.dispose();
-  }
-
-  Future<void> _loadOnboardingStatus() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      firstLaunch = prefs.getBool('firstLaunch') ?? true; // Defaults to true
-    });
-  }
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-
-    if (firstLaunch == null) {
-      return MaterialApp(
-        theme: lightTheme,
-        darkTheme: darkTheme,
-        themeMode: themeProvider.themeMode,
-        home: const Scaffold(
-          body: Center(child: CircularProgressIndicator()),
-        ),
-        debugShowCheckedModeBanner: false,
-      );
-    }
-
     return MaterialApp(
-      theme: lightTheme,
-      darkTheme: darkTheme,
-      themeMode: themeProvider.themeMode,
+      title: 'AI FIT MASTER',
       debugShowCheckedModeBanner: false,
-      home: firstLaunch! ? const OnboardingScreen() : const HomePage(),
+      theme: ThemeData(
+        primaryColor: const Color(0xFFB3A0FF),
+        scaffoldBackgroundColor: const Color(0xFFB3A0FF),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFFB3A0FF),
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.white,
+            foregroundColor: const Color(0xFFB3A0FF),
+          ),
+        ),
+      ),
+      home: const OnboardingScreen(),
     );
   }
 }
 
+// --- Onboarding Model ---
+class OnboardingModel {
+  final String title;
+  final String description;
+  final String image;
+
+  const OnboardingModel({
+    required this.title,
+    required this.description,
+    required this.image,
+  });
+}
+
+// --- Onboarding Screen Widget ---
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
 
   @override
-  _OnboardingScreenState createState() => _OnboardingScreenState();
+  State<OnboardingScreen> createState() => _OnboardingScreenState();
 }
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
@@ -95,23 +60,23 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   final List<OnboardingModel> _pages = [
     const OnboardingModel(
-      title: "Welcome to AI FIT MASTER",
-      description: "Start Your Journey Towards A More Active Lifestyle",
+      title: "Welcome to\nAI FIT MASTER",
+      description: "",
       image: "assets/onboarding1.jpg",
     ),
     const OnboardingModel(
-      title: "Find Nutrition Tips That Fit Your Lifestyle",
-      description: "Personalized dietary recommendations based on your goals",
+      title: "Start Your Journey Towards A More Active Lifestyle",
+      description: "Personalized plans to keep you active and motivated.",
       image: "assets/onboarding2.jpg",
     ),
     const OnboardingModel(
-      title: "A Community For You",
-      description: "Challenge Yourself with like-minded people",
+      title: "Find Nutrition Tips That Fit Your Lifestyle",
+      description: "Personalized dietary recommendations based on your goals.",
       image: "assets/onboarding3.jpg",
     ),
     const OnboardingModel(
-      title: "Ready to Transform?",
-      description: "Let's create your personalized fitness plan",
+      title: "A Community For You, Challenge Yourself",
+      description: "Join challenges and connect with like-minded people.",
       image: "assets/onboarding4.jpg",
     ),
   ];
@@ -119,21 +84,38 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   void initState() {
     super.initState();
-    // Ensure fullscreen mode is applied to onboarding
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      systemNavigationBarColor: Colors.transparent,
+      systemNavigationBarDividerColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light,
+      systemNavigationBarIconBrightness: Brightness.light,
+    ));
   }
 
-  void _completeOnboarding() async {
+  Future<void> _completeOnboarding() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('firstLaunch', false);
     if (mounted) {
-      // Restore system UI when leaving onboarding
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+      SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        systemNavigationBarColor: Colors.white,
+        statusBarIconBrightness: Brightness.dark,
+        systemNavigationBarIconBrightness: Brightness.dark,
+      ));
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const HomePage()),
       );
     }
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
   }
 
   @override
@@ -146,169 +128,143 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           setState(() => _currentPage = index);
         },
         itemBuilder: (context, index) {
-          return FullScreenOnboardingPage(
-            model: _pages[index],
-            isLastPage: index == _pages.length - 1,
-            currentPage: _currentPage,
-            totalPages: _pages.length,
-            onPressed: () {
-              if (index == _pages.length - 1) {
-                _completeOnboarding();
-              } else {
-                _pageController.nextPage(
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeInOut,
-                );
-              }
-            },
-          );
+          return _buildOnboardingPage(index);
         },
       ),
     );
   }
-}
 
-class FullScreenOnboardingPage extends StatelessWidget {
-  final OnboardingModel model;
-  final bool isLastPage;
-  final int currentPage;
-  final int totalPages;
-  final VoidCallback onPressed;
+  Widget _buildOnboardingPage(int index) {
+    final isLastPage = index == _pages.length - 1;
 
-  const FullScreenOnboardingPage({
-    required this.model,
-    required this.isLastPage,
-    required this.currentPage,
-    required this.totalPages,
-    required this.onPressed,
-    super.key,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        // Full screen background image
-        Image.asset(
-          model.image,
-          width: MediaQuery.of(context).size.width,
-          height: MediaQuery.of(context).size.height,
-          fit: BoxFit.cover,
-        ),
-
-        // Semi-transparent overlay for the whole screen
-        Container(
-          width: MediaQuery.of(context).size.width,
-          height: MediaQuery.of(context).size.height,
-          color: Colors.black.withOpacity(0.2),
-        ),
-
-        // Center purple card with content
-        Center(
-          child: Container(
-            width: MediaQuery.of(context).size.width,
-            padding: const EdgeInsets.symmetric(vertical: 24),
-            color: Colors.purple.withOpacity(0.7),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Icon at the top of the purple section
-                const Icon(
-                  Icons.star,
-                  color: Colors.yellow,
-                  size: 40,
-                ),
-                const SizedBox(height: 16),
-
-                // Title text
-                Text(
-                  model.title,
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-
-                const SizedBox(height: 10),
-
-                // Description text
-                Text(
-                  model.description,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.white,
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                ),
-
-                const SizedBox(height: 20),
-
-                // Next button
-                SizedBox(
-                  width: 150,
-                  child: ElevatedButton(
-                    onPressed: onPressed,
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      backgroundColor: Colors.white,
-                      foregroundColor: Colors.purple,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                    ),
-                    child: Text(
-                      isLastPage ? "Get Started" : "Next",
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+    return Container(
+      color: const Color(0xFFB3A0FF),
+      child: Stack(
+        children: [
+          // Top image section
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: MediaQuery.of(context).size.height * 0.6,
+            child: Image.asset(
+              _pages[index].image,
+              fit: BoxFit.cover,
             ),
           ),
-        ),
 
-        // Page indicator dots at bottom
-        Positioned(
-          bottom: 50,
-          left: 0,
-          right: 0,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(
-              totalPages,
-                  (index) => Container(
-                margin: const EdgeInsets.symmetric(horizontal: 4),
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  color: currentPage == index ? Colors.white : Colors.white.withOpacity(0.5),
-                  shape: BoxShape.circle,
+          // Content section
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: MediaQuery.of(context).size.height * 0.4,
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: const BoxDecoration(
+                color: Color(0xFFB3A0FF),
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(30),
+                  topRight: Radius.circular(30),
                 ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Page indicator dots
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(
+                      _pages.length,
+                          (i) => Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: _currentPage == i
+                              ? Colors.white
+                              : Colors.white.withOpacity(0.4),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Icon (only for pages 1-3)
+                  if (index > 0 && index < 4)
+                    Icon(
+                      index == 1 ? Icons.directions_run :
+                      index == 2 ? Icons.restaurant_menu :
+                      Icons.groups,
+                      color: Colors.yellow,
+                      size: 32,
+                    ),
+
+                  // Title
+                  Text(
+                    _pages[index].title,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+
+                  // Description
+                  if (_pages[index].description.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: Text(
+                        _pages[index].description,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+
+                  const Spacer(),
+
+                  // Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        if (isLastPage) {
+                          _completeOnboarding();
+                        } else {
+                          _pageController.nextPage(
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOut,
+                          );
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: const Color(0xFFB3A0FF),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                      ),
+                      child: Text(
+                        isLastPage ? "Get Started" : "Next",
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
-}
-
-class OnboardingModel {
-  final String title;
-  final String description;
-  final String image;
-
-  const OnboardingModel({
-    required this.title,
-    required this.description,
-    required this.image,
-  });
 }

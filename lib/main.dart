@@ -12,7 +12,7 @@ import 'Set Up/03 GenderSelectionScreen.dart';
 import 'Home__Page/Store.dart';
 import 'Home__Page/00_home_page.dart';
 import 'package:untitled/Home__Page/AddRatingPage.dart';
-
+import 'ui/onboarding_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
@@ -57,7 +57,8 @@ class _GenderSelectionAppState extends State<GenderSelectionApp> {
       theme: lightTheme,
       darkTheme: darkTheme,
       themeMode: themeProvider.themeMode,
-      home: const SignInScreen(),
+      // home: const SignInScreen(),
+      home: OnboardingScreen(),
       // home: const WeightSelectionScreen();
       // home: const GenderSelectionScreen(),
       // home:  SupplementsStorePage(),
