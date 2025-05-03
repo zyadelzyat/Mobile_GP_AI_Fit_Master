@@ -337,6 +337,3 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 }
 
-// Placeholders were removed in the previous step.
-// Ensure your actual classes ('ChatPage', 'FavoritePage', etc.)
-// are correctly defined in their respective files and imported properly.
