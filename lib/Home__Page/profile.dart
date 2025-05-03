@@ -2,22 +2,29 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart'; // For date formatting
+import 'package:flutter_rating_bar/flutter_rating_bar.dart'; // Add this import
 
 // Import your login screen (ensure the path is correct)
 import 'package:untitled/Login___Signup/01_signin_screen.dart';
+
 // Import the detailed profile page
 import 'detailed_profile_page.dart'; // Make sure this path is correct
+
 // Import for Chatbot - Check path and project name 'untitled'
 import 'package:untitled/AI/chatbot.dart'; // Replace 'untitled' if needed. Ensure 'ChatPage' (or your class name) is defined here.
+
 // Import Favorite Page - Make sure this path is correct
 import 'favorite_page.dart'; // Ensure 'FavoritePage' (or your actual class name) is defined in this file.
+
+// Import TrainerRatingsPage
+import 'trainer_ratings_page.dart'; // Add this import for the trainer ratings page
 
 class ProfilePage extends StatefulWidget {
   final String userId;
   const ProfilePage({required this.userId, super.key});
 
   @override
-  State<ProfilePage> createState() => _ProfilePageState();
+  State createState() => _ProfilePageState();
 }
 
 class _ProfilePageState extends State<ProfilePage> {
@@ -32,14 +39,15 @@ class _ProfilePageState extends State<ProfilePage> {
     _fetchUserData();
   }
 
-  Future<void> _fetchUserData() async {
+  Future _fetchUserData() async {
     if (!mounted) return;
     setState(() {
       _isLoading = true;
       errorMessage = null;
     });
+
     try {
-      DocumentSnapshot<Map<String, dynamic>> userDoc = await _firestore
+      DocumentSnapshot userDoc = await _firestore
           .collection('users')
           .doc(widget.userId)
           .get();
@@ -47,7 +55,7 @@ class _ProfilePageState extends State<ProfilePage> {
       if (userDoc.exists) {
         if (!mounted) return;
         setState(() {
-          userData = userDoc.data() ?? {};
+          userData = userDoc.data() as Map<String, dynamic>;
           // Add userId to the map to pass it easily
           userData['userId'] = widget.userId;
           _isLoading = false;
@@ -70,8 +78,9 @@ class _ProfilePageState extends State<ProfilePage> {
 
   String _calculateAge() {
     if (userData['dob'] == null || userData['dob'].isEmpty) return "N/A";
+
     try {
-      List<String> parts = userData['dob'].split('-');
+      List parts = userData['dob'].split('-');
       if (parts.length != 3) return "N/A";
       DateTime birthDate = DateTime(int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
       DateTime today = DateTime.now();
@@ -88,7 +97,7 @@ class _ProfilePageState extends State<ProfilePage> {
   String _formatBirthday() {
     if (userData['dob'] == null || userData['dob'].isEmpty) return "N/A";
     try {
-      List<String> parts = userData['dob'].split('-');
+      List parts = userData['dob'].split('-');
       if (parts.length != 3) return "N/A";
       DateTime birthDate = DateTime(int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
       String day = DateFormat('d').format(birthDate);
@@ -132,7 +141,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       child: ElevatedButton(
                         onPressed: () async {
                           Navigator.of(context).pop(); // Close confirmation dialog
-                          showDialog(context: context, barrierDismissible: false, builder: (BuildContext context) => const Dialog(backgroundColor: Colors.transparent, elevation: 0, child: Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF9D7BFF))))));
+                          showDialog(context: context, barrierDismissible: false, builder: (BuildContext context) => const Dialog(backgroundColor: Colors.transparent, elevation: 0, child: Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation(Color(0xFF9D7BFF))))));
                           try {
                             await FirebaseAuth.instance.signOut();
                             if(mounted) Navigator.of(context).pop(); // Pop loading indicator
@@ -188,13 +197,31 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  // New method to build trainer-specific menu items
+  Widget _buildRoleSpecificMenuItems() {
+    // Check if the user is a trainer
+    if (userData['role'] == 'Trainer') {
+      return _buildProfileMenuItem(
+        icon: Icons.star_rate_outlined,
+        title: 'My Ratings',
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const TrainerRatingsPage()),
+          );
+        },
+      );
+    }
+    return const SizedBox.shrink(); // Return empty widget if not a trainer
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
       return Scaffold(
         backgroundColor: const Color(0xFF1E1E1E),
         appBar: AppBar(backgroundColor: const Color(0xFFB29BFF), elevation: 0, title: const Text("My Profile", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500)), leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.white), onPressed: () => Navigator.of(context).pop()), centerTitle: true),
-        body: const Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF9D7BFF)))),
+        body: const Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation(Color(0xFF9D7BFF)))),
       );
     }
 
@@ -265,10 +292,12 @@ class _ProfilePageState extends State<ProfilePage> {
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => DetailedProfilePage(userData: userData)),
+                      MaterialPageRoute(builder: (context) => DetailedProfilePage(userData: Map<String, dynamic>.from(userData))),
                     );
                   },
                 ),
+                // Add the role-specific menu items here
+                _buildRoleSpecificMenuItems(),
                 _buildProfileMenuItem(
                   icon: Icons.star_outline,
                   title: 'Favorite',
@@ -336,4 +365,3 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 }
-
