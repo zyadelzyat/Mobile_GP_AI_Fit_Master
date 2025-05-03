@@ -25,17 +25,18 @@ class _HomePageState extends State<HomePage> {
   int _selectedCategoryIndex = 0;
   // Updated _currentNavIndex to reflect 3 items in BottomNavBar (Home, Store, Chat)
   int _currentNavIndex = 0; // 0: Home, 1: Store, 2: Chat
+
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  Map<String, dynamic> _userData = {}; // Use specific type
+  Map<String, dynamic> _userData = {}; // Use specific type Map<String, dynamic>
   bool _isLoadingUserData = true; // Start as true
 
-  // *** CORRECTED: Use 'iconAsset' with image paths ***
+  // Original list of all possible categories
   final List<Map<String, dynamic>> _categories = [
     {
       'iconAsset': 'assets/icons/youtube.png', // Path to your custom workout icon
       'label': 'Workout',
-      'route': null
+      'route': null // Default Workout might not navigate, but show content below
     },
     {
       'iconAsset': 'assets/icons/nutrition_icon.png', // Path to your custom nutrition icon
@@ -57,63 +58,77 @@ class _HomePageState extends State<HomePage> {
   // Dynamic categories based on user role
   List<Map<String, dynamic>> get _filteredCategories {
     List<Map<String, dynamic>> categories = List.from(_categories); // Create a modifiable copy
-    if (_userData.containsKey('role') && _userData['role'] == 'Self-Trainee') {
-      // Exclude Nutrition and modify Workout for Self-Trainee
-      categories = categories
-          .where((category) => category['label'] != 'Nutrition')
-          .map((category) {
-        if (category['label'] == 'Workout') {
-          return {
-            // *** CHANGE THIS LINE ***
-            'iconAsset': 'assets/icons/youtube.png', // Use the same youtube icon path
-            'label': 'YT_Workout', // Keep or change label as needed
-            'route': 'YT_Channel', // Keep or change route as needed
-          };
-        }
-        return category;
-      }).toList();
-    }
-    // Add other role conditions if they exist...
 
-    // This part seems misplaced in the original code, should likely be outside the Self-Trainee condition
-    // categories.removeWhere((category) => category['label'] == 'ChatBot'); // Example filter
+    // --- Role-Based Filtering Logic ---
+    if (_userData.containsKey('role')) {
+      final String userRole = _userData['role'];
+
+      if (userRole == 'Self-Trainee') {
+        // Exclude Nutrition
+        categories.removeWhere((category) => category['label'] == 'Nutrition');
+        // Modify Workout to point to YouTube
+        categories = categories.map((category) {
+          if (category['label'] == 'Workout') {
+            return {
+              'iconAsset': 'assets/icons/youtube.png', // Keep YouTube icon
+              'label': 'YT_Workout', // Internal label, displayed as 'Workout'
+              'route': 'YT_Channel', // Route to launch YouTube
+            };
+          }
+          return category;
+        }).toList();
+      } else if (userRole == 'Trainee') {
+        // Example: Maybe Trainees see Nutrition but not YT link directly
+        // No specific changes needed based on current logic, but could add rules here.
+      } else if (userRole == 'Trainer') {
+        // Example: Trainers might see different categories
+        // categories.removeWhere((category) => category['label'] == 'Products');
+      }
+      // Add more role conditions as needed
+    } else {
+      // Default view for users with no role or before role is loaded
+      // Example: Remove Nutrition by default if not logged in or no role
+      categories.removeWhere((category) => category['label'] == 'Nutrition');
+    }
 
     return categories;
   }
 
+
   // Made _workouts mutable for favorite state changes
+  // Ensure these workouts match the visual style/content if needed [1]
   List<Map<String, dynamic>> _workouts = [
     {
-      'title': '3 tips for gym beginners',
-      'image': 'assets/workout1.jpg', // Make sure these assets exist
+      'title': 'Squat Exercise', // Matches image [1]
+      'image': 'assets/workout1.jpg', // Make sure these assets exist and match image [1]
       'color': Colors.purple,
-      'videoUrl': 'https://youtube.com/shorts/ajWEUdlbMOA?si=2N01glDn192AaGv6',
-      'duration': '8 Minutes',
-      'calories': '90 kcal',
+      'videoUrl': 'https://youtube.com/shorts/ajWEUdlbMOA?si=2N01glDn192AaGv6', // Example URL
+      'duration': '12 Minutes', // Matches image [1]
+      'calories': '120 Kcal', // Matches image [1]
       'isFavorite': false, // Initialize as false, load state later
     },
     {
-      'title': 'Best Bulking Drink For Skinny Guys!',
-      'image': 'assets/workout2.jpg', // Make sure these assets exist
+      'title': 'Full Body Stretching', // Matches image [1]
+      'image': 'assets/workout2.jpg', // Make sure these assets exist and match image [1]
       'color': Colors.blue,
-      'videoUrl': 'https://www.youtube.com/watch?v=3sH7wbIZjEY',
-      'duration': '12 Minutes',
-      'calories': '120 kcal',
+      'videoUrl': 'https://www.youtube.com/watch?v=3sH7wbIZjEY', // Example URL
+      'duration': '12 Minutes', // Matches image [1]
+      'calories': '120 Kcal', // Matches image [1]
       'isFavorite': false, // Default to false, load state later
     },
     // Add more workouts if needed
   ];
 
-  final List<Map<String, dynamic>> _healthAndFitItems = [
+  final List<Map<String, String>> _healthAndFitItems = [
     {
-      'title': 'Supplement Guide',
+      'title': 'Supplement Guide', // Matches image [1]
       'description': '',
-      'image': 'assets/supplement.jpg', // Make sure this asset exists
+      'image': 'assets/supplement.jpg', // Make sure this asset exists and matches image [1]
     },
     {
-      'title': '5 Quick & Effective Daily Routines',
+      'title': '15 Quick & Effective Daily Routines', // Matches image [1]
       'description': '',
-      'image': 'assets/daily.jpg', // Make sure this asset exists
+      'image': 'assets/daily.jpg', // Make sure this asset exists and matches image [1]
     },
     // Add more items if needed
   ];
@@ -123,7 +138,10 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     // Fetch user data first, then load favorites which might depend on user ID
     _fetchCurrentUserData().then((_) {
-      _loadFavorites(); // Load favorites after user data is fetched
+      // Only load favorites if user data fetch was successful and component still mounted
+      if (mounted && _userData.isNotEmpty) {
+        _loadFavorites(); // Load favorites after user data is fetched
+      }
     });
   }
 
@@ -133,6 +151,7 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       _isLoadingUserData = true;
     });
+
     try {
       User? currentUser = _auth.currentUser;
       if (currentUser != null) {
@@ -140,15 +159,18 @@ class _HomePageState extends State<HomePage> {
         await _firestore.collection('users').doc(currentUser.uid).get();
         if (userDoc.exists && mounted) { // Check if mounted before setting state
           setState(() {
-            _userData = userDoc.data() as Map<String, dynamic>;
+            // Ensure data is Map<String, dynamic>
+            _userData = Map<String, dynamic>.from(userDoc.data() as Map<dynamic, dynamic>);
           });
         } else {
           print("User document does not exist for UID: ${currentUser.uid}");
-          // Handle case where user doc doesn't exist
+          // Handle case where user doc doesn't exist (e.g., show default view)
+          if (mounted) setState(() => _userData = {}); // Clear user data
         }
       } else {
         print("No current user logged in.");
-        // Handle case where no user is logged in
+        // Handle case where no user is logged in (e.g., show guest view)
+        if (mounted) setState(() => _userData = {}); // Clear user data
       }
     } catch (e) {
       print("Error fetching user data: $e");
@@ -166,37 +188,44 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+
   Future<void> _loadFavorites() async {
     if (!mounted) return; // Check if component is still mounted
+    User? currentUser = _auth.currentUser;
+    if (currentUser == null) return; // No user, cannot load favorites
+
     try {
-      User? currentUser = _auth.currentUser;
-      if (currentUser != null) {
-        DocumentSnapshot favoritesDoc =
-        await _firestore.collection('favorites').doc(currentUser.uid).get();
-        if (favoritesDoc.exists && mounted) {
-          Map<String, dynamic> favoritesData =
-          favoritesDoc.data() as Map<String, dynamic>;
-          List<dynamic> favoriteWorkoutsTitlesDynamic = favoritesData['workouts'] ?? [];
-          List<String> favoriteWorkoutsTitles = favoriteWorkoutsTitlesDynamic.cast<String>();
-          List<Map<String, dynamic>> updatedWorkouts = List.from(_workouts);
-          for (int i = 0; i < updatedWorkouts.length; i++) {
-            String workoutTitle = updatedWorkouts[i]['title'];
-            updatedWorkouts[i]['isFavorite'] = favoriteWorkoutsTitles.contains(workoutTitle);
-          }
-          if (mounted) {
-            setState(() {
-              _workouts = updatedWorkouts;
-            });
-          }
-        } else {
-          print("No favorites document found for user ${currentUser.uid}");
-          if (mounted) {
-            setState(() {
-              for (var workout in _workouts) {
-                workout['isFavorite'] = false;
-              }
-            });
-          }
+      DocumentSnapshot favoritesDoc =
+      await _firestore.collection('favorites').doc(currentUser.uid).get();
+
+      if (favoritesDoc.exists && mounted) {
+        Map<String, dynamic> favoritesData = favoritesDoc.data() as Map<String, dynamic>;
+        List<dynamic> favoriteWorkoutsTitlesDynamic = favoritesData['workouts'] ?? [];
+        List<String> favoriteWorkoutsTitles = favoriteWorkoutsTitlesDynamic.cast<String>();
+
+        // Create a new list to avoid modifying state directly during iteration
+        List<Map<String, dynamic>> updatedWorkouts = List.from(_workouts);
+        for (int i = 0; i < updatedWorkouts.length; i++) {
+          String workoutTitle = updatedWorkouts[i]['title'] as String;
+          updatedWorkouts[i]['isFavorite'] = favoriteWorkoutsTitles.contains(workoutTitle);
+        }
+
+        if (mounted) {
+          setState(() {
+            _workouts = updatedWorkouts;
+          });
+        }
+      } else {
+        print("No favorites document found for user ${currentUser.uid}");
+        // Ensure all workouts are marked as not favorite if doc doesn't exist
+        if (mounted) {
+          setState(() {
+            List<Map<String, dynamic>> updatedWorkouts = List.from(_workouts);
+            for (var workout in updatedWorkouts) {
+              workout['isFavorite'] = false;
+            }
+            _workouts = updatedWorkouts;
+          });
         }
       }
     } catch (e) {
@@ -209,23 +238,34 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+
   Future<void> _saveFavorites() async {
     if (!mounted) return; // Check if component is still mounted
-    try {
-      User? currentUser = _auth.currentUser;
-      if (currentUser != null) {
-        List<String> favoriteWorkoutsTitles = [];
-        for (var workout in _workouts) {
-          if (workout['isFavorite'] == true) {
-            favoriteWorkoutsTitles.add(workout['title']);
-          }
-        }
-        await _firestore.collection('favorites').doc(currentUser.uid).set({
-          'workouts': favoriteWorkoutsTitles,
-          'lastUpdated': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
-        print("Favorites saved successfully.");
+    User? currentUser = _auth.currentUser;
+    if (currentUser == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("You must be logged in to save favorites.")),
+        );
       }
+      return;
+    }
+
+    try {
+      List<String> favoriteWorkoutsTitles = [];
+      for (var workout in _workouts) {
+        if (workout['isFavorite'] == true) {
+          favoriteWorkoutsTitles.add(workout['title'] as String);
+        }
+      }
+
+      await _firestore.collection('favorites').doc(currentUser.uid).set({
+        'workouts': favoriteWorkoutsTitles,
+        'lastUpdated': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true)); // Use merge to avoid overwriting other potential favorite types
+
+      print("Favorites saved successfully.");
+
     } catch (e) {
       print("Error saving favorites: $e");
       if (mounted) {
@@ -239,28 +279,30 @@ class _HomePageState extends State<HomePage> {
   // --- Navigation ---
   void _navigateToFeature(String? routeName) {
     if (routeName == null || !mounted) return; // Check context validity
+
     switch (routeName) {
       case 'Workout':
-        break; // Default section, do nothing
+        print("Workout category tapped (no specific route assigned)");
+        break;
       case 'Nutrition':
         Navigator.push(
-            context, MaterialPageRoute(builder: (context) => NutritionPage()));
+            context, MaterialPageRoute(builder: (context) => NutritionPage())); // Ensure NutritionPage exists
         break;
       case 'ChatBot':
         Navigator.push(
-            context, MaterialPageRoute(builder: (context) => const ChatPage()));
+            context, MaterialPageRoute(builder: (context) => const ChatPage())); // Ensure ChatPage exists
         break;
       case 'CalorieCalculator':
         Navigator.push(
             context,
             MaterialPageRoute(
-                builder: (context) => const CalorieCalculator()));
+                builder: (context) => const CalorieCalculator())); // Ensure CalorieCalculator exists
         break;
       case 'SupplementsStore':
         Navigator.push(
             context,
             MaterialPageRoute(
-                builder: (context) => const SupplementsStorePage()));
+                builder: (context) => const SupplementsStorePage())); // Ensure SupplementsStorePage exists
         break;
       case 'YT_Channel':
         _launchYouTubeChannel();
@@ -269,7 +311,7 @@ class _HomePageState extends State<HomePage> {
       //   Navigator.push(
       //       context,
       //       MaterialPageRoute(
-      //           builder: (context) => AllVideosPage(videos: _workouts))); // Assuming AllVideosPage exists
+      //           builder: (context) => AllVideosPage(videos: _workouts))); // Ensure AllVideosPage exists and accepts videos
       //   break;
       default:
         print("Unknown route: $routeName");
@@ -306,7 +348,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _launchYouTubeChannel() async {
-    await _launchUrlHelper('https://www.youtube.com/@yusufashraf17');
+    await _launchUrlHelper('https://www.youtube.com/@yusufashraf17'); // Use actual channel URL
   }
 
   Future<void> _launchVideo(String url) async {
@@ -320,7 +362,7 @@ class _HomePageState extends State<HomePage> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => ProfilePage(userId: currentUser.uid),
+          builder: (context) => ProfilePage(userId: currentUser.uid), // Ensure ProfilePage exists
         ),
       );
     } else {
@@ -337,15 +379,16 @@ class _HomePageState extends State<HomePage> {
     if (!mounted) return;
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const TrainerTraineesPage()),
+      MaterialPageRoute(builder: (context) => const TrainerTraineesPage()), // Ensure TrainerTraineesPage exists
     );
   }
 
   void _navigateToChatbot() {
     if (!mounted) return;
+    // Chat is now in bottom nav, this might be redundant unless called from elsewhere
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const ChatPage()),
+      MaterialPageRoute(builder: (context) => const ChatPage()), // Ensure ChatPage exists
     );
   }
 
@@ -354,7 +397,8 @@ class _HomePageState extends State<HomePage> {
     if (!mounted) return;
     setState(() {
       if (index >= 0 && index < _workouts.length) {
-        _workouts[index]['isFavorite'] = !_workouts[index]['isFavorite'];
+        // Toggle the boolean state
+        _workouts[index]['isFavorite'] = !(_workouts[index]['isFavorite'] as bool? ?? false);
       } else {
         print("Error: Invalid index $index for toggling favorite.");
         if (mounted) {
@@ -362,29 +406,26 @@ class _HomePageState extends State<HomePage> {
             const SnackBar(content: Text("Error updating favorite status.")),
           );
         }
-        return;
+        return; // Exit if index is invalid
       }
     });
+    // Save the updated favorites list to Firestore
     _saveFavorites();
   }
 
+
   // --- WIDGET BUILDERS ---
 
-  // *** CORRECTED: Accepts iconAsset path and uses Image.asset ***
+  // Builds a single category icon widget
   Widget _buildCategoryIcon(String iconAsset, String label, int index) {
     String displayLabel = (label == 'YT_Workout') ? 'Workout' : label;
+
     return GestureDetector(
       onTap: () {
         if (!mounted) return;
-        setState(() {
-          _selectedCategoryIndex = index;
-        });
         String? route = _filteredCategories[index]['route'];
-        if (route != null) {
-          _navigateToFeature(route);
-        } else if (_filteredCategories[index]['label'] == 'Workout'){
-          print("Workout category tapped (no specific route assigned)");
-        }
+        _navigateToFeature(route);
+
       },
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -392,22 +433,19 @@ class _HomePageState extends State<HomePage> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFF8E7AFE).withOpacity(0.2),
+              color: const Color(0xFF8E7AFE).withOpacity(0.1),
               borderRadius: BorderRadius.circular(15),
             ),
-            // *** Use Image.asset with color tinting ***
             child: Image.asset(
               iconAsset,
-              width: 24,
-              height: 24,
-              //color: const Color(0xFF8E7AFE), // Apply the theme color tint <--- THIS LINE
+              width: 30,
+              height: 30,
               errorBuilder: (context, error, stackTrace) {
                 print("Error loading icon image '$iconAsset': $error");
-                // Fallback icon if image fails
                 return const Icon(
-                  Icons.broken_image, // More appropriate fallback
+                  Icons.category,
                   color: Color(0xFF8E7AFE),
-                  size: 24,
+                  size: 30,
                 );
               },
             ),
@@ -416,7 +454,7 @@ class _HomePageState extends State<HomePage> {
           Text(
             displayLabel,
             style: const TextStyle(
-              color: Colors.white,
+              color: Colors.white70,
               fontSize: 12,
             ),
             textAlign: TextAlign.center,
@@ -426,13 +464,15 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  // Builds a single workout card
   Widget _buildWorkoutCard(Map<String, dynamic> workout, int index) {
     final videoUrl = workout['videoUrl'] as String?;
     final isFavorite = workout['isFavorite'] as bool? ?? false;
     final imageUrl = workout['image'] as String? ?? 'assets/placeholder.png';
-    final title = workout['title'] as String? ?? 'No Title';
+    final title = workout['title'] as String? ?? 'Workout Title';
     final duration = workout['duration'] as String? ?? '-';
     final calories = workout['calories'] as String? ?? '-';
+
     return GestureDetector(
       onTap: () {
         if (videoUrl != null && videoUrl.isNotEmpty) {
@@ -448,7 +488,7 @@ class _HomePageState extends State<HomePage> {
       },
       child: Container(
         width: MediaQuery.of(context).size.width * 0.44,
-        margin: const EdgeInsets.only(right: 10),
+        margin: const EdgeInsets.only(right: 12),
         decoration: BoxDecoration(
           color: const Color(0xFF2A2A2A),
           borderRadius: BorderRadius.circular(15),
@@ -481,7 +521,7 @@ class _HomePageState extends State<HomePage> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: const BoxDecoration(
-                      color: Colors.black45,
+                      color: Colors.black54,
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
@@ -494,17 +534,17 @@ class _HomePageState extends State<HomePage> {
                   top: 8,
                   right: 8,
                   child: GestureDetector(
-                    onTap: () => _toggleFavorite(index),
+                    onTap: () => _toggleFavorite(_workouts.indexWhere((w) => w['title'] == title)),
                     child: Container(
                       padding: const EdgeInsets.all(4),
                       decoration: const BoxDecoration(
-                        color: Colors.black45,
+                        color: Colors.black54,
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
-                        isFavorite ? Icons.star : Icons.star_border,
-                        color: Colors.yellow,
-                        size: 18,
+                        isFavorite ? Icons.star_rounded : Icons.star_border_rounded,
+                        color: isFavorite ? Colors.yellowAccent : Colors.white70,
+                        size: 20,
                       ),
                     ),
                   ),
@@ -529,7 +569,7 @@ class _HomePageState extends State<HomePage> {
                   const SizedBox(height: 6),
                   Row(
                     children: [
-                      const Icon(Icons.timer, color: Colors.grey, size: 14),
+                      const Icon(Icons.timer_outlined, color: Colors.grey, size: 14),
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
@@ -540,7 +580,7 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      const Icon(Icons.local_fire_department, color: Colors.grey, size: 14),
+                      const Icon(Icons.local_fire_department_outlined, color: Colors.orangeAccent, size: 14),
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
@@ -561,12 +601,15 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildHealthAndFitCard(Map<String, dynamic> item) {
+
+  // Builds a single card for the Health & Fit section
+  Widget _buildHealthAndFitCard(Map<String, String> item) {
     final imageUrl = item['image'] ?? 'assets/placeholder.png';
-    final title = item['title'] ?? 'No Title';
+    final title = item['title'] ?? 'Health & Fit Item';
+
     return Container(
       width: MediaQuery.of(context).size.width * 0.44,
-      margin: const EdgeInsets.only(right: 10),
+      margin: const EdgeInsets.only(right: 12),
       decoration: BoxDecoration(
         color: const Color(0xFF2A2A2A),
         borderRadius: BorderRadius.circular(15),
@@ -609,150 +652,119 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  // Builds the rating section (only shown for 'Trainee' role)
   Widget _buildRatingSection() {
-    String coachName = "Coach";
-    String coachImageUrl = "assets/coach_placeholder.png";
-    double currentRating = 4.0;
-    String lastComment = "Good effort but ..........";
+    // Placeholder data - Fetch actual rating data if needed
+    String coachName = "Coach Name"; // Fetch from user data or trainee profile
+    String coachImageUrl = "assets/coach_placeholder.png"; // Fetch actual image path
+    double currentRating = 4.0; // Fetch last given rating
+    String lastComment = "Last comment here..."; // Fetch last comment
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFB3A0FF),
+        color: const Color(0xFF2A2A2A),
         borderRadius: BorderRadius.circular(15),
       ),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: const Color(0xFF1E1E1E),
-          borderRadius: BorderRadius.circular(15),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                "My Rating",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              TextButton.icon(
+                icon: const Icon(Icons.edit_note, size: 18, color: Color(0xFF8E7AFE)),
+                label: const Text(
+                  "Add/Edit Rating",
+                  style: TextStyle(
+                    color: Color(0xFF8E7AFE),
+                    fontSize: 14,
+                  ),
+                ),
+                onPressed: () {
+                  if (!mounted) return;
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const AddRatingPage()), // Ensure AddRatingPage exists
+                  ).then((_) {
+                    print("Returned from AddRatingPage");
+                  });
+                },
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              CircleAvatar(
+                radius: 25,
+                backgroundImage: AssetImage(coachImageUrl),
+                backgroundColor: Colors.grey[800],
+                onBackgroundImageError: (exception, stackTrace) {
+                  print('Error loading coach image: $exception');
+                },
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.black,
+                    RatingBarIndicator(
+                      rating: currentRating,
+                      itemBuilder: (context, index) => const Icon(
+                        Icons.star_rounded,
+                        color: Colors.amber,
                       ),
-                      child: const Icon(
-                        Icons.star,
-                        color: Colors.yellow,
-                        size: 16,
-                      ),
+                      itemCount: 5,
+                      itemSize: 20.0,
+                      unratedColor: Colors.grey[800],
+                      direction: Axis.horizontal,
                     ),
-                    const SizedBox(width: 8),
-                    const Text(
-                      "My Rate",
+                    const SizedBox(height: 4),
+                    Text(
+                      lastComment,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 14,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      "Coach: $coachName",
                       style: TextStyle(
-                        color: Colors.yellow,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                        color: Colors.grey[500],
+                        fontSize: 12,
                       ),
                     ),
                   ],
                 ),
-                InkWell(
-                  onTap: () {
-                    if (!mounted) return;
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const AddRatingPage()),
-                    ).then((_) {
-                      print("Returned from AddRatingPage");
-                    });
-                  },
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.black,
-                        ),
-                        child: const Icon(
-                          Icons.star,
-                          color: Colors.yellow,
-                          size: 16,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      const Text(
-                        "Add Rating",
-                        style: TextStyle(
-                          color: Colors.yellow,
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                CircleAvatar(
-                  radius: 20,
-                  backgroundImage: AssetImage(coachImageUrl),
-                  backgroundColor: Colors.grey[800],
-                  onBackgroundImageError: (exception, stackTrace) {
-                    print('Error loading coach image: $exception');
-                  },
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: List.generate(5, (index) {
-                          return Icon(
-                            Icons.star,
-                            color: index < currentRating.floor()
-                                ? Colors.yellow
-                                : Colors.grey[800],
-                            size: 20,
-                          );
-                        }),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        lastComment,
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 14,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      Text(
-                        coachName,
-                        style: TextStyle(
-                          color: Colors.grey[500],
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
 
+
+  // Builds the view for displaying favorite workouts.
   Widget _buildFavoritesView() {
     if (!mounted) return const SizedBox.shrink();
+
     List<Map<String, dynamic>> favoriteWorkouts =
     _workouts.where((workout) => workout['isFavorite'] == true).toList();
 
@@ -764,13 +776,13 @@ class _HomePageState extends State<HomePage> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: const [
               Icon(
-                Icons.star_border,
+                Icons.star_border_rounded,
                 color: Colors.grey,
                 size: 60,
               ),
               SizedBox(height: 16),
               Text(
-                "No favorites yet",
+                "No Favorites Yet",
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 18,
@@ -779,7 +791,7 @@ class _HomePageState extends State<HomePage> {
               ),
               SizedBox(height: 8),
               Text(
-                "Mark workouts as favorites by tapping the star icon to see them here.",
+                "Tap the star icon on workouts to save them here.",
                 style: TextStyle(
                   color: Colors.grey,
                   fontSize: 14,
@@ -798,6 +810,7 @@ class _HomePageState extends State<HomePage> {
       itemBuilder: (context, index) {
         final originalIndex = _workouts.indexWhere(
                 (workout) => workout['title'] == favoriteWorkouts[index]['title']);
+
         if (originalIndex == -1) {
           print("Warning: Could not find original index for favorite workout: ${favoriteWorkouts[index]['title']}");
           return const SizedBox.shrink();
@@ -807,12 +820,14 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  // Builds a card specifically for the Favorites list
   Widget _buildFavoriteWorkoutCard(Map<String, dynamic> workout, int originalIndex) {
     final videoUrl = workout['videoUrl'] as String?;
     final imageUrl = workout['image'] as String? ?? 'assets/placeholder.png';
-    final title = workout['title'] as String? ?? 'No Title';
+    final title = workout['title'] as String? ?? 'Favorite Workout';
     final duration = workout['duration'] as String? ?? '-';
     final calories = workout['calories'] as String? ?? '-';
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
@@ -853,7 +868,7 @@ class _HomePageState extends State<HomePage> {
                   child: Container(
                     padding: const EdgeInsets.all(12),
                     decoration: const BoxDecoration(
-                      color: Colors.black45,
+                      color: Colors.black54,
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
@@ -871,12 +886,12 @@ class _HomePageState extends State<HomePage> {
                   child: Container(
                     padding: const EdgeInsets.all(6),
                     decoration: const BoxDecoration(
-                      color: Colors.black45,
+                      color: Colors.black54,
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
-                      Icons.star,
-                      color: Colors.yellow,
+                      Icons.star_rounded,
+                      color: Colors.yellowAccent,
                       size: 22,
                     ),
                   ),
@@ -900,7 +915,7 @@ class _HomePageState extends State<HomePage> {
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    const Icon(Icons.timer, color: Colors.grey, size: 16),
+                    const Icon(Icons.timer_outlined, color: Colors.grey, size: 16),
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
@@ -911,7 +926,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    const Icon(Icons.local_fire_department, color: Colors.grey, size: 16),
+                    const Icon(Icons.local_fire_department_outlined, color: Colors.orangeAccent, size: 16),
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
@@ -931,11 +946,14 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+
   @override
   Widget build(BuildContext context) {
-    String userName = _isLoadingUserData ? 'User' : (_userData['firstName'] as String? ?? 'User');
-    Widget mainContent;
+    String userName = _isLoadingUserData
+        ? 'User'
+        : (_userData['firstName'] as String? ?? 'User');
 
+    Widget mainContent;
     if (_isLoadingUserData) {
       mainContent = const Center(
         child: CircularProgressIndicator(color: Color(0xFF8E7AFE)),
@@ -946,7 +964,7 @@ class _HomePageState extends State<HomePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Top Header Section (with Profile Icon in AppBar)
+            // --- Top Header Section ---
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
               child: Row(
@@ -956,10 +974,11 @@ class _HomePageState extends State<HomePage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "Hi, $userName",
+                          "Hi, $userName", // Display user name
+                          // --- MODIFIED: Changed text color ---
                           style: const TextStyle(
-                            color: Color(0xFF8E7AFE),
-                            fontSize: 24,
+                            color: Color(0xFF896CFE), // Color #896CFE [User Request]
+                            fontSize: 26,
                             fontWeight: FontWeight.bold,
                           ),
                           maxLines: 1,
@@ -967,7 +986,7 @@ class _HomePageState extends State<HomePage> {
                         ),
                         const SizedBox(height: 4),
                         const Text(
-                          "It's time to challenge your limits.",
+                          "Ready to crush your goals today?",
                           style: TextStyle(
                             color: Colors.grey,
                             fontSize: 14,
@@ -983,7 +1002,7 @@ class _HomePageState extends State<HomePage> {
                     onPressed: () {
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Search not implemented yet.'))
+                            const SnackBar(content: Text('Search functionality not implemented yet.'))
                         );
                       }
                     },
@@ -994,13 +1013,12 @@ class _HomePageState extends State<HomePage> {
                     onPressed: () {
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Notifications not implemented yet.'))
+                            const SnackBar(content: Text('Notifications functionality not implemented yet.'))
                         );
                       }
                     },
                     tooltip: 'Notifications',
                   ),
-                  // Profile Icon Button in AppBar
                   IconButton(
                     icon: const Icon(Icons.person_outline, color: Colors.white),
                     onPressed: _navigateToProfile,
@@ -1009,30 +1027,35 @@ class _HomePageState extends State<HomePage> {
                 ],
               ),
             ),
-            // Category Icons Section
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: List.generate(_filteredCategories.length, (index) {
-                  final category = _filteredCategories[index];
-                  // *** CORRECTED: Pass 'iconAsset' path to builder ***
-                  return _buildCategoryIcon(
-                    category['iconAsset'], // Use the asset path
-                    category['label'],
-                    index,
-                  );
-                }),
+
+            // --- Category Icons Section ---
+            if (_filteredCategories.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                child: Row(
+                  mainAxisAlignment: _filteredCategories.length > 3
+                      ? MainAxisAlignment.spaceBetween
+                      : MainAxisAlignment.spaceAround,
+                  children: List.generate(_filteredCategories.length, (index) {
+                    final category = _filteredCategories[index];
+                    return _buildCategoryIcon(
+                      category['iconAsset'] as String,
+                      category['label'] as String,
+                      index,
+                    );
+                  }),
+                ),
               ),
-            ),
-            // Workouts Section
+
+
+            // --- Workouts Section ---
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text(
-                    "Workouts",
+                    "Featured Workouts",
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 18,
@@ -1041,7 +1064,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                   GestureDetector(
                     onTap: () {
-                      _navigateToFeature('VideosPage'); // Navigate to all videos page
+                      _navigateToFeature('VideosPage');
                     },
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -1064,7 +1087,7 @@ class _HomePageState extends State<HomePage> {
             ),
             const SizedBox(height: 12),
             SizedBox(
-              height: 200,
+              height: 210,
               child: ListView.builder(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 scrollDirection: Axis.horizontal,
@@ -1074,15 +1097,79 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             const SizedBox(height: 24),
-            // Promotional Banner (Conditional)
+
+
+            // --- Promotional Banner (MODIFIED Padding) ---
             if (!(_userData.containsKey('role') && _userData['role'] == 'Trainee')) ...[
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Container( /* ... Banner content ... */ ),
+                child: Container( // Outer container
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFB3A0FF),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  // --- MODIFIED: Increased padding to make inner box smaller ---
+                  padding: const EdgeInsets.all(12), // Increased padding [User Request]
+                  child: Container( // Inner container
+                    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2A2A2A),
+                      borderRadius: BorderRadius.circular(15), // Keep inner rounding slightly less than outer
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: const [
+                              Text(
+                                "Achieve Your Goals",
+                                style: TextStyle(
+                                  color: Colors.yellowAccent,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                "Plank With Hip Twist",
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.asset(
+                            'assets/plank_image.png',
+                            height: 65,
+                            width: 65,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              print("Error loading banner image 'assets/plank_image.png': $error");
+                              return Container(
+                                height: 65,
+                                width: 65,
+                                color: Colors.grey[700],
+                                child: const Icon(Icons.image_not_supported, color: Colors.grey, size: 30),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
               const SizedBox(height: 24),
             ],
-            // Rating Section (Conditional)
+
+
+            // --- Rating Section (Conditional) ---
             if (_userData.containsKey('role') && _userData['role'] == 'Trainee') ...[
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -1090,7 +1177,8 @@ class _HomePageState extends State<HomePage> {
               ),
               const SizedBox(height: 24),
             ],
-            // Health & Fit Section
+
+            // --- Health & Fit Section ---
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: const Text(
@@ -1114,57 +1202,79 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             const SizedBox(height: 24),
-            // Trainer Button (Conditional)
+
+
+            // --- Trainer Button (Conditional) ---
             if (_userData.containsKey('role') &&
                 _userData['role'] != 'Trainee' &&
                 _userData['role'] != 'Self-Trainee') ...[
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                child: GestureDetector( /* ... Trainer button content ... */ ),
+                child: ElevatedButton.icon(
+                  onPressed: _navigateToTrainees,
+                  icon: const Icon(Icons.group),
+                  label: const Text("View My Trainees"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Color(0xFF8E7AFE),
+                    foregroundColor: Colors.white,
+                    minimumSize: Size(double.infinity, 50),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
               ),
+              const SizedBox(height: 16),
             ],
+
             const SizedBox(height: 16),
+
           ],
         ),
       );
-    } else if (_currentNavIndex == 1) { // Favorites Tab Content
-      // This index now corresponds to 'Store' based on the BottomNavBar items below
-      // If you want a favorites tab, you need to adjust the BottomNavBar items and logic
-      mainContent = _buildFavoritesView(); // Assuming you might want favorites later
-    } else if (_currentNavIndex == 2) { // AI Coach Tab Content
-      mainContent = const ChatPage(); // Show ChatPage directly
+    } else if (_currentNavIndex == 1) {
+      // Store Tab (Navigated to via onTap)
+      mainContent = Center(child: Text("Store Tab (handled by navigation)", style: TextStyle(color: Colors.white)));
+      // Or optionally: mainContent = _buildFavoritesView();
+    } else if (_currentNavIndex == 2) { // Chat Tab Content
+      mainContent = const ChatPage();
     } else { // Fallback
       mainContent = const Center(
         child: Text("Invalid Tab Index", style: TextStyle(color: Colors.white)),
       );
     }
 
+    // --- Scaffold Structure ---
     return Scaffold(
-      backgroundColor: const Color(0xFF232323),
+      backgroundColor: const Color(0xFF1E1E1E),
       body: SafeArea(
         child: mainContent,
       ),
-      // *** CORRECTED BottomNavBar to have 3 items: Home, Store, Chat ***
+      // --- Bottom Navigation Bar ---
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFF8E7AFE), // Purple background
+          color: const Color(0xFF2A2A2A),
           borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(15),
-            topRight: Radius.circular(15),
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
           ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 10,
+              spreadRadius: 1,
+            ),
+          ],
         ),
         child: BottomNavigationBar(
           currentIndex: _currentNavIndex,
           onTap: (index) {
             if (!mounted) return;
-            // Handle navigation based on the 3 items
-            if (index == 1) { // Store is index 1
+            if (index == 1) { // Store
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const SupplementsStorePage()),
               );
-              // Optional: Reset index if you don't want Store to be persistently selected
-              // setState(() { _currentNavIndex = 0; });
             } else { // Home (0) or Chat (2)
               setState(() {
                 _currentNavIndex = index;
@@ -1172,13 +1282,12 @@ class _HomePageState extends State<HomePage> {
             }
           },
           backgroundColor: Colors.transparent,
-          selectedItemColor: Colors.white,
-          unselectedItemColor: Colors.white.withOpacity(0.7),
+          selectedItemColor: const Color(0xFF8E7AFE),
+          unselectedItemColor: Colors.grey[600],
           type: BottomNavigationBarType.fixed,
           showSelectedLabels: false,
           showUnselectedLabels: false,
           elevation: 0,
-          // *** Updated items to match 3-item layout ***
           items: const [
             BottomNavigationBarItem(
               icon: Icon(Icons.home_outlined),
@@ -1186,8 +1295,8 @@ class _HomePageState extends State<HomePage> {
               label: 'Home',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.shopping_cart_outlined),
-              activeIcon: Icon(Icons.shopping_cart),
+              icon: Icon(Icons.shopping_bag_outlined),
+              activeIcon: Icon(Icons.shopping_bag),
               label: 'Store',
             ),
             BottomNavigationBarItem(
@@ -1202,6 +1311,4 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-// Ensure you have the corresponding pages imported:
-// NutritionPage, CalorieCalculator, SupplementsStorePage, AllVideosPage,
-// ProfilePage, TrainerTraineesPage, ChatPage, AddRatingPage
+// --- Ensure necessary imports, pages, and assets exist ---
