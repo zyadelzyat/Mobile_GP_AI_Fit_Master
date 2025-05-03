@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart'; // Import Provider for state management
-import 'set_password.dart'; // Import SetPasswordScreen
-import 'package:untitled/theme_provider.dart'; // Import ThemeProvider for theme management
+import 'package:provider/provider.dart';
+import 'package:cloud_functions/cloud_functions.dart'; // Import Cloud Functions
+import 'set_password.dart';
+import 'package:untitled/theme_provider.dart';
 
 class EnterCodeScreen extends StatefulWidget {
-  const EnterCodeScreen({super.key});
+  final String email; // Receive email from the previous screen
+
+  const EnterCodeScreen({super.key, required this.email});
 
   @override
   _EnterCodeScreenState createState() => _EnterCodeScreenState();
@@ -12,135 +15,136 @@ class EnterCodeScreen extends StatefulWidget {
 
 class _EnterCodeScreenState extends State<EnterCodeScreen> {
   final TextEditingController _codeController = TextEditingController();
+  bool _isLoading = false;
+  final FirebaseFunctions _functions = FirebaseFunctions.instance;
 
   bool _isValidCode(String code) {
-    return code.length == 6;
+    return code.length == 6 && int.tryParse(code) != null;
+  }
+
+  // Function to call the Cloud Function that verifies the OTP
+  Future<void> _verifyOtp() async {
+    final otp = _codeController.text.trim();
+    if (!_isValidCode(otp)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Please enter a valid 6-digit code."),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() { _isLoading = true; });
+
+    try {
+      // Replace 'verifyOtpFunction' with the actual name of your Cloud Function
+      final HttpsCallable callable = _functions.httpsCallable('verifyOtpFunction');
+      // Pass both email and OTP to the function
+      final result = await callable.call<Map<String, dynamic>>({
+        'email': widget.email, // Use the email passed to this widget
+        'otp': otp,
+      });
+
+      // Check the result from your Cloud Function
+      if (result.data['success'] == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("OTP verified successfully."),
+            backgroundColor: Colors.green,
+          ),
+        );
+        // Navigate to set password screen, passing the email (or a token if your function returns one)
+        Navigator.pushReplacement( // Use pushReplacement to prevent going back to OTP screen
+          context,
+          MaterialPageRoute(
+            builder: (context) => SetPasswordScreen(email: widget.email), // Pass email
+          ),
+        );
+      } else {
+        final errorMessage = result.data['message'] ?? 'Invalid or expired OTP. Please try again.';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } on FirebaseFunctionsException catch (e) {
+      print("Cloud Functions Error: ${e.code} - ${e.message}");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Error verifying OTP: ${e.message ?? 'Please try again.'}"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } catch (e) {
+      print("Generic Error: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("An unexpected error occurred. Please try again."),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() { _isLoading = false; });
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context); // Access ThemeProvider
-
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    // --- UI remains largely the same as your original code ---
+    // --- Key changes are in the onPressed of the 'Verify Code' button ---
+    // --- Added email property to receive it from ResetPasswordScreen ---
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor, // Use theme background color
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Theme.of(context).appBarTheme.backgroundColor, // Use theme app bar color
-        elevation: 0, // Remove AppBar shadow
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+        elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white), // Back icon
-          onPressed: () {
-            Navigator.pop(context); // Go back to ResetPasswordScreen
-          },
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
         ),
+        // Optional: Add Theme Toggle Button
+        actions: [
+          IconButton(
+            icon: Icon(
+              themeProvider.themeMode == ThemeMode.light
+                  ? Icons.dark_mode
+                  : Icons.light_mode,
+              color: Colors.white, // Adjust color as needed
+            ),
+            onPressed: () => themeProvider.toggleTheme(),
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 50),
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
-            children: <Widget>[
+            children: [
               const SizedBox(height: 50),
-
-              // Theme Toggle Button
-              Align(
-                alignment: Alignment.topRight,
-                child: IconButton(
-                  icon: Icon(
-                    themeProvider.themeMode == ThemeMode.light
-                        ? Icons.dark_mode // Dark mode icon
-                        : Icons.light_mode, // Light mode icon
-                    color: Theme.of(context).iconTheme.color, // Use theme icon color
-                  ),
-                  onPressed: () {
-                    themeProvider.toggleTheme(); // Toggle between light and dark mode
-                  },
-                ),
-              ),
-
-              // Title
-              Text(
-                'Enter the 6-digit Code',
-                style: TextStyle(
-                  color: Theme.of(context).primaryColor, // Use theme primary color
-                  fontSize: 30,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              Text('Enter the 6-digit Code', style: TextStyle(color: Theme.of(context).primaryColor, fontSize: 30, fontWeight: FontWeight.bold)),
               const SizedBox(height: 20),
-
-              // Instruction text
-              Text(
-                'Check your email for the 6-digit code.',
-                style: TextStyle(
-                  color: Theme.of(context).textTheme.bodyLarge?.color, // Use theme text color
-                  fontSize: 18,
-                  fontWeight: FontWeight.normal,
-                ),
-                textAlign: TextAlign.center,
-              ),
+              Text('Check your email (${widget.email}) for the 6-digit code.', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color, fontSize: 18), textAlign: TextAlign.center),
               const SizedBox(height: 30),
-
-              // Code input field
-              _buildTextField('Enter Code', Icons.lock, _codeController),
+              _buildTextField('Enter Code', Icons.lock_open, _codeController), // Changed icon
               const SizedBox(height: 30),
-
-              // Verify Code Button
               MaterialButton(
-                color: Colors.white, // White background for the button
+                color: Colors.white,
                 elevation: 5.0,
                 padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 80),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30), // Rounded corners
-                ),
-                onPressed: () {
-                  String code = _codeController.text;
-
-                  if (!_isValidCode(code)) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("Please enter a valid 6-digit code."),
-                      ),
-                    );
-                    return;
-                  }
-
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const SetPasswordScreen(),
-                    ),
-                  );
-                },
-                child: const Text(
-                  'Verify Code',
-                  style: TextStyle(
-                    color: Color(0xFF232323), // Black text for the button
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                onPressed: _isLoading ? null : _verifyOtp, // Call _verifyOtp
+                child: _isLoading
+                    ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 3, valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF232323))))
+                    : const Text('Verify Code', style: TextStyle(color: Color(0xFF232323), fontSize: 18, fontWeight: FontWeight.bold)),
               ),
-              const SizedBox(height: 20),
-
-              // Back to Email Button
-              MaterialButton(
-                color: Colors.grey[700], // Grey background for the button
-                elevation: 2.0,
-                padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 60),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30), // Rounded corners
-                ),
-                onPressed: () {
-                  Navigator.pop(context); // Go back to ResetPasswordScreen
-                },
-                child: const Text(
-                  'Back to Email',
-                  style: TextStyle(
-                    color: Colors.white, // White text for the button
-                    fontSize: 16,
-                  ),
-                ),
-              ),
+              // Removed the 'Back to Email' button as navigation is handled by AppBar back arrow
             ],
           ),
         ),
@@ -148,19 +152,25 @@ class _EnterCodeScreenState extends State<EnterCodeScreen> {
     );
   }
 
+  // _buildTextField remains the same, maybe add keyboardType: TextInputType.number
   Widget _buildTextField(String hintText, IconData icon, TextEditingController controller) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white, // White background for text fields
-        borderRadius: BorderRadius.circular(15), // Rounded corners (15px radius)
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [ BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 5, offset: const Offset(0, 2)) ],
       ),
       child: TextField(
         controller: controller,
-        style: const TextStyle(color: Colors.black), // Black text color for input
+        keyboardType: TextInputType.number, // Set keyboard for numbers
+        maxLength: 6, // Limit input to 6 digits
+        style: const TextStyle(color: Colors.black, letterSpacing: 5.0), // Add spacing for code look
+        textAlign: TextAlign.center,
         decoration: InputDecoration(
           hintText: hintText,
-          hintStyle: const TextStyle(color: Colors.grey), // Grey hint text
-          prefixIcon: Icon(icon, color: Colors.grey), // Grey icon
+          counterText: "", // Hide the counter
+          hintStyle: const TextStyle(color: Colors.grey, letterSpacing: 0), // Reset spacing for hint
+          prefixIcon: Icon(icon, color: Colors.grey),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 10),
         ),

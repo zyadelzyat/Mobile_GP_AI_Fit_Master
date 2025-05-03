@@ -1,7 +1,8 @@
+// In forgotton_password.dart
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart'; // Import Provider for state management
-import 'enter_code_OTP__screen.dart'; // Import EnterCodeScreen
-import 'package:untitled/theme_provider.dart'; // Import ThemeProvider for theme management
+import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // Changed from cloud_functions
+import 'package:untitled/theme_provider.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
   const ResetPasswordScreen({super.key});
@@ -12,95 +13,131 @@ class ResetPasswordScreen extends StatefulWidget {
 
 class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   final TextEditingController _emailController = TextEditingController();
+  bool _isLoading = false;
+  final FirebaseAuth _auth = FirebaseAuth.instance; // Using FirebaseAuth instead
 
   bool _isValidEmail(String email) {
     final regex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
     return regex.hasMatch(email);
   }
 
+  // Function to send reset email
+  Future<void> _sendResetLink() async {
+    final email = _emailController.text.trim();
+    if (!_isValidEmail(email)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Please enter a valid email address."),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() { _isLoading = true; });
+
+    try {
+      // Using Firebase Auth to send verification email
+      await _auth.sendPasswordResetEmail(email: email);
+
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Password reset email sent. Please check your inbox and click the reset link."),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      // Navigate back to sign in screen
+      Navigator.pop(context);
+    } catch (e) {
+      print("Error sending reset email: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Error sending reset email: ${e.toString()}"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() { _isLoading = false; });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context); // Access ThemeProvider
+    final themeProvider = Provider.of<ThemeProvider>(context);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor, // Use theme background color
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Theme.of(context).appBarTheme.backgroundColor, // Use theme app bar color
-        elevation: 0, // Remove AppBar shadow
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+        elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white), // Back icon
-          onPressed: () {
-            Navigator.pop(context); // Go back to the previous page
-          },
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
         ),
+        actions: [
+          IconButton(
+            icon: Icon(
+              themeProvider.themeMode == ThemeMode.light
+                  ? Icons.dark_mode
+                  : Icons.light_mode,
+              color: Colors.white,
+            ),
+            onPressed: () => themeProvider.toggleTheme(),
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 50),
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
-            children: <Widget>[
+            children: [
               const SizedBox(height: 50),
-              Text(
-                'Reset Password',
-                style: TextStyle(
-                  color: Theme.of(context).primaryColor, // Use theme primary color
-                  fontSize: 30,
-                  fontWeight: FontWeight.bold,
-                ),
+              Text('Reset Password',
+                  style: TextStyle(
+                      color: Theme.of(context).primaryColor,
+                      fontSize: 30,
+                      fontWeight: FontWeight.bold
+                  )
               ),
               const SizedBox(height: 20),
               Text(
-                'Enter your email to receive a 6-digit reset code.',
-                style: TextStyle(
-                  color: Theme.of(context).textTheme.bodyLarge?.color, // Use theme text color
-                  fontSize: 18,
-                  fontWeight: FontWeight.normal,
-                ),
-                textAlign: TextAlign.center,
+                  'Enter your email to receive a password reset link.',
+                  style: TextStyle(
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                      fontSize: 18
+                  ),
+                  textAlign: TextAlign.center
               ),
               const SizedBox(height: 30),
               _buildTextField('Email', Icons.email, _emailController),
               const SizedBox(height: 30),
               MaterialButton(
-                color: Colors.white, // White background for the button
+                color: Colors.white,
                 elevation: 5.0,
                 padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 80),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30), // Rounded corners
-                ),
-                onPressed: () {
-                  String email = _emailController.text;
-                  if (!_isValidEmail(email)) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("Please enter a valid email address."),
-                      ),
-                    );
-                    return;
-                  }
-
-                  // Simulate sending a code and navigate to EnterCodeScreen
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text("6-digit code has been sent to your email."),
-                    ),
-                  );
-
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const EnterCodeScreen(),
-                    ),
-                  );
-                },
-                child: const Text(
-                  'Send Code',
-                  style: TextStyle(
-                    color: Color(0xFF232323), // Black text for the button
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                onPressed: _isLoading ? null : _sendResetLink,
+                child: _isLoading
+                    ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 3,
+                        valueColor: AlwaysStoppedAnimation(Color(0xFF232323))
+                    )
+                )
+                    : const Text(
+                    'Send Reset Link',
+                    style: TextStyle(
+                        color: Color(0xFF232323),
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold
+                    )
                 ),
               ),
             ],
@@ -113,16 +150,18 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   Widget _buildTextField(String hintText, IconData icon, TextEditingController controller) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white, // White background for text fields
-        borderRadius: BorderRadius.circular(15), // Rounded corners (15px radius)
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [ BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 5, offset: const Offset(0, 2)) ],
       ),
       child: TextField(
         controller: controller,
-        style: const TextStyle(color: Colors.black), // Black text color for input
+        keyboardType: TextInputType.emailAddress,
+        style: const TextStyle(color: Colors.black),
         decoration: InputDecoration(
           hintText: hintText,
-          hintStyle: const TextStyle(color: Colors.grey), // Grey hint text
-          prefixIcon: Icon(icon, color: Colors.grey), // Grey icon
+          hintStyle: const TextStyle(color: Colors.grey),
+          prefixIcon: Icon(icon, color: Colors.grey),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 10),
         ),
