@@ -1,3 +1,4 @@
+// file: enter_code_OTP__screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_functions/cloud_functions.dart'; // Import Cloud Functions
@@ -6,7 +7,6 @@ import 'package:untitled/theme_provider.dart';
 
 class EnterCodeScreen extends StatefulWidget {
   final String email; // Receive email from the previous screen
-
   const EnterCodeScreen({super.key, required this.email});
 
   @override
@@ -19,6 +19,7 @@ class _EnterCodeScreenState extends State<EnterCodeScreen> {
   final FirebaseFunctions _functions = FirebaseFunctions.instance;
 
   bool _isValidCode(String code) {
+    // Basic validation: 6 digits
     return code.length == 6 && int.tryParse(code) != null;
   }
 
@@ -54,15 +55,15 @@ class _EnterCodeScreenState extends State<EnterCodeScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        // Navigate to set password screen, passing the email (or a token if your function returns one)
-        Navigator.pushReplacement( // Use pushReplacement to prevent going back to OTP screen
+        // Navigate to set password screen, passing the email
+        Navigator.pushReplacement( // Use pushReplacement to prevent going back
           context,
           MaterialPageRoute(
             builder: (context) => SetPasswordScreen(email: widget.email), // Pass email
           ),
         );
       } else {
-        final errorMessage = result.data['message'] ?? 'Invalid or expired OTP. Please try again.';
+        final errorMessage = result.data['message']?.toString() ?? 'Invalid or expired OTP.';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(errorMessage),
@@ -96,9 +97,6 @@ class _EnterCodeScreenState extends State<EnterCodeScreen> {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
-    // --- UI remains largely the same as your original code ---
-    // --- Key changes are in the onPressed of the 'Verify Code' button ---
-    // --- Added email property to receive it from ResetPasswordScreen ---
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
@@ -108,14 +106,13 @@ class _EnterCodeScreenState extends State<EnterCodeScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        // Optional: Add Theme Toggle Button
         actions: [
           IconButton(
             icon: Icon(
               themeProvider.themeMode == ThemeMode.light
                   ? Icons.dark_mode
                   : Icons.light_mode,
-              color: Colors.white, // Adjust color as needed
+              color: Colors.white,
             ),
             onPressed: () => themeProvider.toggleTheme(),
           ),
@@ -132,19 +129,18 @@ class _EnterCodeScreenState extends State<EnterCodeScreen> {
               const SizedBox(height: 20),
               Text('Check your email (${widget.email}) for the 6-digit code.', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color, fontSize: 18), textAlign: TextAlign.center),
               const SizedBox(height: 30),
-              _buildTextField('Enter Code', Icons.lock_open, _codeController), // Changed icon
+              _buildTextField('Enter Code', Icons.lock_open, _codeController),
               const SizedBox(height: 30),
               MaterialButton(
                 color: Colors.white,
                 elevation: 5.0,
                 padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 80),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                onPressed: _isLoading ? null : _verifyOtp, // Call _verifyOtp
+                onPressed: _isLoading ? null : _verifyOtp, // Calls the OTP verification function
                 child: _isLoading
-                    ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 3, valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF232323))))
+                    ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 3, valueColor: AlwaysStoppedAnimation(Color(0xFF232323))))
                     : const Text('Verify Code', style: TextStyle(color: Color(0xFF232323), fontSize: 18, fontWeight: FontWeight.bold)),
               ),
-              // Removed the 'Back to Email' button as navigation is handled by AppBar back arrow
             ],
           ),
         ),
@@ -152,7 +148,6 @@ class _EnterCodeScreenState extends State<EnterCodeScreen> {
     );
   }
 
-  // _buildTextField remains the same, maybe add keyboardType: TextInputType.number
   Widget _buildTextField(String hintText, IconData icon, TextEditingController controller) {
     return Container(
       decoration: BoxDecoration(
@@ -162,14 +157,15 @@ class _EnterCodeScreenState extends State<EnterCodeScreen> {
       ),
       child: TextField(
         controller: controller,
-        keyboardType: TextInputType.number, // Set keyboard for numbers
-        maxLength: 6, // Limit input to 6 digits
-        style: const TextStyle(color: Colors.black, letterSpacing: 5.0), // Add spacing for code look
+        keyboardType: TextInputType.number,
+        maxLength: 6,
+        style: const TextStyle(color: Colors.black, letterSpacing: 5.0),
         textAlign: TextAlign.center,
         decoration: InputDecoration(
           hintText: hintText,
-          counterText: "", // Hide the counter
-          hintStyle: const TextStyle(color: Colors.grey, letterSpacing: 0), // Reset spacing for hint
+          counterText: "",
+          hintStyle: const TextStyle(color: Colors.grey, letterSpacing: 0),
+          // Using a generic icon, maybe change to something like pin or numbers
           prefixIcon: Icon(icon, color: Colors.grey),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 10),
