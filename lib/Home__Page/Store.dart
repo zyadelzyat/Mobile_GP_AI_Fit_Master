@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:async';
 import '00_home_page.dart';
 
 // Product model with overridden == and hashCode for correct Map functionality
@@ -10,7 +11,8 @@ class Product {
   final String category;
   final String description;
   final String imageUrl;
-  int quantity; // لإحتساب الكمية المطلوبة لكل منتج
+  int stock; // Added stock field
+  int quantity; // For cart quantity
 
   Product({
     required this.id,
@@ -19,6 +21,7 @@ class Product {
     required this.category,
     required this.description,
     required this.imageUrl,
+    this.stock = 0, // Default stock to 0
     this.quantity = 1,
   });
 
@@ -33,6 +36,7 @@ class Product {
       category: data['category'] ?? 'Other',
       description: data['description'] ?? 'No description available',
       imageUrl: data['imageUrl'] ?? 'assets/images/placeholder.jpg',
+      stock: data['stock'] ?? 0, // Get stock from Firebase
     );
   }
 
@@ -60,13 +64,10 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
   final Color textColor = Colors.black;
   final TextEditingController searchController = TextEditingController();
   String selectedCategory = 'All'; // Default to 'All' category
-
   // Firestore instance
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
   // Shopping cart: يخزن الكمية المطلوبة لكل منتج
   Map<Product, int> cart = {};
-
   // List to store all available categories
   List<String> categories = ['All'];
 
@@ -99,13 +100,37 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
 
   // Add product to cart (بناءً على الكمية المحددة للمنتج)
   void addToCart(Product product) {
-    setState(() {
-      if (cart.containsKey(product)) {
-        cart[product] = cart[product]! + 1;
-      } else {
-        cart[product] = 1;
-      }
-    });
+    // Check if there's enough stock before adding to cart
+    if (product.stock > 0) {
+      setState(() {
+        if (cart.containsKey(product)) {
+          // Only add if the current cart quantity is less than available stock
+          if (cart[product]! < product.stock) {
+            cart[product] = cart[product]! + 1;
+
+            // Update the stock in Firebase (optional - if you want to decrease stock when adding to cart)
+            _firestore.collection('products').doc(product.id).update({
+              'stock': FieldValue.increment(-1)
+            });
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Cannot add more of this item - stock limit reached')),
+            );
+          }
+        } else {
+          cart[product] = 1;
+
+          // Update the stock in Firebase (optional)
+          _firestore.collection('products').doc(product.id).update({
+            'stock': FieldValue.increment(-1)
+          });
+        }
+      });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('This product is out of stock')),
+      );
+    }
   }
 
   // Remove product from cart
@@ -113,7 +138,18 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
     setState(() {
       if (cart.containsKey(product) && cart[product]! > 1) {
         cart[product] = cart[product]! - 1;
+
+        // Update the stock in Firebase (optional - if you decreased stock when adding to cart)
+        _firestore.collection('products').doc(product.id).update({
+          'stock': FieldValue.increment(1)
+        });
       } else {
+        if (cart.containsKey(product)) {
+          // Update the stock in Firebase (optional)
+          _firestore.collection('products').doc(product.id).update({
+            'stock': FieldValue.increment(1)
+          });
+        }
         cart.remove(product);
       }
     });
@@ -121,6 +157,13 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
 
   // تفريغ السلة
   void clearCart() {
+    // Optionally restore stock counts for all items in cart
+    cart.forEach((product, quantity) {
+      _firestore.collection('products').doc(product.id).update({
+        'stock': FieldValue.increment(quantity)
+      });
+    });
+
     setState(() {
       cart.clear();
     });
@@ -147,11 +190,9 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
     TextEditingController cardHolderController = TextEditingController();
     TextEditingController expiryDateController = TextEditingController();
     TextEditingController cvvController = TextEditingController();
-
     // Calculate total items and amount for display
     int totalItems = 0;
     double totalAmount = 0;
-
     cart.forEach((product, quantity) {
       totalItems += quantity;
       final price = double.parse(product.price.replaceAll(RegExp(r'[^0-9.]'), ''));
@@ -227,9 +268,7 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
                                 ),
                               ),
                             ),
-
                             const SizedBox(height: 24),
-
                             // Card Number
                             TextField(
                               controller: cardNumberController,
@@ -245,9 +284,7 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
                               ),
                               keyboardType: TextInputType.number,
                             ),
-
                             const SizedBox(height: 16),
-
                             // Cardholder Name
                             TextField(
                               controller: cardHolderController,
@@ -262,9 +299,7 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
                                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                               ),
                             ),
-
                             const SizedBox(height: 16),
-
                             // Expiry Date and CVV in a row
                             Row(
                               children: [
@@ -286,9 +321,7 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
                                     keyboardType: TextInputType.datetime,
                                   ),
                                 ),
-
                                 const SizedBox(width: 12),
-
                                 // CVV
                                 Expanded(
                                   child: TextField(
@@ -309,9 +342,7 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
                                 ),
                               ],
                             ),
-
                             const SizedBox(height: 30),
-
                             // Order summary
                             Container(
                               padding: const EdgeInsets.all(16),
@@ -340,9 +371,7 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
                                       ),
                                     );
                                   }).toList(),
-
                                   const Divider(),
-
                                   // Total
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -366,9 +395,7 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
                                 ],
                               ),
                             ),
-
                             const SizedBox(height: 24),
-
                             // Submit button
                             ElevatedButton(
                               style: ElevatedButton.styleFrom(
@@ -399,7 +426,6 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
                   ),
                 ),
               ),
-
               // Bottom navigation
               Container(
                 padding: const EdgeInsets.symmetric(vertical: 12),
@@ -445,238 +471,279 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
 
   // Show product details screen
   void showProductDetails(Product product) {
+    // Create a stream to listen for stock updates
+    StreamSubscription<DocumentSnapshot>? stockSubscription;
+
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => Scaffold(
-          backgroundColor: const Color(0xFF232323),
-          appBar: AppBar(
-            backgroundColor: const Color(0xFF232323),
-            elevation: 0,
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.green),
-              onPressed: () => Navigator.pop(context),
-            ),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.search, color: Colors.purple),
-                onPressed: () {},
-              ),
-              IconButton(
-                icon: const Icon(Icons.notifications_outlined, color: Colors.purple),
-                onPressed: () {},
-              ),
-              IconButton(
-                icon: const Icon(Icons.person_outline, color: Colors.purple),
-                onPressed: () {},
-              ),
-            ],
-          ),
-          body: Column(
-            children: [
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      // Product image with star
-                      Stack(
-                        alignment: Alignment.topRight,
-                        children: [
-                          Container(
-                            margin: const EdgeInsets.all(20),
-                            height: 250,
-                            child: product.imageUrl.startsWith('http') || product.imageUrl.startsWith('https')
-                                ? Image.network(
-                              product.imageUrl,
-                              fit: BoxFit.contain,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Container(
-                                  color: Colors.grey[300],
-                                  child: const Icon(Icons.image_not_supported, size: 50),
-                                );
-                              },
-                            )
-                                : Image.asset(
-                              product.imageUrl,
-                              fit: BoxFit.contain,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Container(
-                                  color: Colors.grey[300],
-                                  child: const Icon(Icons.image_not_supported, size: 50),
-                                );
-                              },
-                            ),
-                          ),
-                          Positioned(
-                            top: 20,
-                            right: 20,
-                            child: Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: const BoxDecoration(
-                                color: Colors.yellow,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(Icons.star, size: 16, color: Colors.white),
-                            ),
-                          ),
-                        ],
-                      ),
+        builder: (context) {
+          // Set up the stock listener when the screen is built
+          stockSubscription = _firestore.collection('products').doc(product.id)
+              .snapshots().listen((snapshot) {
+            if (snapshot.exists) {
+              final data = snapshot.data() as Map;
+              setState(() {
+                product.stock = data['stock'] ?? 0;
+              });
+            }
+          });
 
-                      // Product name
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: Text(
-                          product.name,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
+          return Scaffold(
+            backgroundColor: const Color(0xFF232323),
+            appBar: AppBar(
+              backgroundColor: const Color(0xFF232323),
+              elevation: 0,
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.green),
+                onPressed: () {
+                  // Cancel the subscription when navigating back
+                  stockSubscription?.cancel();
+                  Navigator.pop(context);
+                },
+              ),
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.search, color: Colors.purple),
+                  onPressed: () {},
+                ),
+                IconButton(
+                  icon: const Icon(Icons.notifications_outlined, color: Colors.purple),
+                  onPressed: () {},
+                ),
+                IconButton(
+                  icon: const Icon(Icons.person_outline, color: Colors.purple),
+                  onPressed: () {},
+                ),
+              ],
+            ),
+            body: StreamBuilder<DocumentSnapshot>(
+                stream: _firestore.collection('products').doc(product.id).snapshots(),
+                builder: (context, snapshot) {
+                  // Update stock value if data is available
+                  if (snapshot.hasData && snapshot.data != null && snapshot.data!.exists) {
+                    final data = snapshot.data!.data() as Map;
+                    product.stock = data['stock'] ?? 0;
+                  }
+
+                  return Column(
+                    children: [
+                      Expanded(
+                        child: SingleChildScrollView(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              // Product image with star
+                              Stack(
+                                alignment: Alignment.topRight,
+                                children: [
+                                  Container(
+                                    margin: const EdgeInsets.all(20),
+                                    height: 250,
+                                    child: product.imageUrl.startsWith('http') || product.imageUrl.startsWith('https')
+                                        ? Image.network(
+                                      product.imageUrl,
+                                      fit: BoxFit.contain,
+                                      errorBuilder: (context, error, stackTrace) {
+                                        return Container(
+                                          color: Colors.grey[300],
+                                          child: const Icon(Icons.image_not_supported, size: 50),
+                                        );
+                                      },
+                                    )
+                                        : Image.asset(
+                                      product.imageUrl,
+                                      fit: BoxFit.contain,
+                                      errorBuilder: (context, error, stackTrace) {
+                                        return Container(
+                                          color: Colors.grey[300],
+                                          child: const Icon(Icons.image_not_supported, size: 50),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                  Positioned(
+                                    top: 20,
+                                    right: 20,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(4),
+                                      decoration: const BoxDecoration(
+                                        color: Colors.yellow,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(Icons.star, size: 16, color: Colors.white),
+                                    ),
+                                  ),
+                                ],
+                              ),
+
+                              // Product name
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 20),
+                                child: Text(
+                                  product.name,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+
+                              // Product details in gray containers
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 20),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    // Updated In Stock container with real-time data
+                                    Container(
+                                      width: double.infinity,
+                                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                      margin: const EdgeInsets.only(bottom: 10),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF333333),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        'In Stock: ${product.stock}',
+                                        style: const TextStyle(color: Colors.lime),
+                                      ),
+                                    ),
+
+                                    // Category container
+                                    Container(
+                                      width: double.infinity,
+                                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                      margin: const EdgeInsets.only(bottom: 10),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF333333),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        'Category: ${product.category}',
+                                        style: const TextStyle(color: Colors.lime),
+                                      ),
+                                    ),
+
+                                    // Price container
+                                    Container(
+                                      width: double.infinity,
+                                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                      margin: const EdgeInsets.only(bottom: 20),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF333333),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        'Price: ${product.price}',
+                                        style: const TextStyle(color: Colors.lime),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
-                          textAlign: TextAlign.center,
                         ),
                       ),
 
-                      const SizedBox(height: 20),
-
-                      // Product details in gray containers
+                      // Bottom action buttons
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        padding: const EdgeInsets.all(16.0),
+                        child: Row(
                           children: [
-                            Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                              margin: const EdgeInsets.only(bottom: 10),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF333333),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                'In Stock: ${cart[product] ?? 10}',
-                                style: const TextStyle(color: Colors.lime),
-                              ),
-                            ),
-
-                            Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                              margin: const EdgeInsets.only(bottom: 10),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF333333),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                'Category: ${product.category}',
-                                style: const TextStyle(color: Colors.lime),
+                            Expanded(
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.red,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                                onPressed: () {
+                                  stockSubscription?.cancel();
+                                  Navigator.pop(context);
+                                },
+                                child: const Text('Delete'),
                               ),
                             ),
-
-                            Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                              margin: const EdgeInsets.only(bottom: 20),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF333333),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                'Price: ${product.price}',
-                                style: const TextStyle(color: Colors.lime),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFE2F163),
+                                  foregroundColor: Colors.black,
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                                onPressed: () {
+                                  if (product.stock > 0) {
+                                    addToCart(product);
+                                    Navigator.pop(context);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text('${product.name} added to cart')),
+                                    );
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Product out of stock')),
+                                    );
+                                  }
+                                },
+                                child: const Text('Add To Cart'),
                               ),
                             ),
                           ],
                         ),
                       ),
+
+                      // Bottom navigation bar
+                      Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF6A5ACD),
+                          borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(20),
+                            topRight: Radius.circular(20),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.home_outlined, color: Colors.white),
+                              onPressed: () {},
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.shopping_cart_outlined, color: Colors.white),
+                              onPressed: () {
+                                stockSubscription?.cancel();
+                                Navigator.pop(context);
+                                showCartScreen();
+                              },
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.star_border, color: Colors.white),
+                              onPressed: () {},
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.headset_mic_outlined, color: Colors.white),
+                              onPressed: () {},
+                            ),
+                          ],
+                        ),
+                      ),
                     ],
-                  ),
-                ),
-              ),
-
-              // Bottom action buttons
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        child: const Text('Delete'),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFB9FF65),
-                          foregroundColor: Colors.black,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        onPressed: () {
-                          addToCart(product);
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('${product.name} added to cart')),
-                          );
-                        },
-                        child: const Text('Add To Cart'),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Bottom navigation bar
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                decoration: const BoxDecoration(
-                  color: Color(0xFF6A5ACD),
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(20),
-                    topRight: Radius.circular(20),
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.home_outlined, color: Colors.white),
-                      onPressed: () {},
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.shopping_cart_outlined, color: Colors.white),
-                      onPressed: () {
-                        Navigator.pop(context);
-                        showCartScreen();
-                      },
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.star_border, color: Colors.white),
-                      onPressed: () {},
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.headset_mic_outlined, color: Colors.white),
-                      onPressed: () {},
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
+                  );
+                }
+            ),
+          );
+        },
       ),
     );
   }
@@ -735,7 +802,6 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
                   itemBuilder: (context, index) {
                     final product = cart.keys.elementAt(index);
                     final quantity = cart[product];
-
                     return Container(
                       margin: const EdgeInsets.only(bottom: 12),
                       decoration: BoxDecoration(
@@ -760,7 +826,7 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
                                     ),
                                   ),
                                   const SizedBox(height: 4),
-                                  Text('In Stock: $quantity'),
+                                  Text('In Stock: ${product.stock}'),
                                   const SizedBox(height: 4),
                                   Text('Price: ${product.price}'),
                                 ],
@@ -802,6 +868,10 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
                             child: TextButton(
                               onPressed: () {
                                 setState(() {
+                                  // Update stock when removing from cart
+                                  _firestore.collection('products').doc(product.id).update({
+                                    'stock': FieldValue.increment(cart[product] ?? 0)
+                                  });
                                   cart.remove(product);
                                 });
                                 // Refresh the cart screen
@@ -827,7 +897,6 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
                   },
                 ),
               ),
-
               // Calculate total and payment buttons
               if (cart.isNotEmpty)
                 Padding(
@@ -855,9 +924,7 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
                           style: TextStyle(fontSize: 18),
                         ),
                       ),
-
                       const SizedBox(height: 16),
-
                       // Total display
                       Container(
                         width: double.infinity,
@@ -875,9 +942,7 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
                           textAlign: TextAlign.center,
                         ),
                       ),
-
                       const SizedBox(height: 16),
-
                       // Pay with Visa button
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
@@ -920,7 +985,6 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
                     ],
                   ),
                 ),
-
               // Bottom navigation
               Container(
                 padding: const EdgeInsets.symmetric(vertical: 12),
@@ -1029,31 +1093,27 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Categories from Firestore
-          StreamBuilder<QuerySnapshot>(
+          StreamBuilder(
             stream: _firestore.collection('products').snapshots(),
             builder: (context, snapshot) {
               if (snapshot.hasError) {
                 return const Center(child: Text('Error loading categories'));
               }
-
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Padding(
                   padding: EdgeInsets.all(8.0),
                   child: Center(child: CircularProgressIndicator()),
                 );
               }
-
               // Extract unique categories
               Set<String> categorySet = {'All'};
               for (var doc in snapshot.data!.docs) {
-                final data = doc.data() as Map<String, dynamic>;
+                final data = doc.data() as Map;
                 if (data['category'] != null) {
                   categorySet.add(data['category'].toString());
                 }
               }
-
               List<String> availableCategories = categorySet.toList();
-
               return Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
                 child: SingleChildScrollView(
@@ -1065,7 +1125,6 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
               );
             },
           ),
-
           // Search Bar
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -1086,29 +1145,24 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
               ),
             ),
           ),
-
           // Product List from Firestore
           Expanded(
-            child: StreamBuilder<QuerySnapshot>(
+            child: StreamBuilder(
               stream: _firestore.collection('products').snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
                   return Center(child: Text('Error: ${snapshot.error}'));
                 }
-
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }
-
                 if (snapshot.data == null || snapshot.data!.docs.isEmpty) {
                   return const Center(child: Text('No products available'));
                 }
-
                 // Convert to Product objects
                 List<Product> allProducts = snapshot.data!.docs
                     .map((doc) => Product.fromFirestore(doc))
                     .toList();
-
                 // Filter products based on search and category
                 List<Product> filteredProducts = allProducts.where((product) {
                   final matchesCategory = selectedCategory == 'All' ||
@@ -1117,11 +1171,9 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
                       .contains(searchController.text.toLowerCase());
                   return matchesCategory && matchesSearch;
                 }).toList();
-
                 if (filteredProducts.isEmpty) {
                   return const Center(child: Text('No products match your criteria'));
                 }
-
                 return ListView.builder(
                   padding: const EdgeInsets.all(16),
                   itemCount: filteredProducts.length,
@@ -1177,6 +1229,14 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
                                         color: Colors.black87,
                                       ),
                                     ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'In Stock: ${product.stock}',
+                                      style: TextStyle(
+                                        color: product.stock > 0 ? Colors.green : Colors.red,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ),
@@ -1227,7 +1287,7 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
                                   Text(cart[product]?.toString() ?? '0'),
                                   IconButton(
                                     icon: const Icon(Icons.add_circle_outline, color: Colors.green),
-                                    onPressed: () => addToCart(product),
+                                    onPressed: product.stock > 0 ? () => addToCart(product) : null,
                                   ),
                                 ],
                               ),
