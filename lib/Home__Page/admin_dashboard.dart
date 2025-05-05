@@ -853,11 +853,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
                           ),
                         );
                       },
-                      errorBuilder: (context, error, stackTrace) => Container( // Show a placeholder or error icon
+                      errorBuilder: (context, error, stackTrace) => Container(
                           color: Colors.grey[300],
                           child: Icon(Icons.image_not_supported, size: 50, color: Colors.grey)),
                     )
-                        : Container( // Placeholder if no image URL
+                        : Container(
                         color: Colors.grey[300],
                         child: Icon(Icons.image_not_supported, size: 50, color: Colors.grey)
                     ),
@@ -879,41 +879,46 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         ),
                         const SizedBox(height: 4.0),
                         Text(
-                          productPrice,
+                          'Price: $productPrice',
                           style: TextStyle(
                             fontSize: 14.0,
                             color: darkColor,
                           ),
                         ),
+                        const SizedBox(height: 4.0),
+                        Text(
+                          'Stock: ${productData['stock'] ?? 0}',
+                          style: TextStyle(
+                            fontSize: 14.0,
+                            color: (productData['stock'] ?? 0) > 0 ? Colors.green : Colors.red,
+                          ),
+                        ),
                       ],
                     ),
                   ),
-                  // Optional: Add buttons for actions like "Edit" or "Delete"
                   Padding(
                     padding: const EdgeInsets.only(left: 8.0, right: 8.0, bottom: 8.0),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      mainAxisSize: MainAxisSize.min, // Correct use of MainAxisSize.min
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
                           icon: const Icon(Icons.edit, color: Colors.black54),
                           onPressed: () {
-                            // Implement edit product functionality using productDocument.id
                             _showEditProductDialog(productDocument);
                           },
                           tooltip: 'Edit Product',
-                          padding: EdgeInsets.zero, // Remove default padding
-                          constraints: BoxConstraints(), // Remove default constraints
+                          padding: EdgeInsets.zero,
+                          constraints: BoxConstraints(),
                         ),
                         IconButton(
                           icon: const Icon(Icons.delete, color: Colors.redAccent),
                           onPressed: () {
-                            // Implement delete product functionality using productDocument.id
                             _deleteProduct(productDocument.id);
                           },
                           tooltip: 'Delete Product',
-                          padding: EdgeInsets.zero, // Remove default padding
-                          constraints: BoxConstraints(), // Remove default constraints
+                          padding: EdgeInsets.zero,
+                          constraints: BoxConstraints(),
                         ),
                       ],
                     ),
@@ -927,124 +932,184 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
-  // --- Product Action Methods ---
-
   void _showAddProductDialog() {
     _productNameController.clear();
     _productPriceController.clear();
-    setState(() {
-      _pickedProductImage = null;
-    });
+
+    // Create a new controller for image URL and stock
+    final TextEditingController _imageUrlController = TextEditingController();
+    final TextEditingController _stockController = TextEditingController();
+
+    // Variable to preview the image
+    String _previewImageUrl = '';
+    bool _isPreviewVisible = false;
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: darkColor,
-        title: Text('Add New Product', style: TextStyle(color: purpleColor)),
-        content: SingleChildScrollView(
-          child: Form(
-            key: _addProductFormKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: _productNameController,
-                  decoration: InputDecoration(
-                    labelText: 'Product Name',
-                    labelStyle: TextStyle(color: Colors.white70),
-                    enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: purpleColor)),
-                    focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: purpleColor)),
-                  ),
-                  style: const TextStyle(color: Colors.white),
-                  validator: (value) => value!.isEmpty ? 'Required' : null,
+      builder: (context) => StatefulBuilder(
+        builder: (BuildContext context, StateSetter dialogSetState) {
+          return AlertDialog(
+            backgroundColor: darkColor,
+            title: Text('Add New Product', style: TextStyle(color: purpleColor)),
+            content: SingleChildScrollView(
+              child: Form(
+                key: _addProductFormKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextFormField(
+                      controller: _productNameController,
+                      decoration: InputDecoration(
+                        labelText: 'Product Name',
+                        labelStyle: TextStyle(color: Colors.white70),
+                        enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: purpleColor)),
+                        focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: purpleColor)),
+                      ),
+                      style: const TextStyle(color: Colors.white),
+                      validator: (value) => value!.isEmpty ? 'Required' : null,
+                    ),
+                    TextFormField(
+                      controller: _productPriceController,
+                      decoration: InputDecoration(
+                        labelText: 'Price',
+                        labelStyle: TextStyle(color: Colors.white70),
+                        enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: purpleColor)),
+                        focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: purpleColor)),
+                      ),
+                      style: const TextStyle(color: Colors.white),
+                      keyboardType: TextInputType.number,
+                      validator: (value) {
+                        if (value!.isEmpty) return 'Required';
+                        if (double.tryParse(value) == null) return 'Enter a valid number';
+                        return null;
+                      },
+                    ),
+                    TextFormField(
+                      controller: _stockController,
+                      decoration: InputDecoration(
+                        labelText: 'Stock Quantity',
+                        labelStyle: TextStyle(color: Colors.white70),
+                        enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: purpleColor)),
+                        focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: purpleColor)),
+                      ),
+                      style: const TextStyle(color: Colors.white),
+                      keyboardType: TextInputType.number,
+                      validator: (value) {
+                        if (value!.isEmpty) return 'Required';
+                        if (int.tryParse(value) == null) return 'Enter a valid number';
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    // Replace image picker with URL input
+                    TextFormField(
+                      controller: _imageUrlController,
+                      decoration: InputDecoration(
+                        labelText: 'Image URL',
+                        labelStyle: TextStyle(color: Colors.white70),
+                        enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: purpleColor)),
+                        focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: purpleColor)),
+                      ),
+                      style: const TextStyle(color: Colors.white),
+                      validator: (value) => value!.isEmpty ? 'Required' : null,
+                    ),
+                    const SizedBox(height: 8),
+                    // Preview button
+                    ElevatedButton(
+                      onPressed: () {
+                        dialogSetState(() {
+                          _previewImageUrl = _imageUrlController.text;
+                          _isPreviewVisible = true;
+                        });
+                      },
+                      style: ElevatedButton.styleFrom(backgroundColor: yellowColor),
+                      child: Text('Preview Image', style: TextStyle(color: darkColor)),
+                    ),
+                    // Image preview area
+                    if (_isPreviewVisible)
+                      Container(
+                        height: 150,
+                        width: double.infinity,
+                        margin: const EdgeInsets.only(top: 10),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: _previewImageUrl.isNotEmpty
+                            ? Image.network(
+                          _previewImageUrl,
+                          fit: BoxFit.contain,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Center(child: CircularProgressIndicator());
+                          },
+                          errorBuilder: (context, error, stackTrace) =>
+                              Center(child: Text('Invalid image URL', style: TextStyle(color: Colors.red))),
+                        )
+                            : Center(child: Text('Enter a URL to preview', style: TextStyle(color: Colors.grey))),
+                      ),
+                  ],
                 ),
-                TextFormField(
-                  controller: _productPriceController,
-                  decoration: InputDecoration(
-                    labelText: 'Price',
-                    labelStyle: TextStyle(color: Colors.white70),
-                    enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: purpleColor)),
-                    focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: purpleColor)),
-                  ),
-                  style: const TextStyle(color: Colors.white),
-                  keyboardType: TextInputType.number,
-                  validator: (value) {
-                    if (value!.isEmpty) return 'Required';
-                    if (double.tryParse(value) == null) return 'Enter a valid number';
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton.icon(
-                  onPressed: _pickImage,
-                  icon: Icon(Icons.image, color: darkColor),
-                  label: Text('Pick Image from Gallery', style: TextStyle(color: darkColor)),
-                  style: ElevatedButton.styleFrom(backgroundColor: yellowColor),
-                ),
-                if (_pickedProductImage != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8.0),
-                    child: Image.file(_pickedProductImage!, height: 100),
-                  ),
-              ],
+              ),
             ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cancel', style: TextStyle(color: purpleColor)),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              if (_addProductFormKey.currentState!.validate() && _pickedProductImage != null) {
-                try {
-                  String? imageUrl = await _uploadImage(_pickedProductImage!);
-                  if (imageUrl != null) {
-                    Map<String, dynamic> newProductData = {
-                      'name': _productNameController.text,
-                      'price': double.tryParse(_productPriceController.text),
-                      'imageUrl': imageUrl,
-                      'createdAt': FieldValue.serverTimestamp(),
-                    };
-                    await _firestore.collection('products').add(newProductData);
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Cancel', style: TextStyle(color: purpleColor)),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  if (_addProductFormKey.currentState!.validate()) {
+                    try {
+                      // Use the image URL directly instead of uploading
+                      Map<String, dynamic> newProductData = {
+                        'name': _productNameController.text,
+                        'price': double.tryParse(_productPriceController.text),
+                        'imageUrl': _imageUrlController.text,
+                        'stock': int.tryParse(_stockController.text) ?? 0,
+                        'createdAt': FieldValue.serverTimestamp(),
+                      };
+
+                      await _firestore.collection('products').add(newProductData);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Product added successfully!')),
+                      );
+                      Navigator.pop(context);
+                    } catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Failed to add product: $e')),
+                      );
+                    }
+                  } else {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Product added successfully!')),
+                      const SnackBar(content: Text('Please fill all fields.')),
                     );
-                    Navigator.pop(context);
                   }
-                } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Failed to add product: $e')),
-                  );
-                }
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Please fill all fields and select an image.')),
-                );
-              }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: purpleColor),
-            child: const Text('Save', style: TextStyle(color: Colors.white)),
-          ),
-        ],
+                },
+                style: ElevatedButton.styleFrom(backgroundColor: purpleColor),
+                child: const Text('Save', style: TextStyle(color: Colors.white)),
+              ),
+            ],
+          );
+        },
       ),
     ).then((_) {
       _productNameController.clear();
       _productPriceController.clear();
-      setState(() {
-        _pickedProductImage = null;
-      });
     });
   }
+
 
 
   void _showEditProductDialog(DocumentSnapshot product) {
     final productData = product.data() as Map<String, dynamic>;
     final TextEditingController editProductNameController = TextEditingController(text: productData['name']);
     final TextEditingController editProductPriceController = TextEditingController(text: productData['price']?.toString());
-    File? _editPickedProductImage;
-    String? _currentProductImageUrl = productData['imageUrl'];
+    final TextEditingController editImageUrlController = TextEditingController(text: productData['imageUrl']);
+    final TextEditingController editStockController = TextEditingController(text: productData['stock']?.toString() ?? '0');
+
+    String _previewImageUrl = productData['imageUrl'] ?? '';
+    bool _isPreviewVisible = true;
 
     showDialog(
       context: context,
@@ -1085,34 +1150,69 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         return null;
                       },
                     ),
-                    const SizedBox(height: 16),
-                    ElevatedButton.icon(
-                      onPressed: () async {
-                        await _pickImage();
-                        if (_pickedProductImage != null) {
-                          dialogSetState(() {
-                            _editPickedProductImage = _pickedProductImage;
-                          });
-                        }
+                    TextFormField(
+                      controller: editStockController,
+                      decoration: InputDecoration(
+                        labelText: 'Stock Quantity',
+                        labelStyle: TextStyle(color: Colors.white70),
+                        enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: purpleColor)),
+                        focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: purpleColor)),
+                      ),
+                      style: const TextStyle(color: Colors.white),
+                      keyboardType: TextInputType.number,
+                      validator: (value) {
+                        if (value!.isEmpty) return 'Required';
+                        if (int.tryParse(value) == null) return 'Enter a valid number';
+                        return null;
                       },
-                      icon: Icon(Icons.image, color: darkColor),
-                      label: Text('Pick New Image', style: TextStyle(color: darkColor)),
-                      style: ElevatedButton.styleFrom(backgroundColor: yellowColor),
                     ),
-                    if (_editPickedProductImage != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8.0),
-                        child: Image.file(_editPickedProductImage!, height: 100),
-                      )
-                    else if (_currentProductImageUrl != null && _currentProductImageUrl!.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8.0),
-                        child: Image.network(
-                          _currentProductImageUrl!,
-                          height: 100,
-                          errorBuilder: (context, error, stackTrace) =>
-                              Icon(Icons.image_not_supported, size: 50, color: Colors.grey),
+                    const SizedBox(height: 16),
+                    // Replace image picker with URL input
+                    TextFormField(
+                      controller: editImageUrlController,
+                      decoration: InputDecoration(
+                        labelText: 'Image URL',
+                        labelStyle: TextStyle(color: Colors.white70),
+                        enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: purpleColor)),
+                        focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: purpleColor)),
+                      ),
+                      style: const TextStyle(color: Colors.white),
+                      validator: (value) => value!.isEmpty ? 'Required' : null,
+                    ),
+                    const SizedBox(height: 8),
+                    // Preview button
+                    ElevatedButton(
+                      onPressed: () {
+                        dialogSetState(() {
+                          _previewImageUrl = editImageUrlController.text;
+                          _isPreviewVisible = true;
+                        });
+                      },
+                      style: ElevatedButton.styleFrom(backgroundColor: yellowColor),
+                      child: Text('Preview Image', style: TextStyle(color: darkColor)),
+                    ),
+                    // Image preview area
+                    if (_isPreviewVisible)
+                      Container(
+                        height: 150,
+                        width: double.infinity,
+                        margin: const EdgeInsets.only(top: 10),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey),
+                          borderRadius: BorderRadius.circular(8),
                         ),
+                        child: _previewImageUrl.isNotEmpty
+                            ? Image.network(
+                          _previewImageUrl,
+                          fit: BoxFit.contain,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Center(child: CircularProgressIndicator());
+                          },
+                          errorBuilder: (context, error, stackTrace) =>
+                              Center(child: Text('Invalid image URL', style: TextStyle(color: Colors.red))),
+                        )
+                            : Center(child: Text('Enter a URL to preview', style: TextStyle(color: Colors.grey))),
                       ),
                   ],
                 ),
@@ -1128,31 +1228,23 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   if (editProductNameController.text.isNotEmpty &&
                       editProductPriceController.text.isNotEmpty &&
                       double.tryParse(editProductPriceController.text) != null &&
-                      (_editPickedProductImage != null || _currentProductImageUrl != null)) {
+                      editStockController.text.isNotEmpty &&
+                      int.tryParse(editStockController.text) != null &&
+                      editImageUrlController.text.isNotEmpty) {
                     try {
-                      String? imageUrl = _currentProductImageUrl;
-                      if (_editPickedProductImage != null) {
-                        imageUrl = await _uploadImage(_editPickedProductImage!);
-                      }
-                      if (imageUrl != null) {
-                        Map<String, dynamic> updatedProductData = {
-                          'name': editProductNameController.text,
-                          'price': double.tryParse(editProductPriceController.text),
-                          'imageUrl': imageUrl,
-                          'updatedAt': FieldValue.serverTimestamp(),
-                        };
-                        await _firestore.collection('products').doc(product.id).update(updatedProductData);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Product updated successfully!')),
-                        );
-                        Navigator.pop(context);
-                        editProductNameController.dispose();
-                        editProductPriceController.dispose();
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Failed to upload image.')),
-                        );
-                      }
+                      Map<String, dynamic> updatedProductData = {
+                        'name': editProductNameController.text,
+                        'price': double.tryParse(editProductPriceController.text),
+                        'imageUrl': editImageUrlController.text,
+                        'stock': int.tryParse(editStockController.text) ?? 0,
+                        'updatedAt': FieldValue.serverTimestamp(),
+                      };
+
+                      await _firestore.collection('products').doc(product.id).update(updatedProductData);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Product updated successfully!')),
+                      );
+                      Navigator.pop(context);
                     } catch (e) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text('Failed to update product: $e')),
@@ -1160,7 +1252,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     }
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Please fill all fields and ensure an image is selected.')),
+                      const SnackBar(content: Text('Please fill all fields correctly.')),
                     );
                   }
                 },
@@ -1171,12 +1263,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
           );
         },
       ),
-    ).then((_) {
-      setState(() {
-        _pickedProductImage = null;
-      });
-    });
+    );
   }
+
 
   Future<void> _deleteProduct(String productId) async {
     // Show a confirmation dialog before deleting
