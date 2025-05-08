@@ -6,7 +6,7 @@ import 'package:untitled/Home__Page/00_home_page.dart';
 import 'package:untitled/Home__Page/favorite_page.dart';
 import 'package:untitled/Meal_Plan/MealPlansPage.dart';
 import 'package:untitled/Meal_Plan/Mealpreferences.dart'; // عدل الاسم حسب اسم الملف لو مختلف
-import 'package:untitled/Meal_Idea/MealIdeaPage.dart';
+import 'package:untitled/Meal_Plan/MealIdeaPage.dart';
 
 
 class NutritionPage extends StatelessWidget {
