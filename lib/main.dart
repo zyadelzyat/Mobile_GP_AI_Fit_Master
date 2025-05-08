@@ -58,7 +58,7 @@ class _GenderSelectionAppState extends State<GenderSelectionApp> {
       theme: lightTheme,
       darkTheme: darkTheme,
       themeMode: themeProvider.themeMode,
-      // home: const SignInScreen(),
+      home: const SignInScreen(),
       // home: const SupplementsStorePage(),
       // home: OnboardingScreen(),
       // home: const WeightSelectionScreen();
@@ -66,7 +66,7 @@ class _GenderSelectionAppState extends State<GenderSelectionApp> {
       // home:  SupplementsStorePage(),
       //  home: const SignInScreen(),
       // home : AdminDashboard(),
-      home : const HomePage(),
+      // home : const HomePage(),
       // home : const AddRatingPage(),
       debugShowCheckedModeBanner: false,
     );

@@ -1,19 +1,17 @@
-// [File: 00_home_page.dart]
 import 'package:flutter/material.dart';
-// import 'package:provider/provider.dart'; // Assuming needed for ThemeProvider if used
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-// import 'package:flutter_rating_bar/flutter_rating_bar.dart'; // Import Rating Bar - Not directly used here but might be in AddRatingPage
-import 'package:untitled/AI/chatbot.dart'; // Replace 'untitled' with your project name
-import 'package:untitled/Home__Page/profile.dart'; // Replace 'untitled'
-// import 'package:untitled/theme_provider.dart'; // Uncomment if needed
-// import 'package:untitled/videos_page.dart'; // Replace 'untitled' - This seems to be for "See All" workouts
-import 'CalorieCalculator.dart'; // Replace 'untitled' if needed
-import 'Store.dart'; // Replace 'untitled' if needed
-import 'trainer_trainees_page.dart'; // Replace 'untitled' if needed
+import 'package:untitled/AI/chatbot.dart';
+import 'package:untitled/Home__Page/profile.dart';
+import 'CalorieCalculator.dart';
+import 'Store.dart';
+import 'trainer_trainees_page.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:untitled/Home__Page/NutritionMainPage.dart'; // Replace 'untitled'
-import 'AddRatingPage.dart'; // Replace 'untitled' if needed
+import 'package:untitled/Home__Page/NutritionMainPage.dart';
+import 'AddRatingPage.dart';
+
+// If you have the AssignedExercisesPage, import it here
+import 'assigned_exercises_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -23,14 +21,12 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  int _selectedCategoryIndex = 0;
-  int _currentNavIndex = 0; // 0: Home, 1: Store, 2: Chat
+  int _currentNavIndex = 0;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  Map<String, dynamic> _userData = {}; // Use specific type Map<String, dynamic>
-  bool _isLoadingUserData = true; // Start as true
+  Map _userData = {};
+  bool _isLoadingUserData = true;
 
-  // Original list of all possible categories
   final List<Map<String, dynamic>> _baseCategories = [
     {
       'iconAsset': 'assets/icons/workout_icon.png',
@@ -53,31 +49,26 @@ class _HomePageState extends State<HomePage> {
       'route': 'SupplementsStore',
     },
   ];
-  // Dynamic categories based on user role and membership status
-  List<Map<String, dynamic>> get _filteredCategories {
-    List<Map<String, dynamic>> categories = List.from(_baseCategories); // Create a modifiable copy
 
-    // --- Role-Based Filtering Logic (for other categories) ---
+  List<Map<String, dynamic>> get _filteredCategories {
+    List<Map<String, dynamic>> categories = List.from(_baseCategories);
     if (_userData.containsKey('role')) {
       final String userRole = _userData['role'] as String? ?? '';
-
       if (userRole == 'Self-Trainee') {
         categories.removeWhere((category) => category['label'] == 'Nutrition');
         categories = categories.map((category) {
           if (category['label'] == 'Workout') {
             return {
               'iconAsset': 'assets/icons/youtube.png',
-              'label': 'YT_Workout', // This will be displayed as 'Workout'
+              'label': 'YT_Workout',
               'route': 'YT_Channel',
             };
           }
           return category;
         }).toList();
+      } else {
+        categories.removeWhere((category) => category['label'] == 'Nutrition');
       }
-      // Add other role-based conditions if needed for Trainee, Trainer, etc.
-    } else {
-      // Default view for users with no role or before role is loaded
-      categories.removeWhere((category) => category['label'] == 'Nutrition');
     }
     return categories;
   }
@@ -122,9 +113,6 @@ class _HomePageState extends State<HomePage> {
     _fetchCurrentUserData().then((_) {
       if (mounted && _userData.isNotEmpty) {
         _loadFavorites();
-      }
-      // Ensure UI rebuilds after fetching user data
-      if (mounted) {
         setState(() {});
       }
     });
@@ -142,24 +130,16 @@ class _HomePageState extends State<HomePage> {
         await _firestore.collection('users').doc(currentUser.uid).get();
         if (userDoc.exists && mounted) {
           setState(() {
-            _userData = Map<String, dynamic>.from(userDoc.data() as Map<String, dynamic>);
+            _userData = Map.from(userDoc.data() as Map);
           });
         } else {
-          print("User document does not exist for UID: ${currentUser.uid}");
-          if (mounted) setState(() => _userData = {});
+          setState(() => _userData = {});
         }
       } else {
-        print("No current user logged in.");
-        if (mounted) setState(() => _userData = {});
+        setState(() => _userData = {});
       }
     } catch (e) {
-      print("Error fetching user data: $e");
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading profile: ${e.toString()}')),
-        );
-        setState(() => _userData = {}); // Set to empty on error
-      }
+      setState(() => _userData = {});
     } finally {
       if (mounted) {
         setState(() {
@@ -173,60 +153,37 @@ class _HomePageState extends State<HomePage> {
     if (!mounted) return;
     User? currentUser = _auth.currentUser;
     if (currentUser == null) return;
-
     try {
       DocumentSnapshot favoritesDoc =
       await _firestore.collection('favorites').doc(currentUser.uid).get();
-
       if (favoritesDoc.exists && mounted) {
-        Map<String, dynamic> favoritesData = favoritesDoc.data() as Map<String, dynamic>;
-        List<dynamic> favoriteWorkoutsTitlesDynamic = favoritesData['workouts'] ?? [];
-        List<String> favoriteWorkoutsTitles = favoriteWorkoutsTitlesDynamic.cast<String>();
-
+        Map favoritesData = favoritesDoc.data() as Map;
+        List favoriteWorkoutsTitlesDynamic = favoritesData['workouts'] ?? [];
+        List favoriteWorkoutsTitles = favoriteWorkoutsTitlesDynamic.cast<String>();
         List<Map<String, dynamic>> updatedWorkouts = List.from(_workouts);
         for (int i = 0; i < updatedWorkouts.length; i++) {
           String workoutTitle = updatedWorkouts[i]['title'] as String;
           updatedWorkouts[i]['isFavorite'] = favoriteWorkoutsTitles.contains(workoutTitle);
         }
-        if (mounted) {
-          setState(() {
-            _workouts = updatedWorkouts;
-          });
-        }
+        setState(() {
+          _workouts = updatedWorkouts;
+        });
       } else {
-        print("No favorites document found for user ${currentUser.uid}");
-        if (mounted) {
-          setState(() {
-            List<Map<String, dynamic>> updatedWorkouts = List.from(_workouts);
-            for (var workout in updatedWorkouts) {
-              workout['isFavorite'] = false;
-            }
-            _workouts = updatedWorkouts;
-          });
-        }
+        setState(() {
+          List<Map<String, dynamic>> updatedWorkouts = List.from(_workouts);
+          for (var workout in updatedWorkouts) {
+            workout['isFavorite'] = false;
+          }
+          _workouts = updatedWorkouts;
+        });
       }
-    } catch (e) {
-      print("Error loading favorites: $e");
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading favorites: ${e.toString()}')),
-        );
-      }
-    }
+    } catch (e) {}
   }
 
   Future<void> _saveFavorites() async {
     if (!mounted) return;
     User? currentUser = _auth.currentUser;
-    if (currentUser == null) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("You must be logged in to save favorites.")),
-        );
-      }
-      return;
-    }
-
+    if (currentUser == null) return;
     try {
       List<String> favoriteWorkoutsTitles = [];
       for (var workout in _workouts) {
@@ -238,27 +195,27 @@ class _HomePageState extends State<HomePage> {
         'workouts': favoriteWorkoutsTitles,
         'lastUpdated': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
-      print("Favorites saved successfully.");
-    } catch (e) {
-      print("Error saving favorites: $e");
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error saving favorites: ${e.toString()}")),
-        );
-      }
-    }
+    } catch (e) {}
   }
 
   void _navigateToFeature(String? routeName) {
     if (routeName == null || !mounted) return;
     switch (routeName) {
       case 'Workout':
-        print("Workout category tapped (no specific route assigned)");
+        if (_userData['role'] == 'Trainee') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const AssignedExercisesPage()),
+          );
+        } else {
+          // You can keep your default logic for other roles here
+          print("Workout category tapped (no specific route assigned)");
+        }
         break;
       case 'Nutrition':
         Navigator.push(context, MaterialPageRoute(builder: (context) => NutritionPage()));
         break;
-      case 'ChatBot': // This route might be handled by bottom nav too
+      case 'ChatBot':
         Navigator.push(context, MaterialPageRoute(builder: (context) => const ChatPage()));
         break;
       case 'CalorieCalculator':
@@ -270,16 +227,8 @@ class _HomePageState extends State<HomePage> {
       case 'YT_Channel':
         _launchYouTubeChannel();
         break;
-    // case 'VideosPage':
-    // Navigator.push(context, MaterialPageRoute(builder: (context) => AllVideosPage(videos: _workouts)));
-    // break;
       default:
-        print("Unknown route: $routeName");
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Navigation for '$routeName' not implemented.")),
-          );
-        }
+        break;
     }
   }
 
@@ -289,22 +238,8 @@ class _HomePageState extends State<HomePage> {
     try {
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
-      } else {
-        print("Could not launch $url");
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Could not launch $url")),
-          );
-        }
       }
-    } catch (e) {
-      print("Error launching URL $url: $e");
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error launching URL: ${e.toString()}")),
-        );
-      }
-    }
+    } catch (e) {}
   }
 
   Future<void> _launchYouTubeChannel() async {
@@ -322,13 +257,7 @@ class _HomePageState extends State<HomePage> {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => ProfilePage(userId: currentUser.uid)),
-      ).then((_) => _fetchCurrentUserData()); // Refresh data when returning from profile
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("You need to be logged in to view your profile")),
-        );
-      }
+      ).then((_) => _fetchCurrentUserData());
     }
   }
 
@@ -342,27 +271,18 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       if (index >= 0 && index < _workouts.length) {
         _workouts[index]['isFavorite'] = !(_workouts[index]['isFavorite'] as bool? ?? false);
-      } else {
-        print("Error: Invalid index $index for toggling favorite.");
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Error updating favorite status.")),
-          );
-        }
-        return;
       }
     });
     _saveFavorites();
   }
 
-  // --- WIDGET BUILDERS ---
   Widget _buildCategoryIcon(String iconAsset, String label, int index) {
     String displayLabel = (label == 'YT_Workout') ? 'Workout' : label;
     return GestureDetector(
       onTap: () {
         if (!mounted) return;
         String? route = _filteredCategories[index]['route'] as String?;
-        _navigateToFeature(route);
+        _navigateToFeature(route ?? label);
       },
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -405,12 +325,6 @@ class _HomePageState extends State<HomePage> {
       onTap: () {
         if (videoUrl != null && videoUrl.isNotEmpty) {
           _launchVideo(videoUrl);
-        } else {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("No video available for this workout.")),
-            );
-          }
         }
       },
       child: Container(
@@ -448,11 +362,10 @@ class _HomePageState extends State<HomePage> {
                     },
                   ),
                 ),
-                // Play button (bottom right)
                 if (videoUrl != null && videoUrl.isNotEmpty)
                   Positioned(
-                    bottom: 10, // Adjust positioning if needed after size change
-                    right: 10,  // Adjust positioning if needed after size change
+                    bottom: 10,
+                    right: 10,
                     child: Container(
                       decoration: BoxDecoration(
                         color: const Color(0xFF8E7AFE),
@@ -460,15 +373,14 @@ class _HomePageState extends State<HomePage> {
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withOpacity(0.25),
-                            blurRadius: 6, // You might want to reduce blurRadius if the button is much smaller
+                            blurRadius: 6,
                           ),
                         ],
                       ),
-                      padding: const EdgeInsets.all(8), // Reduced padding
-                      child: const Icon(Icons.play_arrow, color: Colors.white, size: 24), // Reduced icon size
+                      padding: const EdgeInsets.all(8),
+                      child: const Icon(Icons.play_arrow, color: Colors.white, size: 24),
                     ),
                   ),
-                // Favorite star (top right)
                 Positioned(
                   top: 8,
                   right: 8,
@@ -525,7 +437,8 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
-  Widget _buildHealthAndFitCard(Map<String, dynamic> item) {
+
+  Widget _buildHealthAndFitCard(Map item) {
     final imageUrl = item['image'] as String? ?? 'assets/placeholder.png';
     final title = item['title'] as String? ?? 'Health & Fit Item';
 
@@ -547,7 +460,6 @@ class _HomePageState extends State<HomePage> {
               width: double.infinity,
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) {
-                print("Error loading health/fit image '$imageUrl': $error");
                 return Container(
                   height: 100,
                   color: Colors.grey[800],
@@ -578,7 +490,7 @@ class _HomePageState extends State<HomePage> {
         color: const Color(0xFFB3A0FF),
         borderRadius: BorderRadius.circular(20),
       ),
-      child: ClipRRect( // Added ClipRRect to apply borderRadius to the Stack
+      child: ClipRRect(
         borderRadius: BorderRadius.circular(15),
         child: Container(
           padding: const EdgeInsets.all(16),
@@ -598,7 +510,7 @@ class _HomePageState extends State<HomePage> {
                         Text(
                           "My Rate",
                           style: TextStyle(
-                            color: Colors.white, // Changed color to white for better visibility on dark background
+                            color: Colors.white,
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
                           ),
@@ -607,14 +519,13 @@ class _HomePageState extends State<HomePage> {
                     ),
                     SizedBox(height: 10),
                     Row(
-                      children: List.generate(
-                        5,
-                            (index) => const Icon(
-                          Icons.star,
-                          color: Color(0xFFFFD600),
-                          size: 22,
-                        ),
-                      ),
+                      children: [
+                        Icon(Icons.star, color: Color(0xFFFFD600), size: 22),
+                        Icon(Icons.star, color: Color(0xFFFFD600), size: 22),
+                        Icon(Icons.star, color: Color(0xFFFFD600), size: 22),
+                        Icon(Icons.star, color: Color(0xFFFFD600), size: 22),
+                        Icon(Icons.star, color: Color(0xFFFFD600), size: 22),
+                      ],
                     ),
                     SizedBox(height: 10),
                     Row(
@@ -624,17 +535,11 @@ class _HomePageState extends State<HomePage> {
                           backgroundImage: AssetImage('assets/coach_placeholder.png'),
                         ),
                         SizedBox(width: 8),
-                        Text(
-                          "Coach",
-                          style: TextStyle(color: Colors.white70, fontSize: 14), // Changed color to white70 for better visibility
-                        ),
+                        Text("Coach", style: TextStyle(color: Colors.white70, fontSize: 14)),
                       ],
                     ),
                     SizedBox(height: 4),
-                    Text(
-                      "Good effort but .............",
-                      style: TextStyle(color: Colors.grey, fontSize: 13), // Changed color to grey for better visibility
-                    ),
+                    Text("Good effort but .............", style: TextStyle(color: Colors.grey, fontSize: 13)),
                   ],
                 ),
               ),
@@ -664,7 +569,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
     String userName = _isLoadingUserData ? 'User' : (_userData['firstName'] as String? ?? 'User');
@@ -672,7 +576,7 @@ class _HomePageState extends State<HomePage> {
 
     if (_isLoadingUserData) {
       mainContent = const Center(child: CircularProgressIndicator(color: Color(0xFF8E7AFE)));
-    } else if (_currentNavIndex == 0) { // Home Tab Content
+    } else if (_currentNavIndex == 0) {
       mainContent = SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
         child: Column(
@@ -692,8 +596,8 @@ class _HomePageState extends State<HomePage> {
                       ],
                     ),
                   ),
-                  IconButton(icon: const Icon(Icons.search, color: Colors.white), onPressed: () {/* ... */}, tooltip: 'Search'),
-                  IconButton(icon: const Icon(Icons.notifications_outlined, color: Colors.white), onPressed: () {/* ... */}, tooltip: 'Notifications'),
+                  IconButton(icon: const Icon(Icons.search, color: Colors.white), onPressed: () {}, tooltip: 'Search'),
+                  IconButton(icon: const Icon(Icons.notifications_outlined, color: Colors.white), onPressed: () {}, tooltip: 'Notifications'),
                   IconButton(icon: const Icon(Icons.person_outline, color: Colors.white), onPressed: _navigateToProfile, tooltip: 'Profile'),
                 ],
               ),
@@ -716,7 +620,7 @@ class _HomePageState extends State<HomePage> {
                 children: [
                   const Text("Workouts", style: TextStyle(color: Color(0xFFE2F163), fontSize: 18, fontWeight: FontWeight.bold)),
                   GestureDetector(
-                    onTap: () { print("See All Workouts tapped"); /* _navigateToFeature('VideosPage'); */ },
+                    onTap: () {},
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: const [
@@ -765,7 +669,7 @@ class _HomePageState extends State<HomePage> {
                         ClipRRect(
                           borderRadius: BorderRadius.circular(8),
                           child: Image.asset(
-                            'assets/plank_image.png', // Ensure this asset exists
+                            'assets/plank_image.png',
                             height: 65, width: 65, fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) {
                               return Container(height: 65, width: 65, color: Colors.grey[700], child: const Icon(Icons.image_not_supported, color: Colors.grey, size: 30));
@@ -817,13 +721,13 @@ class _HomePageState extends State<HomePage> {
               ),
               const SizedBox(height: 16),
             ],
-            const SizedBox(height: 16), // Bottom padding
+            const SizedBox(height: 16),
           ],
         ),
       );
-    } else if (_currentNavIndex == 1) { // Store (handled by onTap)
+    } else if (_currentNavIndex == 1) {
       mainContent = Center(child: Text("Store Tab (handled by navigation)", style: TextStyle(color: Colors.white)));
-    } else if (_currentNavIndex == 2) { // Chat
+    } else if (_currentNavIndex == 2) {
       mainContent = const ChatPage();
     } else {
       mainContent = const Center(child: Text("Invalid Tab Index", style: TextStyle(color: Colors.white)));
@@ -842,9 +746,9 @@ class _HomePageState extends State<HomePage> {
           currentIndex: _currentNavIndex,
           onTap: (index) {
             if (!mounted) return;
-            if (index == 1) { // Store
+            if (index == 1) {
               Navigator.push(context, MaterialPageRoute(builder: (context) => const SupplementsStorePage()));
-            } else { // Home (0) or Chat (2)
+            } else {
               setState(() { _currentNavIndex = index; });
             }
           },
