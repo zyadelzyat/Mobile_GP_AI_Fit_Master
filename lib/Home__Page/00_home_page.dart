@@ -67,7 +67,7 @@ class _HomePageState extends State<HomePage> {
   List<Map<String, dynamic>> get _filteredCategories {
     List<Map<String, dynamic>> categories = List.from(_baseCategories); // Create a modifiable copy
 
-    // --- Role-Based Filtering Logic ---
+    // --- Role-Based Filtering Logic (for other categories) ---
     if (_userData.containsKey('role')) {
       final String userRole = _userData['role'] as String? ?? '';
       if (userRole == 'Self-Trainee') {
@@ -89,9 +89,19 @@ class _HomePageState extends State<HomePage> {
       categories.removeWhere((category) => category['label'] == 'Nutrition');
     }
 
-    // --- Membership-Based Category ---
+    // --- Membership-Based Category (MODIFIED) ---
     final String membershipStatus = _userData['membershipStatus'] as String? ?? 'none';
-    if (membershipStatus != 'active' && _auth.currentUser != null) { // Only show if logged in and not active
+    final String currentUserRole = _userData['role'] as String? ?? ''; // Get current user's role
+
+    // Condition to show "Join Membership":
+    // 1. User is logged in (_auth.currentUser != null)
+    // 2. Membership is not 'active'
+    // 3. User role is NOT 'Trainer'
+    bool showJoinMembershipCategory = _auth.currentUser != null &&
+        membershipStatus != 'active' &&
+        currentUserRole != 'Trainer'; // <-- EDITED HERE
+
+    if (showJoinMembershipCategory) {
       // Add "Join Membership" if not already present to avoid duplicates during rebuilds
       if (!categories.any((cat) => cat['label'] == 'Join Membership')) {
         categories.add({
@@ -101,7 +111,7 @@ class _HomePageState extends State<HomePage> {
         });
       }
     } else {
-      // Remove "Join Membership" if user becomes active or logs out
+      // Remove "Join Membership" if conditions are not met (e.g., active member, user is Trainer, or not logged in)
       categories.removeWhere((category) => category['label'] == 'Join Membership');
     }
 
