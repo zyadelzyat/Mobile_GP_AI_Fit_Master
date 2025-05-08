@@ -311,7 +311,7 @@ class _AddRatingPageState extends State<AddRatingPage> {
             ElevatedButton(
               onPressed: _submitRating, // Call the function to save to Firestore
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFC3FC6F), // Yellowish button color
+                backgroundColor: const Color(0xFFE2F163), // Yellowish button color
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(30), // Rounded corners

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart'; // For date formatting
-// import 'package:flutter_rating_bar/flutter_rating_bar.dart'; // Not used in this version of profile page directly
 
 // Import your login screen (ensure the path is correct)
 import 'package:untitled/Login___Signup/01_signin_screen.dart'; // Replace 'untitled' with your project name
@@ -22,6 +21,7 @@ import 'trainer_ratings_page.dart'; // Add this import for the trainer ratings p
 
 class ProfilePage extends StatefulWidget {
   final String userId;
+
   const ProfilePage({required this.userId, super.key});
 
   @override
@@ -31,7 +31,6 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance; // Added FirebaseAuth instance
-
   bool _isLoading = true;
   Map<String, dynamic> userData = {};
   String? errorMessage;
@@ -84,16 +83,13 @@ class _ProfilePageState extends State<ProfilePage> {
 
   String _calculateAge() {
     if (userData['dob'] == null || (userData['dob'] is String && (userData['dob'] as String).isEmpty)) return "N/A";
-
     DateTime? birthDate;
     if (userData['dob'] is Timestamp) {
       birthDate = (userData['dob'] as Timestamp).toDate();
     } else if (userData['dob'] is String) {
-      // Attempt to parse common date formats, e.g., yyyy-MM-dd
       try {
-        birthDate = DateTime.parse(userData['dob']);
+        birthDate = DateTime.parse(userData['dob'] as String);
       } catch (e) {
-        // Handle other string formats if necessary, or default to N/A
         List<String> parts = (userData['dob'] as String).split('-');
         if (parts.length == 3) {
           try {
@@ -108,7 +104,6 @@ class _ProfilePageState extends State<ProfilePage> {
     }
 
     if (birthDate == null) return "N/A";
-
     DateTime today = DateTime.now();
     int age = today.year - birthDate.year;
     if (today.month < birthDate.month ||
@@ -120,13 +115,12 @@ class _ProfilePageState extends State<ProfilePage> {
 
   String _formatBirthday() {
     if (userData['dob'] == null || (userData['dob'] is String && (userData['dob'] as String).isEmpty)) return "N/A";
-
     DateTime? birthDate;
     if (userData['dob'] is Timestamp) {
       birthDate = (userData['dob'] as Timestamp).toDate();
     } else if (userData['dob'] is String) {
       try {
-        birthDate = DateTime.parse(userData['dob']);
+        birthDate = DateTime.parse(userData['dob'] as String);
       } catch (e) {
         List<String> parts = (userData['dob'] as String).split('-');
         if (parts.length == 3) {
@@ -142,7 +136,6 @@ class _ProfilePageState extends State<ProfilePage> {
     }
 
     if (birthDate == null) return "N/A";
-
     String day = DateFormat('d').format(birthDate);
     String suffix = 'th';
     if (day.endsWith('1') && !day.endsWith('11')) suffix = 'st';
@@ -306,7 +299,6 @@ class _ProfilePageState extends State<ProfilePage> {
       builder: (BuildContext context) {
         String? selectedPlanKey; // To hold the key of the selected plan
         Map<String, dynamic>? selectedPlanDetails;
-
         return StatefulBuilder( // Use StatefulBuilder for dialog state
           builder: (context, setDialogState) {
             return AlertDialog(
@@ -317,7 +309,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 children: _membershipPlans.map((plan) {
                   return RadioListTile<String>(
                     title: Text('${plan['name']} - \$${plan['price'].toStringAsFixed(2)}', style: TextStyle(color: Colors.white)),
-                    value: plan['typeKey'],
+                    value: plan['typeKey'] as String,
                     groupValue: selectedPlanKey,
                     onChanged: (String? value) {
                       setDialogState(() {
@@ -330,7 +322,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   );
                 }).toList(),
               ),
-              actions: <Widget>[
+              actions: [
                 TextButton(
                   child: Text('Cancel', style: TextStyle(color: Color(0xFFB29BFF))),
                   onPressed: () {
@@ -362,7 +354,7 @@ class _ProfilePageState extends State<ProfilePage> {
           title: Text('Choose Payment Method for ${planDetails['name']}', style: TextStyle(color: Color(0xFFB29BFF))),
           content: Column(
             mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
+            children: [
               ListTile(
                 leading: Icon(Icons.money, color: Color(0xFFB29BFF)),
                 title: Text('Pay with Cash', style: TextStyle(color: Colors.white)),
@@ -428,13 +420,11 @@ class _ProfilePageState extends State<ProfilePage> {
           const SnackBar(content: Text('You need to be logged in.')));
       return;
     }
-
     // Placeholder for Visa payment integration
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Initiating Visa payment for ${planDetails['name']}. Integration with a payment gateway is required here.')),
     );
     print("Visa payment for ${planDetails['typeKey']} selected. Implement payment gateway.");
-
     // After successful payment via a gateway, you would update Firestore:
     // await _firestore.collection('users').doc(currentUser.uid).update({
     //   'membershipType': planDetails['typeKey'],
@@ -499,6 +489,14 @@ class _ProfilePageState extends State<ProfilePage> {
     String ageDisplay = _calculateAge();
     String birthdayDisplay = _formatBirthday();
 
+    // *** MODIFICATION START ***
+    String userRole = userData['role'] as String? ?? '';
+    String membershipStatus = userData['membershipStatus'] as String? ?? 'none';
+    String membershipTitle = (membershipStatus == 'active' || membershipStatus == 'pending_approval')
+        ? 'Manage Membership'
+        : 'Join Membership';
+    // *** MODIFICATION END ***
+
     return Scaffold(
       backgroundColor: const Color(0xFF1E1E1E),
       appBar: AppBar(
@@ -524,8 +522,8 @@ class _ProfilePageState extends State<ProfilePage> {
                 CircleAvatar(
                     radius: 45,
                     backgroundImage: userData['profileImageUrl'] != null &&
-                        userData['profileImageUrl'].isNotEmpty
-                        ? NetworkImage(userData['profileImageUrl'])
+                        (userData['profileImageUrl'] as String).isNotEmpty
+                        ? NetworkImage(userData['profileImageUrl'] as String)
                         : const AssetImage('assets/profile.png')
                     as ImageProvider,
                     backgroundColor: Colors.grey[300]),
@@ -583,15 +581,18 @@ class _ProfilePageState extends State<ProfilePage> {
                       context,
                       MaterialPageRoute(
                           builder: (context) =>
-                              DetailedProfilePage(userData: Map.from(userData))),
+                              DetailedProfilePage(userData: Map<String, dynamic>.from(userData))),
                     );
                   },
                 ),
-                _buildProfileMenuItem( // New Membership Menu Item
-                  icon: Icons.card_membership,
-                  title: 'Manage Membership',
-                  onTap: _showMembershipDialog,
-                ),
+                // *** MODIFICATION START ***
+                if (userRole != 'Trainer') // Conditionally show membership item
+                  _buildProfileMenuItem(
+                    icon: Icons.card_membership,
+                    title: membershipTitle, // Dynamic title
+                    onTap: _showMembershipDialog,
+                  ),
+                // *** MODIFICATION END ***
                 _buildRoleSpecificMenuItems(),
                 _buildProfileMenuItem(
                   icon: Icons.star_outline,

@@ -30,39 +30,29 @@ class _HomePageState extends State<HomePage> {
   Map<String, dynamic> _userData = {}; // Use specific type Map<String, dynamic>
   bool _isLoadingUserData = true; // Start as true
 
-
-  // Define membership plans (name, price, typeKey for Firestore) - consistent with profile.dart
-  final List<Map<String, dynamic>> _membershipPlans = [
-    {'name': 'Basic Plan', 'price': 20.0, 'typeKey': 'basic'},
-    {'name': 'Standard Plan', 'price': 30.0, 'typeKey': 'standard'},
-    {'name': 'Premium Plan', 'price': 50.0, 'typeKey': 'premium'},
-  ];
-
-
   // Original list of all possible categories
   final List<Map<String, dynamic>> _baseCategories = [
     {
-      'iconAsset': 'assets/icons/youtube.png',
+      'iconAsset': 'assets/icons/workout_icon.png',
       'label': 'Workout',
-      'route': null // Default Workout might not navigate, but show content below
-    },
-    {
-      'iconAsset': 'assets/icons/nutrition_icon.png',
-      'label': 'Nutrition',
-      'route': 'Nutrition'
-    },
-    {
-      'iconAsset': 'assets/icons/products_icon.png',
-      'label': 'Products',
-      'route': 'SupplementsStore'
+      'route': null,
     },
     {
       'iconAsset': 'assets/icons/calculating_calories_icon.png',
       'label': 'Calculating Calories',
-      'route': 'CalorieCalculator'
+      'route': 'CalorieCalculator',
+    },
+    {
+      'iconAsset': 'assets/icons/nutrition_icon.png',
+      'label': 'Nutrition',
+      'route': 'Nutrition',
+    },
+    {
+      'iconAsset': 'assets/icons/products_icon.png',
+      'label': 'Products',
+      'route': 'SupplementsStore',
     },
   ];
-
   // Dynamic categories based on user role and membership status
   List<Map<String, dynamic>> get _filteredCategories {
     List<Map<String, dynamic>> categories = List.from(_baseCategories); // Create a modifiable copy
@@ -70,13 +60,14 @@ class _HomePageState extends State<HomePage> {
     // --- Role-Based Filtering Logic (for other categories) ---
     if (_userData.containsKey('role')) {
       final String userRole = _userData['role'] as String? ?? '';
+
       if (userRole == 'Self-Trainee') {
         categories.removeWhere((category) => category['label'] == 'Nutrition');
         categories = categories.map((category) {
           if (category['label'] == 'Workout') {
             return {
               'iconAsset': 'assets/icons/youtube.png',
-              'label': 'YT_Workout',
+              'label': 'YT_Workout', // This will be displayed as 'Workout'
               'route': 'YT_Channel',
             };
           }
@@ -88,37 +79,8 @@ class _HomePageState extends State<HomePage> {
       // Default view for users with no role or before role is loaded
       categories.removeWhere((category) => category['label'] == 'Nutrition');
     }
-
-    // --- Membership-Based Category (MODIFIED) ---
-    final String membershipStatus = _userData['membershipStatus'] as String? ?? 'none';
-    final String currentUserRole = _userData['role'] as String? ?? ''; // Get current user's role
-
-    // Condition to show "Join Membership":
-    // 1. User is logged in (_auth.currentUser != null)
-    // 2. Membership is not 'active'
-    // 3. User role is NOT 'Trainer'
-    bool showJoinMembershipCategory = _auth.currentUser != null &&
-        membershipStatus != 'active' &&
-        currentUserRole != 'Trainer'; // <-- EDITED HERE
-
-    if (showJoinMembershipCategory) {
-      // Add "Join Membership" if not already present to avoid duplicates during rebuilds
-      if (!categories.any((cat) => cat['label'] == 'Join Membership')) {
-        categories.add({
-          'iconAsset': 'assets/icons/membership_icon.png', // Ensure this icon exists
-          'label': 'Join Membership',
-          'route': 'JoinMembership'
-        });
-      }
-    } else {
-      // Remove "Join Membership" if conditions are not met (e.g., active member, user is Trainer, or not logged in)
-      categories.removeWhere((category) => category['label'] == 'Join Membership');
-    }
-
-
     return categories;
   }
-
 
   List<Map<String, dynamic>> _workouts = [
     {
@@ -161,7 +123,7 @@ class _HomePageState extends State<HomePage> {
       if (mounted && _userData.isNotEmpty) {
         _loadFavorites();
       }
-      // Ensure UI rebuilds after fetching user data to reflect membership status in categories
+      // Ensure UI rebuilds after fetching user data
       if (mounted) {
         setState(() {});
       }
@@ -211,9 +173,11 @@ class _HomePageState extends State<HomePage> {
     if (!mounted) return;
     User? currentUser = _auth.currentUser;
     if (currentUser == null) return;
+
     try {
       DocumentSnapshot favoritesDoc =
       await _firestore.collection('favorites').doc(currentUser.uid).get();
+
       if (favoritesDoc.exists && mounted) {
         Map<String, dynamic> favoritesData = favoritesDoc.data() as Map<String, dynamic>;
         List<dynamic> favoriteWorkoutsTitlesDynamic = favoritesData['workouts'] ?? [];
@@ -262,6 +226,7 @@ class _HomePageState extends State<HomePage> {
       }
       return;
     }
+
     try {
       List<String> favoriteWorkoutsTitles = [];
       for (var workout in _workouts) {
@@ -305,12 +270,9 @@ class _HomePageState extends State<HomePage> {
       case 'YT_Channel':
         _launchYouTubeChannel();
         break;
-      case 'JoinMembership': // Handle new category
-        _showMembershipDialog();
-        break;
     // case 'VideosPage':
-    //   Navigator.push(context, MaterialPageRoute(builder: (context) => AllVideosPage(videos: _workouts)));
-    //   break;
+    // Navigator.push(context, MaterialPageRoute(builder: (context) => AllVideosPage(videos: _workouts)));
+    // break;
       default:
         print("Unknown route: $routeName");
         if (mounted) {
@@ -393,157 +355,13 @@ class _HomePageState extends State<HomePage> {
     _saveFavorites();
   }
 
-
-  // --- Membership Dialogs (similar to profile.dart) ---
-  void _showMembershipDialog() {
-    if (_auth.currentUser == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please log in to join a membership.')),
-      );
-      // Optionally, navigate to login screen
-      // Navigator.push(context, MaterialPageRoute(builder: (context) => const SignInScreen()));
-      return;
-    }
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        String? selectedPlanKey;
-        Map<String, dynamic>? selectedPlanDetails;
-
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              backgroundColor: const Color(0xFF2A2A2A),
-              title: Text('Select Membership Plan', style: TextStyle(color: Color(0xFFB29BFF))),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: _membershipPlans.map((plan) {
-                  return RadioListTile<String>(
-                    title: Text('${plan['name']} - \$${plan['price'].toStringAsFixed(2)}', style: TextStyle(color: Colors.white)),
-                    value: plan['typeKey'],
-                    groupValue: selectedPlanKey,
-                    onChanged: (String? value) {
-                      setDialogState(() {
-                        selectedPlanKey = value;
-                        selectedPlanDetails = plan;
-                      });
-                    },
-                    activeColor: Color(0xFFB29BFF),
-                    controlAffinity: ListTileControlAffinity.trailing,
-                  );
-                }).toList(),
-              ),
-              actions: <Widget>[
-                TextButton(
-                  child: Text('Cancel', style: TextStyle(color: Color(0xFFB29BFF))),
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: Color(0xFFB29BFF)),
-                  child: Text('Next', style: TextStyle(color: Colors.white)),
-                  onPressed: selectedPlanKey == null ? null : () {
-                    Navigator.of(context).pop();
-                    _showPaymentMethodDialog(selectedPlanDetails!);
-                  },
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
-
-  void _showPaymentMethodDialog(Map<String, dynamic> planDetails) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: const Color(0xFF2A2A2A),
-          title: Text('Choose Payment Method for ${planDetails['name']}', style: TextStyle(color: Color(0xFFB29BFF))),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              ListTile(
-                leading: Icon(Icons.money, color: Color(0xFFB29BFF)),
-                title: Text('Pay with Cash', style: TextStyle(color: Colors.white)),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  _handleCashPayment(planDetails);
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.credit_card, color: Color(0xFFB29BFF)),
-                title: Text('Pay with Visa', style: TextStyle(color: Colors.white)),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  _handleVisaPayment(planDetails);
-                },
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              child: Text('Cancel', style: TextStyle(color: Color(0xFFB29BFF))),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Future<void> _handleCashPayment(Map<String, dynamic> planDetails) async {
-    User? currentUser = _auth.currentUser;
-    if (currentUser == null) return; // Should be checked before calling _showMembershipDialog
-
-    try {
-      await _firestore.collection('users').doc(currentUser.uid).update({
-        'membershipType': planDetails['typeKey'],
-        'membershipPrice': planDetails['price'],
-        'membershipPaymentType': 'cash',
-        'membershipStatus': 'pending_approval',
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Cash payment request submitted. Admin will review.')),
-      );
-      _fetchCurrentUserData(); // Refresh user data to update UI
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to process cash payment: $e')),
-      );
-    }
-  }
-
-  void _handleVisaPayment(Map<String, dynamic> planDetails) {
-    User? currentUser = _auth.currentUser;
-    if (currentUser == null) return;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Initiating Visa payment for ${planDetails['name']}. Integration with a payment gateway is required here.')),
-    );
-    print("Visa payment for ${planDetails['typeKey']} selected. Implement payment gateway integration here.");
-    // After successful payment via gateway:
-    // await _firestore.collection('users').doc(currentUser.uid).update({
-    //   'membershipType': planDetails['typeKey'],
-    //   'membershipPrice': planDetails['price'],
-    //   'membershipPaymentType': 'visa',
-    //   'membershipStatus': 'active',
-    //   'updatedAt': FieldValue.serverTimestamp(),
-    // });
-    // _fetchCurrentUserData(); // Refresh
-  }
-
-
   // --- WIDGET BUILDERS ---
   Widget _buildCategoryIcon(String iconAsset, String label, int index) {
     String displayLabel = (label == 'YT_Workout') ? 'Workout' : label;
     return GestureDetector(
       onTap: () {
         if (!mounted) return;
-        String? route = _filteredCategories[index]['route'];
+        String? route = _filteredCategories[index]['route'] as String?;
         _navigateToFeature(route);
       },
       child: Column(
@@ -560,12 +378,7 @@ class _HomePageState extends State<HomePage> {
               width: 30,
               height: 30,
               errorBuilder: (context, error, stackTrace) {
-                print("Error loading icon image '$iconAsset': $error");
-                return Icon(
-                  label == 'Join Membership' ? Icons.card_membership : Icons.category, // Specific icon for membership
-                  color: Color(0xFF8E7AFE),
-                  size: 30,
-                );
+                return const Icon(Icons.category, color: Color(0xFF8E7AFE), size: 30);
               },
             ),
           ),
@@ -580,7 +393,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildWorkoutCard(Map<String, dynamic> workout, int index) {
+  Widget _buildWorkoutCard(Map workout, int index) {
     final videoUrl = workout['videoUrl'] as String?;
     final isFavorite = workout['isFavorite'] as bool? ?? false;
     final imageUrl = workout['image'] as String? ?? 'assets/placeholder.png';
@@ -593,7 +406,6 @@ class _HomePageState extends State<HomePage> {
         if (videoUrl != null && videoUrl.isNotEmpty) {
           _launchVideo(videoUrl);
         } else {
-          print("No video URL for workout: $title");
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text("No video available for this workout.")),
@@ -607,12 +419,18 @@ class _HomePageState extends State<HomePage> {
         decoration: BoxDecoration(
           color: const Color(0xFF2A2A2A),
           borderRadius: BorderRadius.circular(15),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.15),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Stack(
-              alignment: Alignment.center,
               children: [
                 ClipRRect(
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
@@ -622,7 +440,6 @@ class _HomePageState extends State<HomePage> {
                     width: double.infinity,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) {
-                      print("Error loading workout image '$imageUrl': $error");
                       return Container(
                         height: 100,
                         color: Colors.grey[800],
@@ -631,20 +448,38 @@ class _HomePageState extends State<HomePage> {
                     },
                   ),
                 ),
+                // Play button (bottom right)
                 if (videoUrl != null && videoUrl.isNotEmpty)
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
-                    child: const Icon(Icons.play_arrow, color: Colors.white, size: 30),
+                  Positioned(
+                    bottom: 10,
+                    right: 10,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF8E7AFE),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.25),
+                            blurRadius: 6,
+                          ),
+                        ],
+                      ),
+                      padding: const EdgeInsets.all(12), // Increased
+                      child: const Icon(Icons.play_arrow, color: Colors.white, size: 32), // Increased
+                    ),
                   ),
+                // Favorite star (top right)
                 Positioned(
                   top: 8,
                   right: 8,
                   child: GestureDetector(
                     onTap: () => _toggleFavorite(_workouts.indexWhere((w) => w['title'] == title)),
                     child: Container(
+                      decoration: const BoxDecoration(
+                        color: Colors.black54,
+                        shape: BoxShape.circle,
+                      ),
                       padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
                       child: Icon(
                         isFavorite ? Icons.star_rounded : Icons.star_border_rounded,
                         color: isFavorite ? Colors.yellowAccent : Colors.white70,
@@ -690,10 +525,10 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
-
   Widget _buildHealthAndFitCard(Map<String, dynamic> item) {
     final imageUrl = item['image'] as String? ?? 'assets/placeholder.png';
     final title = item['title'] as String? ?? 'Health & Fit Item';
+
     return Container(
       width: MediaQuery.of(context).size.width * 0.44,
       margin: const EdgeInsets.only(right: 12),
@@ -736,42 +571,85 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildRatingSection() {
-    String coachName = "Coach Name"; // Fetch from user data or trainee profile
-    String coachImageUrl = "assets/coach_placeholder.png"; // Fetch actual image path
-    double currentRating = _userData['lastGivenRating'] as double? ?? 4.0; // Example, fetch actual
-    String lastComment = _userData['lastRatingComment'] as String? ?? "No recent comments."; // Example
-
     return Container(
+      margin: const EdgeInsets.symmetric(vertical: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF2A2A2A),
-        borderRadius: BorderRadius.circular(15),
+        color: const Color(0xFFB3A0FF),
+        borderRadius: BorderRadius.circular(20),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: const [
+                    Icon(Icons.star, color: Color(0xFF8E7AFE)),
+                    SizedBox(width: 6),
+                    Text(
+                      "My Rate",
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 10),
+                Row(
+                  children: List.generate(
+                    5,
+                        (index) => const Icon(
+                      Icons.star,
+                      color: Color(0xFFFFD600),
+                      size: 22,
+                    ),
+                  ),
+                ),
+                SizedBox(height: 10),
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 16,
+                      backgroundImage: AssetImage('assets/coach_placeholder.png'),
+                    ),
+                    SizedBox(width: 8),
+                    Text(
+                      "Coach John",
+                      style: TextStyle(color: Colors.black87, fontSize: 14),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 4),
+                Text(
+                  "Good effort but .............",
+                  style: TextStyle(color: Colors.black54, fontSize: 13),
+                ),
+              ],
+            ),
+          ),
+          Column(
             children: [
-              const Text("My Rating", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-              TextButton.icon(
-                icon: const Icon(Icons.edit_note, size: 18, color: Color(0xFF8E7AFE)),
-                label: const Text("Add/Edit Rating", style: TextStyle(color: Color(0xFF8E7AFE), fontSize: 14)),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFDBD5FF),
+                  foregroundColor: const Color(0xFF8E7AFE),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                ),
                 onPressed: () {
-                  if (!mounted) return;
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => const AddRatingPage()))
-                      .then((_) {
-                    print("Returned from AddRatingPage, potentially refresh rating data.");
-                    // TODO: Re-fetch rating data if necessary
-                  });
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const AddRatingPage()));
                 },
-                style: TextButton.styleFrom(padding: EdgeInsets.zero, tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+                icon: const Icon(Icons.add_circle, size: 20),
+                label: const Text("Add Rating", style: TextStyle(fontSize: 14)),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          // Display existing rating and comment
-          // This part needs logic to fetch and display actual rating data
         ],
       ),
     );
@@ -827,7 +705,7 @@ class _HomePageState extends State<HomePage> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text("Featured Workouts", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                  const Text("Workouts", style: TextStyle(color: Color(0xFFE2F163), fontSize: 18, fontWeight: FontWeight.bold)),
                   GestureDetector(
                     onTap: () { print("See All Workouts tapped"); /* _navigateToFeature('VideosPage'); */ },
                     child: Row(
@@ -901,7 +779,7 @@ class _HomePageState extends State<HomePage> {
             ],
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: const Text("Health & Fit", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+              child: const Text("Health & Fit", style: TextStyle(color: Color(0xFFE2F163), fontSize: 18, fontWeight: FontWeight.bold)),
             ),
             const SizedBox(height: 12),
             SizedBox(
