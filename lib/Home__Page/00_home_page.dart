@@ -84,8 +84,8 @@ class _HomePageState extends State<HomePage> {
 
   List<Map<String, dynamic>> _workouts = [
     {
-      'title': 'Squat Exercise',
-      'image': 'assets/workout1.jpg',
+      'title': '3 Tips For Beginners',
+      'image': 'assets/workout1.png',
       'color': Colors.purple,
       'videoUrl': 'https://youtube.com/shorts/ajWEUdlbMOA?si=2N01glDn192AaGv6',
       'duration': '12 Minutes',
@@ -93,7 +93,7 @@ class _HomePageState extends State<HomePage> {
       'isFavorite': false,
     },
     {
-      'title': 'Full Body Stretching',
+      'title': 'Best Bulking Drink !',
       'image': 'assets/workout2.jpg',
       'color': Colors.blue,
       'videoUrl': 'https://www.youtube.com/watch?v=3sH7wbIZjEY',
@@ -578,79 +578,88 @@ class _HomePageState extends State<HomePage> {
         color: const Color(0xFFB3A0FF),
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: const [
-                    Icon(Icons.star, color: Color(0xFF8E7AFE)),
-                    SizedBox(width: 6),
-                    Text(
-                      "My Rate",
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
+      child: ClipRRect( // Added ClipRRect to apply borderRadius to the Stack
+        borderRadius: BorderRadius.circular(15),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFF2A2A2A),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: const [
+                        Icon(Icons.star, color: Color(0xFF8E7AFE)),
+                        SizedBox(width: 6),
+                        Text(
+                          "My Rate",
+                          style: TextStyle(
+                            color: Colors.white, // Changed color to white for better visibility on dark background
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 10),
+                    Row(
+                      children: List.generate(
+                        5,
+                            (index) => const Icon(
+                          Icons.star,
+                          color: Color(0xFFFFD600),
+                          size: 22,
+                        ),
                       ),
                     ),
-                  ],
-                ),
-                SizedBox(height: 10),
-                Row(
-                  children: List.generate(
-                    5,
-                        (index) => const Icon(
-                      Icons.star,
-                      color: Color(0xFFFFD600),
-                      size: 22,
+                    SizedBox(height: 10),
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 16,
+                          backgroundImage: AssetImage('assets/coach_placeholder.png'),
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          "Coach",
+                          style: TextStyle(color: Colors.white70, fontSize: 14), // Changed color to white70 for better visibility
+                        ),
+                      ],
                     ),
-                  ),
-                ),
-                SizedBox(height: 10),
-                Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 16,
-                      backgroundImage: AssetImage('assets/coach_placeholder.png'),
-                    ),
-                    SizedBox(width: 8),
+                    SizedBox(height: 4),
                     Text(
-                      "Coach John",
-                      style: TextStyle(color: Colors.black87, fontSize: 14),
+                      "Good effort but .............",
+                      style: TextStyle(color: Colors.grey, fontSize: 13), // Changed color to grey for better visibility
                     ),
                   ],
                 ),
-                SizedBox(height: 4),
-                Text(
-                  "Good effort but .............",
-                  style: TextStyle(color: Colors.black54, fontSize: 13),
-                ),
-              ],
-            ),
-          ),
-          Column(
-            children: [
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFDBD5FF),
-                  foregroundColor: const Color(0xFF8E7AFE),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
+              ),
+              Column(
+                children: [
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFDBD5FF),
+                      foregroundColor: const Color(0xFF8E7AFE),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    ),
+                    onPressed: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => const AddRatingPage()));
+                    },
+                    icon: const Icon(Icons.add_circle, size: 20),
+                    label: const Text("Add Rating", style: TextStyle(fontSize: 14)),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                ),
-                onPressed: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => const AddRatingPage()));
-                },
-                icon: const Icon(Icons.add_circle, size: 20),
-                label: const Text("Add Rating", style: TextStyle(fontSize: 14)),
+                ],
               ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }
