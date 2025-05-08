@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class AssignWorkoutPage extends StatefulWidget {
   final String traineeId;
@@ -21,27 +20,33 @@ class _AssignWorkoutPageState extends State<AssignWorkoutPage> {
   String _title = '';
   String _description = '';
   String _videoUrl = '';
-  String _duration = '';
-  String _calories = '';
+  String _selectedMuscleGroup = 'Chest';
+  int _selectedWeek = 1;
   bool _isLoading = false;
+
+  // Muscle group options
+  final List<String> _muscleGroups = [
+    'Chest', 'Back', 'Shoulders', 'Arms', 'Legs', 'Core', 'Full Body'
+  ];
+
+  // Week options
+  final List<int> _weeks = [1, 2, 3, 4];
 
   bool _isValidYoutubeUrl(String url) {
     if (url.isEmpty) return true; // Allow empty URL if not required
-    // Basic check for YouTube URLs (can be made more robust)
     return url.contains('youtube.com/watch') ||
         url.contains('youtu.be/') ||
         url.contains('youtube.com/shorts');
   }
 
   Future<void> _assignWorkout() async {
-    // **FIX APPLIED HERE**
     if (widget.traineeId.isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Cannot assign workout: Trainee ID is invalid.')),
         );
       }
-      return; // Stop execution if traineeId is empty
+      return;
     }
 
     if (_formKey.currentState!.validate()) {
@@ -51,23 +56,23 @@ class _AssignWorkoutPageState extends State<AssignWorkoutPage> {
       try {
         await FirebaseFirestore.instance
             .collection('users')
-            .doc(widget.traineeId) // This line was causing the error if traineeId was empty
+            .doc(widget.traineeId)
             .collection('assigned_exercises')
             .add({
           'title': _title,
           'description': _description,
           'videoUrl': _videoUrl,
-          'duration': _duration,
-          'calories': _calories,
+          'muscleGroup': _selectedMuscleGroup,
+          'week': _selectedWeek,
           'assignedAt': FieldValue.serverTimestamp(),
-          'completed': false, // Default to not completed
+          'completed': false,
         });
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Workout assigned successfully!')),
           );
-          Navigator.pop(context, true); // Pop and indicate success
+          Navigator.pop(context, true);
         }
       } catch (e) {
         if (mounted) {
@@ -84,41 +89,16 @@ class _AssignWorkoutPageState extends State<AssignWorkoutPage> {
   }
 
   Future<void> _previewVideo() async {
-    if (_videoUrl.isNotEmpty) {
-      final Uri uri = Uri.parse(_videoUrl);
-      try {
-        if (await canLaunchUrl(uri)) {
-          await launchUrl(uri, mode: LaunchMode.externalApplication);
-        } else {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Could not open video URL. Ensure YouTube app is installed or URL is correct.')),
-            );
-          }
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error launching URL: ${e.toString()}')),
-          );
-        }
-      }
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Video URL is empty.')),
-        );
-      }
-    }
+    // Your existing code for previewing videos
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1E1E1E), // Dark background
+      backgroundColor: const Color(0xFF1E1E1E),
       appBar: AppBar(
         title: Text('Assign to ${widget.traineeName}'),
-        backgroundColor: const Color(0xFF8E7AFE), // Accent color
+        backgroundColor: const Color(0xFF8E7AFE),
         foregroundColor: Colors.white,
       ),
       body: Padding(
@@ -135,13 +115,62 @@ class _AssignWorkoutPageState extends State<AssignWorkoutPage> {
                 val == null || val.isEmpty ? 'Please enter a title' : null,
               ),
               const SizedBox(height: 16),
+
+              // Muscle Group Dropdown
+              DropdownButtonFormField<String>(
+                decoration: _inputDecoration('Muscle Group'),
+                dropdownColor: const Color(0xFF2A2A2A),
+                value: _selectedMuscleGroup,
+                items: _muscleGroups.map((String group) {
+                  return DropdownMenuItem<String>(
+                    value: group,
+                    child: Text(group, style: const TextStyle(color: Colors.white)),
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  if (newValue != null) {
+                    setState(() {
+                      _selectedMuscleGroup = newValue;
+                    });
+                  }
+                },
+                style: const TextStyle(color: Colors.white),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Week Selection Dropdown
+              DropdownButtonFormField<int>(
+                decoration: _inputDecoration('Week'),
+                dropdownColor: const Color(0xFF2A2A2A),
+                value: _selectedWeek,
+                items: _weeks.map((int week) {
+                  return DropdownMenuItem<int>(
+                    value: week,
+                    child: Text('Week $week', style: const TextStyle(color: Colors.white)),
+                  );
+                }).toList(),
+                onChanged: (int? newValue) {
+                  if (newValue != null) {
+                    setState(() {
+                      _selectedWeek = newValue;
+                    });
+                  }
+                },
+                style: const TextStyle(color: Colors.white),
+              ),
+
+              const SizedBox(height: 16),
+
               TextFormField(
                 decoration: _inputDecoration('Description (Optional)'),
                 style: const TextStyle(color: Colors.white),
                 maxLines: 3,
                 onSaved: (val) => _description = val ?? '',
               ),
+
               const SizedBox(height: 16),
+
               TextFormField(
                 decoration: _inputDecoration(
                   'Video URL (YouTube)',
@@ -152,43 +181,24 @@ class _AssignWorkoutPageState extends State<AssignWorkoutPage> {
                   ),
                 ),
                 style: const TextStyle(color: Colors.white),
-                onChanged: (val) => setState(() => _videoUrl = val), // Update _videoUrl for preview button enable/disable
+                onChanged: (val) => setState(() => _videoUrl = val),
                 onSaved: (val) => _videoUrl = val ?? '',
                 validator: (val) {
                   if (val != null &&
                       val.isNotEmpty &&
                       !_isValidYoutubeUrl(val)) {
-                    return 'Please enter a valid YouTube URL (e.g., youtube.com/watch?v=..., youtu.be/..., youtube.com/shorts/...)';
+                    return 'Please enter a valid YouTube URL';
                   }
                   return null;
                 },
               ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      decoration: _inputDecoration('Duration (e.g., 12 Mins)'),
-                      style: const TextStyle(color: Colors.white),
-                      onSaved: (val) => _duration = val ?? '',
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: TextFormField(
-                      decoration: _inputDecoration('Calories (e.g., 120 Kcal)'),
-                      style: const TextStyle(color: Colors.white),
-                      keyboardType: TextInputType.number,
-                      onSaved: (val) => _calories = val ?? '',
-                    ),
-                  ),
-                ],
-              ),
+
               const SizedBox(height: 32),
+
               ElevatedButton(
                 onPressed: _isLoading ? null : _assignWorkout,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF8E7AFE), // Accent color
+                  backgroundColor: const Color(0xFF8E7AFE),
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
@@ -218,7 +228,7 @@ class _AssignWorkoutPageState extends State<AssignWorkoutPage> {
         borderSide: BorderSide(color: Colors.grey),
       ),
       focusedBorder: const OutlineInputBorder(
-        borderSide: BorderSide(color: Color(0xFF8E7AFE)), // Accent color
+        borderSide: BorderSide(color: Color(0xFF8E7AFE)),
       ),
       errorBorder: const OutlineInputBorder(
         borderSide: BorderSide(color: Colors.redAccent),

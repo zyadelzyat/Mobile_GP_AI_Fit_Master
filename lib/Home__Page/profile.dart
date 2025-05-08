@@ -1,38 +1,35 @@
 // [File: profile.dart]
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart'; // For date formatting
-
 // Import your login screen (ensure the path is correct)
 import 'package:untitled/Login___Signup/01_signin_screen.dart'; // Replace 'untitled' with your project name
-
 // Import the detailed profile page
 import 'detailed_profile_page.dart'; // Make sure this path is correct
-
 // Import for Chatbot - Check path and project name 'untitled'
 import 'package:untitled/AI/chatbot.dart'; // Replace 'untitled' if needed.
-
 // Import Favorite Page - Make sure this path is correct
 import 'favorite_page.dart'; // Ensure 'FavoritePage' is defined.
-
 // Import TrainerRatingsPage
 import 'trainer_ratings_page.dart'; // Add this import for the trainer ratings page
+// Import TrainerTraineesPage
+import 'trainer_trainees_page.dart';
 
 class ProfilePage extends StatefulWidget {
   final String userId;
-
   const ProfilePage({required this.userId, super.key});
 
   @override
-  State<ProfilePage> createState() => _ProfilePageState();
+  State createState() => _ProfilePageState();
 }
 
 class _ProfilePageState extends State<ProfilePage> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance; // Added FirebaseAuth instance
   bool _isLoading = true;
-  Map<String, dynamic> userData = {};
+  Map userData = {};
   String? errorMessage;
 
   // Define membership plans (name, price, typeKey for Firestore)
@@ -48,7 +45,7 @@ class _ProfilePageState extends State<ProfilePage> {
     _fetchUserData();
   }
 
-  Future<void> _fetchUserData() async {
+  Future _fetchUserData() async {
     if (!mounted) return;
     setState(() {
       _isLoading = true;
@@ -60,7 +57,7 @@ class _ProfilePageState extends State<ProfilePage> {
       if (userDoc.exists) {
         if (!mounted) return;
         setState(() {
-          userData = userDoc.data() as Map<String, dynamic>;
+          userData = userDoc.data() as Map;
           // Add userId to the map to pass it easily
           userData['userId'] = widget.userId;
           _isLoading = false;
@@ -90,7 +87,7 @@ class _ProfilePageState extends State<ProfilePage> {
       try {
         birthDate = DateTime.parse(userData['dob'] as String);
       } catch (e) {
-        List<String> parts = (userData['dob'] as String).split('-');
+        List parts = (userData['dob'] as String).split('-');
         if (parts.length == 3) {
           try {
             birthDate = DateTime(int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
@@ -110,6 +107,7 @@ class _ProfilePageState extends State<ProfilePage> {
         (today.month == birthDate.month && today.day < birthDate.day)) {
       age--;
     }
+
     return "$age";
   }
 
@@ -122,7 +120,7 @@ class _ProfilePageState extends State<ProfilePage> {
       try {
         birthDate = DateTime.parse(userData['dob'] as String);
       } catch (e) {
-        List<String> parts = (userData['dob'] as String).split('-');
+        List parts = (userData['dob'] as String).split('-');
         if (parts.length == 3) {
           try {
             birthDate = DateTime(int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
@@ -279,17 +277,32 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget _buildRoleSpecificMenuItems() {
     if (userData['role'] == 'Trainer') {
-      return _buildProfileMenuItem(
-        icon: Icons.star_rate_outlined,
-        title: 'My Ratings',
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const TrainerRatingsPage()),
-          );
-        },
+      return Column(
+        children: [
+          _buildProfileMenuItem(
+            icon: Icons.star_rate_outlined,
+            title: 'My Ratings',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const TrainerRatingsPage()),
+              );
+            },
+          ),
+          _buildProfileMenuItem(
+            icon: Icons.group,
+            title: 'View My Trainees',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const TrainerTraineesPage()),
+              );
+            },
+          ),
+        ],
       );
     }
+
     return const SizedBox.shrink(); // Return empty widget if not a trainer
   }
 
@@ -298,7 +311,7 @@ class _ProfilePageState extends State<ProfilePage> {
       context: context,
       builder: (BuildContext context) {
         String? selectedPlanKey; // To hold the key of the selected plan
-        Map<String, dynamic>? selectedPlanDetails;
+        Map? selectedPlanDetails;
         return StatefulBuilder( // Use StatefulBuilder for dialog state
           builder: (context, setDialogState) {
             return AlertDialog(
@@ -307,7 +320,7 @@ class _ProfilePageState extends State<ProfilePage> {
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: _membershipPlans.map((plan) {
-                  return RadioListTile<String>(
+                  return RadioListTile(
                     title: Text('${plan['name']} - \$${plan['price'].toStringAsFixed(2)}', style: TextStyle(color: Colors.white)),
                     value: plan['typeKey'] as String,
                     groupValue: selectedPlanKey,
@@ -345,7 +358,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  void _showPaymentMethodDialog(Map<String, dynamic> planDetails) {
+  void _showPaymentMethodDialog(Map planDetails) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -386,7 +399,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Future<void> _handleCashPayment(Map<String, dynamic> planDetails) async {
+  Future _handleCashPayment(Map planDetails) async {
     User? currentUser = _auth.currentUser;
     if (currentUser == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -413,13 +426,14 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  void _handleVisaPayment(Map<String, dynamic> planDetails) {
+  void _handleVisaPayment(Map planDetails) {
     User? currentUser = _auth.currentUser;
     if (currentUser == null) {
       ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('You need to be logged in.')));
       return;
     }
+
     // Placeholder for Visa payment integration
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Initiating Visa payment for ${planDetails['name']}. Integration with a payment gateway is required here.')),
@@ -427,16 +441,15 @@ class _ProfilePageState extends State<ProfilePage> {
     print("Visa payment for ${planDetails['typeKey']} selected. Implement payment gateway.");
     // After successful payment via a gateway, you would update Firestore:
     // await _firestore.collection('users').doc(currentUser.uid).update({
-    //   'membershipType': planDetails['typeKey'],
-    //   'membershipPrice': planDetails['price'],
-    //   'membershipPaymentType': 'visa',
-    //   'membershipStatus': 'active',
-    //   'paymentIntentId': 'your_payment_intent_id_from_gateway', // Optional
-    //   'updatedAt': FieldValue.serverTimestamp(),
+    // 'membershipType': planDetails['typeKey'],
+    // 'membershipPrice': planDetails['price'],
+    // 'membershipPaymentType': 'visa',
+    // 'membershipStatus': 'active',
+    // 'paymentIntentId': 'your_payment_intent_id_from_gateway', // Optional
+    // 'updatedAt': FieldValue.serverTimestamp(),
     // });
     // _fetchUserData(); // Refresh user data
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -488,7 +501,6 @@ class _ProfilePageState extends State<ProfilePage> {
         : "${userData['height'] ?? 'N/A'} ${userData['heightUnit'] ?? 'M'}";
     String ageDisplay = _calculateAge();
     String birthdayDisplay = _formatBirthday();
-
     // *** MODIFICATION START ***
     String userRole = userData['role'] as String? ?? '';
     String membershipStatus = userData['membershipStatus'] as String? ?? 'none';
@@ -581,7 +593,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       context,
                       MaterialPageRoute(
                           builder: (context) =>
-                              DetailedProfilePage(userData: Map<String, dynamic>.from(userData))),
+                              DetailedProfilePage(userData: Map.from(userData))),
                     );
                   },
                 ),

@@ -705,22 +705,6 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             const SizedBox(height: 24),
-            if (_userData.containsKey('role') && _userData['role'] != 'Trainee' && _userData['role'] != 'Self-Trainee') ...[
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                child: ElevatedButton.icon(
-                  onPressed: _navigateToTrainees,
-                  icon: const Icon(Icons.group),
-                  label: const Text("View My Trainees"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF8E7AFE), foregroundColor: Colors.white,
-                    minimumSize: Size(double.infinity, 50),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-            ],
             const SizedBox(height: 16),
           ],
         ),
