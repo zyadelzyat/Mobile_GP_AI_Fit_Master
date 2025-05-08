@@ -85,7 +85,7 @@ class _HomePageState extends State<HomePage> {
   List<Map<String, dynamic>> _workouts = [
     {
       'title': '3 Tips For Beginners',
-      'image': 'assets/workout1.png',
+      'image': 'assets/workout1.jpg',
       'color': Colors.purple,
       'videoUrl': 'https://youtube.com/shorts/ajWEUdlbMOA?si=2N01glDn192AaGv6',
       'duration': '12 Minutes',
@@ -451,8 +451,8 @@ class _HomePageState extends State<HomePage> {
                 // Play button (bottom right)
                 if (videoUrl != null && videoUrl.isNotEmpty)
                   Positioned(
-                    bottom: 10,
-                    right: 10,
+                    bottom: 10, // Adjust positioning if needed after size change
+                    right: 10,  // Adjust positioning if needed after size change
                     child: Container(
                       decoration: BoxDecoration(
                         color: const Color(0xFF8E7AFE),
@@ -460,12 +460,12 @@ class _HomePageState extends State<HomePage> {
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withOpacity(0.25),
-                            blurRadius: 6,
+                            blurRadius: 6, // You might want to reduce blurRadius if the button is much smaller
                           ),
                         ],
                       ),
-                      padding: const EdgeInsets.all(12), // Increased
-                      child: const Icon(Icons.play_arrow, color: Colors.white, size: 32), // Increased
+                      padding: const EdgeInsets.all(8), // Reduced padding
+                      child: const Icon(Icons.play_arrow, color: Colors.white, size: 24), // Reduced icon size
                     ),
                   ),
                 // Favorite star (top right)
