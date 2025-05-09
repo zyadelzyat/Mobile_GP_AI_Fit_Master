@@ -4,10 +4,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class AssignWorkoutPage extends StatefulWidget {
   final String traineeId;
   final String traineeName;
+  final bool isEditing;
+  final Map<String, dynamic>? existingWorkout;
 
   const AssignWorkoutPage({
     required this.traineeId,
     required this.traineeName,
+    this.isEditing = false,
+    this.existingWorkout,
     Key? key,
   }) : super(key: key);
 
@@ -32,6 +36,23 @@ class _AssignWorkoutPageState extends State<AssignWorkoutPage> {
   // Week options
   final List<int> _weeks = [1, 2, 3, 4];
 
+  @override
+  void initState() {
+    super.initState();
+    if (widget.isEditing && widget.existingWorkout != null) {
+      _loadExistingWorkout();
+    }
+  }
+
+  void _loadExistingWorkout() {
+    final workout = widget.existingWorkout!;
+    _title = workout['title'] ?? '';
+    _description = workout['description'] ?? '';
+    _videoUrl = workout['videoUrl'] ?? '';
+    _selectedMuscleGroup = workout['muscleGroup'] ?? 'Chest';
+    _selectedWeek = workout['week'] ?? 1;
+  }
+
   bool _isValidYoutubeUrl(String url) {
     if (url.isEmpty) return true; // Allow empty URL if not required
     return url.contains('youtube.com/watch') ||
@@ -39,7 +60,7 @@ class _AssignWorkoutPageState extends State<AssignWorkoutPage> {
         url.contains('youtube.com/shorts');
   }
 
-  Future<void> _assignWorkout() async {
+  Future<void> _saveWorkout() async {
     if (widget.traineeId.isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -54,30 +75,55 @@ class _AssignWorkoutPageState extends State<AssignWorkoutPage> {
       setState(() => _isLoading = true);
 
       try {
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(widget.traineeId)
-            .collection('assigned_exercises')
-            .add({
-          'title': _title,
-          'description': _description,
-          'videoUrl': _videoUrl,
-          'muscleGroup': _selectedMuscleGroup,
-          'week': _selectedWeek,
-          'assignedAt': FieldValue.serverTimestamp(),
-          'completed': false,
-        });
+        if (widget.isEditing && widget.existingWorkout != null) {
+          // Update existing workout
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(widget.traineeId)
+              .collection('assigned_exercises')
+              .doc(widget.existingWorkout!['id'])
+              .update({
+            'title': _title,
+            'description': _description,
+            'videoUrl': _videoUrl,
+            'muscleGroup': _selectedMuscleGroup,
+            'week': _selectedWeek,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
 
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Workout assigned successfully!')),
-          );
-          Navigator.pop(context, true);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Workout updated successfully!')),
+            );
+            Navigator.pop(context, true);
+          }
+        } else {
+          // Create new workout
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(widget.traineeId)
+              .collection('assigned_exercises')
+              .add({
+            'title': _title,
+            'description': _description,
+            'videoUrl': _videoUrl,
+            'muscleGroup': _selectedMuscleGroup,
+            'week': _selectedWeek,
+            'assignedAt': FieldValue.serverTimestamp(),
+            'completed': false,
+          });
+
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Workout assigned successfully!')),
+            );
+            Navigator.pop(context, true);
+          }
         }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error assigning workout: ${e.toString()}')),
+            SnackBar(content: Text('Error saving workout: ${e.toString()}')),
           );
         }
       } finally {
@@ -97,7 +143,7 @@ class _AssignWorkoutPageState extends State<AssignWorkoutPage> {
     return Scaffold(
       backgroundColor: const Color(0xFF1E1E1E),
       appBar: AppBar(
-        title: Text('Assign to ${widget.traineeName}'),
+        title: Text(widget.isEditing ? 'Edit Workout' : 'Assign to ${widget.traineeName}'),
         backgroundColor: const Color(0xFF8E7AFE),
         foregroundColor: Colors.white,
       ),
@@ -110,6 +156,7 @@ class _AssignWorkoutPageState extends State<AssignWorkoutPage> {
               TextFormField(
                 decoration: _inputDecoration('Title'),
                 style: const TextStyle(color: Colors.white),
+                initialValue: _title,
                 onSaved: (val) => _title = val ?? '',
                 validator: (val) =>
                 val == null || val.isEmpty ? 'Please enter a title' : null,
@@ -136,7 +183,6 @@ class _AssignWorkoutPageState extends State<AssignWorkoutPage> {
                 },
                 style: const TextStyle(color: Colors.white),
               ),
-
               const SizedBox(height: 16),
 
               // Week Selection Dropdown
@@ -159,16 +205,15 @@ class _AssignWorkoutPageState extends State<AssignWorkoutPage> {
                 },
                 style: const TextStyle(color: Colors.white),
               ),
-
               const SizedBox(height: 16),
 
               TextFormField(
                 decoration: _inputDecoration('Description (Optional)'),
                 style: const TextStyle(color: Colors.white),
+                initialValue: _description,
                 maxLines: 3,
                 onSaved: (val) => _description = val ?? '',
               ),
-
               const SizedBox(height: 16),
 
               TextFormField(
@@ -181,6 +226,7 @@ class _AssignWorkoutPageState extends State<AssignWorkoutPage> {
                   ),
                 ),
                 style: const TextStyle(color: Colors.white),
+                initialValue: _videoUrl,
                 onChanged: (val) => setState(() => _videoUrl = val),
                 onSaved: (val) => _videoUrl = val ?? '',
                 validator: (val) {
@@ -192,11 +238,10 @@ class _AssignWorkoutPageState extends State<AssignWorkoutPage> {
                   return null;
                 },
               ),
-
               const SizedBox(height: 32),
 
               ElevatedButton(
-                onPressed: _isLoading ? null : _assignWorkout,
+                onPressed: _isLoading ? null : _saveWorkout,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF8E7AFE),
                   padding: const EdgeInsets.symmetric(vertical: 16),
@@ -211,7 +256,10 @@ class _AssignWorkoutPageState extends State<AssignWorkoutPage> {
                   width: 24,
                   child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3),
                 )
-                    : const Text('Assign Workout', style: TextStyle(fontSize: 16)),
+                    : Text(
+                  widget.isEditing ? 'Update Workout' : 'Assign Workout',
+                  style: const TextStyle(fontSize: 16),
+                ),
               ),
             ],
           ),

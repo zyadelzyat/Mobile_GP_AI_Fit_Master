@@ -12,6 +12,11 @@ class AssignedExercisesPage extends StatefulWidget {
 
 class _AssignedExercisesPageState extends State<AssignedExercisesPage> {
   bool _isRefreshing = false;
+  int _selectedWeekIndex = 0; // 0: Week 1, 1: Week 2, 2: Week 3, 3: Week 4
+  final List<String> _weekOptions = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
+
+  // Track watched videos
+  final Map<String, bool> _watchedVideos = {};
 
   Future<List<Map<String, dynamic>>> _fetchAssignedExercises() async {
     final user = FirebaseAuth.instance.currentUser;
@@ -21,7 +26,7 @@ class _AssignedExercisesPageState extends State<AssignedExercisesPage> {
         .collection('users')
         .doc(user.uid)
         .collection('assigned_exercises')
-        .orderBy('week', descending: false)
+        .where('week', isEqualTo: _selectedWeekIndex + 1) // Filter by selected week
         .orderBy('muscleGroup', descending: false)
         .get();
 
@@ -32,7 +37,7 @@ class _AssignedExercisesPageState extends State<AssignedExercisesPage> {
     }).toList();
   }
 
-  Future<void> _launchVideo(BuildContext context, String? videoUrl) async {
+  Future<void> _launchVideo(BuildContext context, String exerciseId, String? videoUrl) async {
     if (videoUrl == null || videoUrl.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No video URL available')),
@@ -44,6 +49,25 @@ class _AssignedExercisesPageState extends State<AssignedExercisesPage> {
     try {
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
+
+        // Mark video as watched
+        setState(() {
+          _watchedVideos[exerciseId] = true;
+        });
+
+        // Update Firestore to mark as watched
+        final user = FirebaseAuth.instance.currentUser;
+        if (user != null) {
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .collection('watched_videos')
+              .doc(exerciseId)
+              .set({
+            'watchedAt': FieldValue.serverTimestamp(),
+            'videoUrl': videoUrl
+          });
+        }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Could not open video URL')),
@@ -78,8 +102,8 @@ class _AssignedExercisesPageState extends State<AssignedExercisesPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(!currentStatus
-              ? 'Workout marked as completed!'
-              : 'Workout marked as incomplete'),
+              ? 'Exercise marked as completed!'
+              : 'Exercise marked as incomplete'),
           backgroundColor: !currentStatus ? Colors.green : Colors.orange,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -105,11 +129,33 @@ class _AssignedExercisesPageState extends State<AssignedExercisesPage> {
     }
   }
 
+  Future<void> _checkWatchedVideos() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('watched_videos')
+          .get();
+
+      setState(() {
+        for (var doc in snapshot.docs) {
+          _watchedVideos[doc.id] = true;
+        }
+      });
+    } catch (e) {
+      print('Error fetching watched videos: $e');
+    }
+  }
+
   Future<void> _refreshExercises() async {
     setState(() {
       _isRefreshing = true;
     });
 
+    await _checkWatchedVideos();
     await Future.delayed(const Duration(milliseconds: 300));
 
     setState(() {
@@ -118,329 +164,385 @@ class _AssignedExercisesPageState extends State<AssignedExercisesPage> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _checkWatchedVideos();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF1E1E1E),
       appBar: AppBar(
         title: const Text(
-          'My Workout Plan',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          'My Workouts',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
         ),
         backgroundColor: const Color(0xFF8E7AFE),
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _refreshExercises,
-            tooltip: 'Refresh',
+            icon: const Icon(Icons.search),
+            onPressed: () {},
+          ),
+          IconButton(
+            icon: const Icon(Icons.notifications_outlined),
+            onPressed: () {},
           ),
         ],
       ),
-      backgroundColor: const Color(0xFF1E1E1E),
       body: RefreshIndicator(
         onRefresh: _refreshExercises,
         color: const Color(0xFF8E7AFE),
-        child: FutureBuilder<List<Map<String, dynamic>>>(
-          future: _fetchAssignedExercises(),
-          builder: (context, snapshot) {
-            if (_isRefreshing || snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(
-                child: CircularProgressIndicator(color: Color(0xFF8E7AFE)),
-              );
-            }
-
-            if (!snapshot.hasData || snapshot.data!.isEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.fitness_center,
-                      size: 80,
-                      color: Color(0xFF8E7AFE),
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'No exercises assigned yet.',
-                      style: TextStyle(color: Colors.white70, fontSize: 18),
-                    ),
-                    const SizedBox(height: 24),
-                    ElevatedButton.icon(
-                      onPressed: () => Navigator.pop(context),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF8E7AFE),
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                      ),
-                      icon: const Icon(Icons.arrow_back),
-                      label: const Text('Back to Home'),
-                    ),
-                  ],
-                ),
-              );
-            }
-
-            final exercises = snapshot.data!;
-            // Group exercises by week
-            Map<int, List<Map<String, dynamic>>> exercisesByWeek = {};
-            for (var exercise in exercises) {
-              int week = exercise['week'] ?? 1;
-              if (!exercisesByWeek.containsKey(week)) {
-                exercisesByWeek[week] = [];
-              }
-              exercisesByWeek[week]!.add(exercise);
-            }
-
-            // Sort weeks
-            List<int> weeks = exercisesByWeek.keys.toList()..sort();
-
-            return ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: weeks.length,
-              itemBuilder: (context, weekIndex) {
-                int week = weeks[weekIndex];
-                List<Map<String, dynamic>> weekExercises = exercisesByWeek[week]!;
-
-                // Group by muscle group within each week
-                Map<String, List<Map<String, dynamic>>> byMuscleGroup = {};
-                for (var exercise in weekExercises) {
-                  String muscleGroup = exercise['muscleGroup'] ?? 'Other';
-                  if (!byMuscleGroup.containsKey(muscleGroup)) {
-                    byMuscleGroup[muscleGroup] = [];
+        child: Column(
+          children: [
+            _buildWeekFilter(),
+            Expanded(
+              child: FutureBuilder<List<Map<String, dynamic>>>(
+                future: _fetchAssignedExercises(),
+                builder: (context, snapshot) {
+                  if (_isRefreshing || snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(
+                      child: CircularProgressIndicator(color: Color(0xFF8E7AFE)),
+                    );
                   }
-                  byMuscleGroup[muscleGroup]!.add(exercise);
-                }
 
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      margin: EdgeInsets.only(bottom: 16, top: weekIndex > 0 ? 24 : 0),
-                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF8E7AFE),
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.calendar_today, color: Colors.white),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Week $week',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                            ),
-                          ),
-                        ],
-                      ),
+                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return _buildEmptyState();
+                  }
+
+                  final exercises = snapshot.data!;
+
+                  // Group exercises by muscle group
+                  Map<String, List<Map<String, dynamic>>> exercisesByMuscleGroup = {};
+
+                  for (var exercise in exercises) {
+                    String muscleGroup = exercise['muscleGroup'] ?? 'Other';
+                    if (!exercisesByMuscleGroup.containsKey(muscleGroup)) {
+                      exercisesByMuscleGroup[muscleGroup] = [];
+                    }
+                    exercisesByMuscleGroup[muscleGroup]!.add(exercise);
+                  }
+
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildWeekHeader(),
+                        const SizedBox(height: 20),
+                        ...exercisesByMuscleGroup.entries.map((entry) {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                entry.key,
+                                style: const TextStyle(
+                                  color: Color(0xFFE2F163),
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              ...entry.value.map((exercise) => _buildExerciseCard(exercise)).toList(),
+                              const SizedBox(height: 20),
+                            ],
+                          );
+                        }).toList(),
+                      ],
                     ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: const Color(0xFF2A2A2A),
+        selectedItemColor: const Color(0xFF8E7AFE),
+        unselectedItemColor: Colors.grey,
+        type: BottomNavigationBarType.fixed,
+        showSelectedLabels: false,
+        showUnselectedLabels: false,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.shopping_bag_outlined), label: 'Store'),
+          BottomNavigationBarItem(icon: Icon(Icons.favorite_border), label: 'Favorites'),
+          BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profile'),
+        ],
+        currentIndex: 0,
+      ),
+    );
+  }
 
-                    ...byMuscleGroup.entries.map((entry) {
-                      String muscleGroup = entry.key;
-                      List<Map<String, dynamic>> muscleExercises = entry.value;
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(
+            Icons.fitness_center,
+            size: 80,
+            color: Color(0xFF8E7AFE),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'No exercises assigned for Week ${_selectedWeekIndex + 1}',
+            style: const TextStyle(color: Colors.white70, fontSize: 18),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: () => Navigator.pop(context),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF8E7AFE),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+              ),
+            ),
+            icon: const Icon(Icons.arrow_back),
+            label: const Text('Back to Home'),
+          ),
+        ],
+      ),
+    );
+  }
 
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  _getMuscleGroupIcon(muscleGroup),
-                                  color: const Color(0xFFE2F163),
-                                  size: 20,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  muscleGroup,
-                                  style: const TextStyle(
-                                    color: Color(0xFFE2F163),
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          ...muscleExercises.map((exercise) {
-                            final bool isCompleted = exercise['completed'] == true;
-                            final String title = exercise['title'] ?? 'Exercise';
-                            final String description = exercise['description'] ?? '';
-
-                            return Card(
-                              margin: const EdgeInsets.only(bottom: 12),
-                              color: const Color(0xFF2A2A2A),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                side: BorderSide(
-                                  color: isCompleted ? Colors.green.withOpacity(0.5) : Colors.transparent,
-                                  width: 1.5,
-                                ),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            title,
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 16,
-                                              decoration: isCompleted ? TextDecoration.lineThrough : null,
-                                            ),
-                                          ),
-                                        ),
-                                        GestureDetector(
-                                          onTap: () => _toggleCompletionStatus(exercise['id'], isCompleted),
-                                          child: AnimatedContainer(
-                                            duration: const Duration(milliseconds: 300),
-                                            padding: const EdgeInsets.all(8),
-                                            decoration: BoxDecoration(
-                                              color: isCompleted
-                                                  ? Colors.green.withOpacity(0.2)
-                                                  : Colors.grey.withOpacity(0.2),
-                                              borderRadius: BorderRadius.circular(8),
-                                            ),
-                                            child: Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                Icon(
-                                                  isCompleted
-                                                      ? Icons.check_circle
-                                                      : Icons.check_circle_outline,
-                                                  color: isCompleted
-                                                      ? Colors.green
-                                                      : Colors.grey,
-                                                  size: 20,
-                                                ),
-                                                const SizedBox(width: 4),
-                                                Text(
-                                                  isCompleted ? 'Done' : 'Mark Done',
-                                                  style: TextStyle(
-                                                    color: isCompleted
-                                                        ? Colors.green
-                                                        : Colors.grey,
-                                                    fontSize: 12,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    if (description.isNotEmpty) ...[
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        description,
-                                        style: TextStyle(
-                                          color: Colors.grey[400],
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                    ],
-                                    const SizedBox(height: 16),
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Row(
-                                          children: [
-                                            const Icon(
-                                              Icons.access_time,
-                                              color: Colors.grey,
-                                              size: 14,
-                                            ),
-                                            const SizedBox(width: 4),
-                                            Text(
-                                              _formatTimestamp(exercise['assignedAt']),
-                                              style: const TextStyle(
-                                                color: Colors.grey,
-                                                fontSize: 12,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        ElevatedButton.icon(
-                                          onPressed: () => _launchVideo(context, exercise['videoUrl']),
-                                          icon: const Icon(Icons.play_circle_outline, size: 16),
-                                          label: const Text('Watch Video'),
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: const Color(0xFF8E7AFE),
-                                            foregroundColor: Colors.white,
-                                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                            textStyle: const TextStyle(fontSize: 12),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(20),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          }).toList(),
-                        ],
-                      );
-                    }).toList(),
-                  ],
-                );
+  Widget _buildWeekFilter() {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: List.generate(
+            _weekOptions.length,
+                (index) => GestureDetector(
+              onTap: () {
+                setState(() {
+                  _selectedWeekIndex = index;
+                });
               },
-            );
-          },
+              child: Container(
+                margin: const EdgeInsets.only(right: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: _selectedWeekIndex == index
+                      ? const Color(0xFFE2F163)
+                      : const Color(0xFF2A2A2A),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  _weekOptions[index],
+                  style: TextStyle(
+                    color: _selectedWeekIndex == index
+                        ? Colors.black
+                        : Colors.white70,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );
   }
 
-  IconData _getMuscleGroupIcon(String muscleGroup) {
-    switch (muscleGroup.toLowerCase()) {
-      case 'chest':
-        return Icons.accessibility_new;
-      case 'back':
-        return Icons.fitness_center;
-      case 'shoulders':
-        return Icons.accessibility;
-      case 'arms':
-        return Icons.sports_gymnastics;
-      case 'legs':
-        return Icons.directions_run;
-      case 'core':
-        return Icons.airline_seat_flat;
-      case 'full body':
-        return Icons.person;
-      default:
-        return Icons.fitness_center;
-    }
+  Widget _buildWeekHeader() {
+    return Container(
+      width: double.infinity,
+      height: 120,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(15),
+        color: const Color(0xFF8E7AFE),
+      ),
+      child: Stack(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(15),
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  const Color(0xFF8E7AFE),
+                  const Color(0xFF8E7AFE).withOpacity(0.7),
+                ],
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Text(
+                  'Week ${_selectedWeekIndex + 1} Workouts',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Stay consistent with your training',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
-  String _formatTimestamp(dynamic timestamp) {
-    if (timestamp == null) return 'Recently';
+  Widget _buildExerciseCard(Map<String, dynamic> exercise) {
+    final String id = exercise['id'] ?? '';
+    final String title = exercise['title'] ?? 'Exercise';
+    final String description = exercise['description'] ?? '';
+    final String videoUrl = exercise['videoUrl'] ?? '';
+    final bool isCompleted = exercise['completed'] == true;
+    final bool isWatched = _watchedVideos[id] == true;
+    final String muscleGroup = exercise['muscleGroup'] ?? 'General';
 
-    if (timestamp is Timestamp) {
-      final DateTime date = timestamp.toDate();
-      return '${date.day}/${date.month}/${date.year}';
-    }
-
-    return 'Recently';
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF2A2A2A),
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(
+          color: isCompleted
+              ? Colors.green.withOpacity(0.5)
+              : Colors.transparent,
+          width: 1.5,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(15),
+          onTap: () => _launchVideo(context, id, videoUrl),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF8E7AFE).withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  muscleGroup,
+                                  style: const TextStyle(
+                                    color: Color(0xFF8E7AFE),
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                              if (isWatched)
+                                Container(
+                                  margin: const EdgeInsets.only(left: 8),
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: Colors.green.withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.visibility, color: Colors.green, size: 12),
+                                      SizedBox(width: 4),
+                                      Text(
+                                        'Watched',
+                                        style: TextStyle(
+                                          color: Colors.green,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(
+                        isCompleted ? Icons.check_circle : Icons.check_circle_outline,
+                        color: isCompleted ? Colors.green : Colors.grey,
+                      ),
+                      onPressed: () => _toggleCompletionStatus(id, isCompleted),
+                    ),
+                  ],
+                ),
+                if (description.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    description,
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 16),
+                if (videoUrl.isNotEmpty)
+                  ElevatedButton.icon(
+                    onPressed: () => _launchVideo(context, id, videoUrl),
+                    icon: const Icon(Icons.play_circle_outline, size: 16),
+                    label: Text(isWatched ? 'Watch Again' : 'Watch Video'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF8E7AFE),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  )
+                else
+                  const Text(
+                    'No video available',
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 14,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

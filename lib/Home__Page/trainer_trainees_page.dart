@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'assign_workout_page.dart';
-// import 'view_plan_page.dart'; // You'll need to create this file
-// import 'edit_plan_page.dart'; // You'll need to create this file
+import 'trainee_workouts_page.dart';
 
 class TrainerTraineesPage extends StatelessWidget {
   const TrainerTraineesPage({super.key});
@@ -11,11 +10,13 @@ class TrainerTraineesPage extends StatelessWidget {
   Future<List<Map<String, dynamic>>> fetchTrainees() async {
     User? trainer = FirebaseAuth.instance.currentUser;
     if (trainer == null) return [];
+
     final querySnapshot = await FirebaseFirestore.instance
         .collection('users')
         .where('coachId', isEqualTo: trainer.uid)
         .where('role', isEqualTo: 'Trainee')
         .get();
+
     return querySnapshot.docs.map((doc) {
       final data = doc.data();
       data['uid'] = data['uid'] ?? doc.id;
@@ -65,42 +66,23 @@ class TrainerTraineesPage extends StatelessWidget {
                   );
                 },
               ),
-              // _buildOptionTile(
-              //   context,
-              //   icon: Icons.edit,
-              //   title: 'Edit Plan',
-              //   onTap: () {
-              //     Navigator.pop(context);
-              //     // Navigate to edit plan page
-              //     Navigator.push(
-              //       context,
-                    // MaterialPageRoute(
-                    //   builder: (context) => EditPlanPage(
-                    //     traineeId: traineeId,
-                    //     traineeName: name.isEmpty ? "Unnamed Trainee" : name,
-                    //   ),
-                    // ),
-              //     );
-              //   },
-              // ),
-              // _buildOptionTile(
-              //   context,
-              //   icon: Icons.visibility,
-              //   title: 'View Plan',
-              //   onTap: () {
-              //     Navigator.pop(context);
-              //     // Navigate to view plan page
-              //     Navigator.push(
-              //       context,
-              //       MaterialPageRoute(
-              //         builder: (context) => ViewPlanPage(
-              //           traineeId: traineeId,
-              //           traineeName: name.isEmpty ? "Unnamed Trainee" : name,
-              //         ),
-              //       ),
-              //     );
-              //   },
-              // ),
+              _buildOptionTile(
+                context,
+                icon: Icons.list,
+                title: 'Manage Workouts',
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => TraineeWorkoutsPage(
+                        traineeId: traineeId,
+                        traineeName: name.isEmpty ? "Unnamed Trainee" : name,
+                      ),
+                    ),
+                  );
+                },
+              ),
             ],
           ),
         );
@@ -215,15 +197,18 @@ class TrainerTraineesPage extends StatelessWidget {
                       final name =
                       "${trainee['firstName'] ?? ''} ${trainee['lastName'] ?? ''}"
                           .trim();
+
                       String initials = '';
                       if (trainee['firstName'] != null &&
                           (trainee['firstName'] as String).isNotEmpty) {
                         initials += (trainee['firstName'] as String)[0];
                       }
+
                       if (trainee['lastName'] != null &&
                           (trainee['lastName'] as String).isNotEmpty) {
                         initials += (trainee['lastName'] as String)[0];
                       }
+
                       initials = initials.toUpperCase();
                       if (initials.isEmpty) initials = "NA";
 
