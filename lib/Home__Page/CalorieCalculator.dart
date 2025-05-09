@@ -1,27 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 import '00_home_page.dart';
 import 'Store.dart';
+import 'profile.dart';
+import 'favorite_page.dart';
 
 class CalorieCalculator extends StatefulWidget {
   const CalorieCalculator({super.key});
 
   @override
-  State<CalorieCalculator> createState() => _CalorieCalculatorState();
+  State createState() => _CalorieCalculatorState();
 }
 
 class _CalorieCalculatorState extends State<CalorieCalculator> {
   final _weightController = TextEditingController(text: "95");
   final _heightController = TextEditingController(text: "166");
   final _ageController = TextEditingController(text: "21");
-
   String _gender = 'male';
   String _activityLevel = 'active';
-
   int proteins = 0, maxProteins = 0;
   int fats = 0, maxFats = 0;
   int carbs = 0, maxCarbs = 0;
   int calories = 0, maxCalories = 0;
-
   int _selectedIndex = 2;
 
   void _calculateCalories() {
@@ -29,8 +30,8 @@ class _CalorieCalculatorState extends State<CalorieCalculator> {
       final double weight = double.tryParse(_weightController.text) ?? 0;
       final double height = double.tryParse(_heightController.text) ?? 0;
       final int age = int.tryParse(_ageController.text) ?? 0;
-
       double bmr;
+
       if (_gender == 'male') {
         bmr = 10 * weight + 6.25 * height - 5 * age + 5;
       } else {
@@ -45,14 +46,12 @@ class _CalorieCalculatorState extends State<CalorieCalculator> {
         'extra active': 1.9,
       };
       final multiplier = activityMultipliers[_activityLevel] ?? 1.2;
-
       maxCalories = (bmr * multiplier).round();
       calories = 0; // Reset display
 
       maxProteins = ((maxCalories * 0.3) / 4).round();
       maxFats = ((maxCalories * 0.3) / 9).round();
       maxCarbs = ((maxCalories * 0.4) / 4).round();
-
       proteins = 0;
       fats = 0;
       carbs = 0;
@@ -113,7 +112,7 @@ class _CalorieCalculatorState extends State<CalorieCalculator> {
           ),
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
+            child: DropdownButton(
               value: _activityLevel,
               isExpanded: true,
               icon: const Icon(Icons.arrow_drop_down),
@@ -157,7 +156,7 @@ class _CalorieCalculatorState extends State<CalorieCalculator> {
           children: [
             Row(
               children: [
-                Radio<String>(
+                Radio(
                   value: 'male',
                   groupValue: _gender,
                   activeColor: Colors.grey,
@@ -174,7 +173,7 @@ class _CalorieCalculatorState extends State<CalorieCalculator> {
             const SizedBox(width: 12),
             Row(
               children: [
-                Radio<String>(
+                Radio(
                   value: 'female',
                   groupValue: _gender,
                   activeColor: Color(0xFFEFFF4B),
@@ -227,7 +226,7 @@ class _CalorieCalculatorState extends State<CalorieCalculator> {
                         style: TextStyle(
                             fontWeight: FontWeight.w500, fontSize: 13)),
                   ],
-                )
+                ),
               ],
             ),
           ),
@@ -254,7 +253,7 @@ class _CalorieCalculatorState extends State<CalorieCalculator> {
                         style: TextStyle(
                             fontWeight: FontWeight.w500, fontSize: 13)),
                   ],
-                )
+                ),
               ],
             ),
           ),
@@ -281,7 +280,7 @@ class _CalorieCalculatorState extends State<CalorieCalculator> {
                         style: TextStyle(
                             fontWeight: FontWeight.w500, fontSize: 13)),
                   ],
-                )
+                ),
               ],
             ),
           ),
@@ -361,6 +360,7 @@ class _CalorieCalculatorState extends State<CalorieCalculator> {
 
   void _onItemTapped(int index) {
     if (index == _selectedIndex) return;
+
     switch (index) {
       case 0: // Home
         Navigator.pushReplacement(
@@ -379,11 +379,11 @@ class _CalorieCalculatorState extends State<CalorieCalculator> {
           _selectedIndex = index;
         });
         break;
-      case 3: // Profile or Support
-      // TODO: Implement navigation for the fourth item if needed
-        setState(() {
-          _selectedIndex = index;
-        });
+      case 3: // Profile
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => ProfilePage(userId: FirebaseAuth.instance.currentUser?.uid ?? '')),
+        );
         break;
     }
   }
@@ -441,41 +441,56 @@ class _CalorieCalculatorState extends State<CalorieCalculator> {
           ),
         ),
       ),
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(20.0),
+        bottomNavigationBar: Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFFB3A0FF),
+            borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20)
+            ),
+            boxShadow: [
+              BoxShadow(
+                  color: Colors.black.withOpacity(0.3),
+                  blurRadius: 10,
+                  spreadRadius: 1
+              )
+            ],
+          ),
           child: BottomNavigationBar(
-            items: const <BottomNavigationBarItem>[
+            items: const [
               BottomNavigationBarItem(
-                icon: Icon(Icons.home),
+                icon: Icon(Icons.home_outlined),
+                activeIcon: Icon(Icons.home),
                 label: 'Home',
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.shopping_cart),
+                icon: Icon(Icons.shopping_bag_outlined),
+                activeIcon: Icon(Icons.shopping_bag),
                 label: 'Store',
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.star),
+                icon: Icon(Icons.calculate_outlined),
+                activeIcon: Icon(Icons.calculate),
                 label: 'Calculator',
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.person),
-                label: 'Profile',
+                icon: Icon(Icons.favorite_border),
+                activeIcon: Icon(Icons.favorite),
+                label: 'Favorites',
               ),
             ],
             currentIndex: _selectedIndex,
             onTap: _onItemTapped,
-            backgroundColor: const Color(0xFF8E7AFE),
+            backgroundColor: Colors.transparent,
             selectedItemColor: Colors.white,
-            unselectedItemColor: Colors.white70,
+            unselectedItemColor: Colors.white.withOpacity(0.6),
             showSelectedLabels: false,
             showUnselectedLabels: false,
             type: BottomNavigationBarType.fixed,
             elevation: 0,
           ),
-        ),
-      ),
+        )
+
     );
   }
 }

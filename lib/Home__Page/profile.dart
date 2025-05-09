@@ -13,7 +13,7 @@ import 'package:untitled/AI/chatbot.dart'; // Replace 'untitled' if needed.
 // Import Favorite Page - Make sure this path is correct
 import 'favorite_page.dart'; // Ensure 'FavoritePage' is defined.
 // Import TrainerRatingsPage
-import 'trainer_ratings_page.dart'; // Add this import for the trainer ratings page
+import '../rating/trainer_ratings_page.dart'; // Add this import for the trainer ratings page
 // Import TrainerTraineesPage
 import 'trainer_trainees_page.dart';
 

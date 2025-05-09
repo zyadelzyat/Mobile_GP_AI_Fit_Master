@@ -8,7 +8,7 @@ import 'Store.dart';
 import 'trainer_trainees_page.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:untitled/Home__Page/NutritionMainPage.dart';
-import 'AddRatingPage.dart';
+import 'package:untitled/rating/AddRatingPage.dart';
 
 // If you have the AssignedExercisesPage, import it here
 import 'assigned_exercises_page.dart';

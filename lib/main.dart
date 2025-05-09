@@ -11,7 +11,7 @@ import 'Set Up/06 WeightSelectionScreen.dart';
 import 'Set Up/03 GenderSelectionScreen.dart';
 import 'Home__Page/Store.dart';
 import 'Home__Page/00_home_page.dart';
-import 'package:untitled/Home__Page/AddRatingPage.dart';
+import 'package:untitled/rating/AddRatingPage.dart';
 import 'ui/onboarding_screen.dart';
 import 'Home__Page/Store.dart';
 void main() async {
