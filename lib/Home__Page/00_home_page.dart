@@ -9,13 +9,10 @@ import 'trainer_trainees_page.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:untitled/Home__Page/NutritionMainPage.dart';
 import 'package:untitled/rating/AddRatingPage.dart';
-
-// If you have the AssignedExercisesPage, import it here
 import 'assigned_exercises_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
-
   @override
   _HomePageState createState() => _HomePageState();
 }
@@ -24,6 +21,7 @@ class _HomePageState extends State<HomePage> {
   int _currentNavIndex = 0;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+
   Map _userData = {};
   bool _isLoadingUserData = true;
 
@@ -157,13 +155,17 @@ class _HomePageState extends State<HomePage> {
       DocumentSnapshot favoritesDoc =
       await _firestore.collection('favorites').doc(currentUser.uid).get();
       if (favoritesDoc.exists && mounted) {
-        Map favoritesData = favoritesDoc.data() as Map;
-        List favoriteWorkoutsTitlesDynamic = favoritesData['workouts'] ?? [];
-        List favoriteWorkoutsTitles = favoriteWorkoutsTitlesDynamic.cast<String>();
+        Map<String, dynamic> favoritesData =
+        favoritesDoc.data() as Map<String, dynamic>;
+        List<dynamic> favoriteWorkoutsTitlesDynamic =
+            favoritesData['workouts'] ?? [];
+        List<String> favoriteWorkoutsTitles =
+        favoriteWorkoutsTitlesDynamic.cast<String>();
         List<Map<String, dynamic>> updatedWorkouts = List.from(_workouts);
         for (int i = 0; i < updatedWorkouts.length; i++) {
           String workoutTitle = updatedWorkouts[i]['title'] as String;
-          updatedWorkouts[i]['isFavorite'] = favoriteWorkoutsTitles.contains(workoutTitle);
+          updatedWorkouts[i]['isFavorite'] =
+              favoriteWorkoutsTitles.contains(workoutTitle);
         }
         setState(() {
           _workouts = updatedWorkouts;
@@ -208,7 +210,6 @@ class _HomePageState extends State<HomePage> {
             MaterialPageRoute(builder: (context) => const AssignedExercisesPage()),
           );
         } else {
-          // You can keep your default logic for other roles here
           print("Workout category tapped (no specific route assigned)");
         }
         break;
@@ -441,7 +442,6 @@ class _HomePageState extends State<HomePage> {
   Widget _buildHealthAndFitCard(Map item) {
     final imageUrl = item['image'] as String? ?? 'assets/placeholder.png';
     final title = item['title'] as String? ?? 'Health & Fit Item';
-
     return Container(
       width: MediaQuery.of(context).size.width * 0.44,
       margin: const EdgeInsets.only(right: 12),
@@ -572,8 +572,8 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     String userName = _isLoadingUserData ? 'User' : (_userData['firstName'] as String? ?? 'User');
-    Widget mainContent;
 
+    Widget mainContent;
     if (_isLoadingUserData) {
       mainContent = const Center(child: CircularProgressIndicator(color: Color(0xFF8E7AFE)));
     } else if (_currentNavIndex == 0) {
@@ -713,6 +713,8 @@ class _HomePageState extends State<HomePage> {
       mainContent = Center(child: Text("Store Tab (handled by navigation)", style: TextStyle(color: Colors.white)));
     } else if (_currentNavIndex == 2) {
       mainContent = const ChatPage();
+    } else if (_currentNavIndex == 3) {
+      mainContent = ProfilePage(userId: FirebaseAuth.instance.currentUser?.uid ?? '');
     } else {
       mainContent = const Center(child: Text("Invalid Tab Index", style: TextStyle(color: Colors.white)));
     }
@@ -724,7 +726,13 @@ class _HomePageState extends State<HomePage> {
         decoration: BoxDecoration(
           color: const Color(0xFF2A2A2A),
           borderRadius: const BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20)),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 10, spreadRadius: 1)],
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 10,
+              spreadRadius: 1,
+            ),
+          ],
         ),
         child: BottomNavigationBar(
           currentIndex: _currentNavIndex,
@@ -744,9 +752,26 @@ class _HomePageState extends State<HomePage> {
           showUnselectedLabels: false,
           elevation: 0,
           items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home), label: 'Home'),
-            BottomNavigationBarItem(icon: Icon(Icons.shopping_bag_outlined), activeIcon: Icon(Icons.shopping_bag), label: 'Store'),
-            BottomNavigationBarItem(icon: Icon(Icons.chat_bubble_outline), activeIcon: Icon(Icons.chat_bubble), label: 'Chat'),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home_outlined),
+              activeIcon: Icon(Icons.home),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.shopping_bag_outlined),
+              activeIcon: Icon(Icons.shopping_bag),
+              label: 'Store',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.chat_bubble_outline),
+              activeIcon: Icon(Icons.chat_bubble),
+              label: 'Chat',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person_outline),
+              activeIcon: Icon(Icons.person),
+              label: 'Profile',
+            ),
           ],
         ),
       ),
