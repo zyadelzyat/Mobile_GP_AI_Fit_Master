@@ -1,24 +1,18 @@
-// [File: profile.dart]
-
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:intl/intl.dart'; // For date formatting
-// Import your login screen (ensure the path is correct)
-import 'package:untitled/Login___Signup/01_signin_screen.dart'; // Replace 'untitled' with your project name
-// Import the detailed profile page
-import 'detailed_profile_page.dart'; // Make sure this path is correct
-// Import for Chatbot - Check path and project name 'untitled'
-import 'package:untitled/AI/chatbot.dart'; // Replace 'untitled' if needed.
-// Import Favorite Page - Make sure this path is correct
-import 'favorite_page.dart'; // Ensure 'FavoritePage' is defined.
-// Import TrainerRatingsPage
-import '../rating/trainer_ratings_page.dart'; // Add this import for the trainer ratings page
-// Import TrainerTraineesPage
+import 'package:intl/intl.dart';
+import 'package:untitled/Login___Signup/01_signin_screen.dart';
+import 'detailed_profile_page.dart';
+import 'package:untitled/AI/chatbot.dart';
+import 'favorite_page.dart';
+import '../rating/trainer_ratings_page.dart';
 import 'trainer_trainees_page.dart';
+import '../Home__Page/00_home_page.dart';
 
 class ProfilePage extends StatefulWidget {
   final String userId;
+
   const ProfilePage({required this.userId, super.key});
 
   @override
@@ -27,12 +21,13 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance; // Added FirebaseAuth instance
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
   bool _isLoading = true;
   Map userData = {};
   String? errorMessage;
 
-  // Define membership plans (name, price, typeKey for Firestore)
+  // Membership plans
   final List<Map<String, dynamic>> _membershipPlans = [
     {'name': 'Basic Plan', 'price': 20.0, 'typeKey': 'basic'},
     {'name': 'Standard Plan', 'price': 30.0, 'typeKey': 'standard'},
@@ -58,7 +53,6 @@ class _ProfilePageState extends State<ProfilePage> {
         if (!mounted) return;
         setState(() {
           userData = userDoc.data() as Map;
-          // Add userId to the map to pass it easily
           userData['userId'] = widget.userId;
           _isLoading = false;
         });
@@ -79,7 +73,8 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   String _calculateAge() {
-    if (userData['dob'] == null || (userData['dob'] is String && (userData['dob'] as String).isEmpty)) return "N/A";
+    if (userData['dob'] == null ||
+        (userData['dob'] is String && (userData['dob'] as String).isEmpty)) return "N/A";
     DateTime? birthDate;
     if (userData['dob'] is Timestamp) {
       birthDate = (userData['dob'] as Timestamp).toDate();
@@ -91,7 +86,9 @@ class _ProfilePageState extends State<ProfilePage> {
         if (parts.length == 3) {
           try {
             birthDate = DateTime(int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
-          } catch (_) { return "N/A"; }
+          } catch (_) {
+            return "N/A";
+          }
         } else {
           return "N/A";
         }
@@ -99,7 +96,6 @@ class _ProfilePageState extends State<ProfilePage> {
     } else {
       return "N/A";
     }
-
     if (birthDate == null) return "N/A";
     DateTime today = DateTime.now();
     int age = today.year - birthDate.year;
@@ -107,12 +103,12 @@ class _ProfilePageState extends State<ProfilePage> {
         (today.month == birthDate.month && today.day < birthDate.day)) {
       age--;
     }
-
     return "$age";
   }
 
   String _formatBirthday() {
-    if (userData['dob'] == null || (userData['dob'] is String && (userData['dob'] as String).isEmpty)) return "N/A";
+    if (userData['dob'] == null ||
+        (userData['dob'] is String && (userData['dob'] as String).isEmpty)) return "N/A";
     DateTime? birthDate;
     if (userData['dob'] is Timestamp) {
       birthDate = (userData['dob'] as Timestamp).toDate();
@@ -124,7 +120,9 @@ class _ProfilePageState extends State<ProfilePage> {
         if (parts.length == 3) {
           try {
             birthDate = DateTime(int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
-          } catch (_) { return "N/A"; }
+          } catch (_) {
+            return "N/A";
+          }
         } else {
           return "N/A";
         }
@@ -132,7 +130,6 @@ class _ProfilePageState extends State<ProfilePage> {
     } else {
       return "N/A";
     }
-
     if (birthDate == null) return "N/A";
     String day = DateFormat('d').format(birthDate);
     String suffix = 'th';
@@ -149,8 +146,7 @@ class _ProfilePageState extends State<ProfilePage> {
       builder: (BuildContext context) {
         return Dialog(
           backgroundColor: const Color(0xFFB29BFF),
-          shape:
-          RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.0)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.0)),
           child: Padding(
             padding: const EdgeInsets.all(24.0),
             child: Column(
@@ -175,8 +171,7 @@ class _ProfilePageState extends State<ProfilePage> {
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(30)),
                             padding: const EdgeInsets.symmetric(vertical: 12)),
-                        child:
-                        const Text('Cancel', style: TextStyle(fontSize: 16)),
+                        child: const Text('Cancel', style: TextStyle(fontSize: 16)),
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -199,9 +194,10 @@ class _ProfilePageState extends State<ProfilePage> {
                             if (mounted) Navigator.of(context).pop(); // Pop loading indicator
                             if (mounted) {
                               Navigator.of(context).pushAndRemoveUntil(
-                                  MaterialPageRoute(
-                                      builder: (context) => const SignInScreen()),
-                                      (route) => false);
+                                MaterialPageRoute(
+                                    builder: (context) => const SignInScreen()),
+                                    (route) => false,
+                              );
                             }
                           } catch (e) {
                             if (mounted) Navigator.of(context).pop(); // Pop loading indicator
@@ -238,12 +234,9 @@ class _ProfilePageState extends State<ProfilePage> {
       children: [
         Text(value,
             style: const TextStyle(
-                color: Colors.white,
-                fontSize: 15,
-                fontWeight: FontWeight.bold)),
+                color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
         const SizedBox(height: 2),
-        Text(label,
-            style: const TextStyle(color: Colors.white70, fontSize: 11)),
+        Text(label, style: const TextStyle(color: Colors.white70, fontSize: 11)),
       ],
     );
   }
@@ -302,26 +295,26 @@ class _ProfilePageState extends State<ProfilePage> {
         ],
       );
     }
-
-    return const SizedBox.shrink(); // Return empty widget if not a trainer
+    return const SizedBox.shrink();
   }
 
   void _showMembershipDialog() {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        String? selectedPlanKey; // To hold the key of the selected plan
+        String? selectedPlanKey;
         Map? selectedPlanDetails;
-        return StatefulBuilder( // Use StatefulBuilder for dialog state
+        return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              backgroundColor: const Color(0xFF2A2A2A), // Dark background
+              backgroundColor: const Color(0xFF2A2A2A),
               title: Text('Select Membership Plan', style: TextStyle(color: Color(0xFFB29BFF))),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: _membershipPlans.map((plan) {
                   return RadioListTile(
-                    title: Text('${plan['name']} - \$${plan['price'].toStringAsFixed(2)}', style: TextStyle(color: Colors.white)),
+                    title: Text('${plan['name']} - \$${plan['price'].toStringAsFixed(2)}',
+                        style: TextStyle(color: Colors.white)),
                     value: plan['typeKey'] as String,
                     groupValue: selectedPlanKey,
                     onChanged: (String? value) {
@@ -346,7 +339,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   style: ElevatedButton.styleFrom(backgroundColor: Color(0xFFB29BFF)),
                   child: Text('Next', style: TextStyle(color: Colors.white)),
                   onPressed: selectedPlanKey == null ? null : () {
-                    Navigator.of(context).pop(); // Close plan selection dialog
+                    Navigator.of(context).pop();
                     _showPaymentMethodDialog(selectedPlanDetails!);
                   },
                 ),
@@ -372,7 +365,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 leading: Icon(Icons.money, color: Color(0xFFB29BFF)),
                 title: Text('Pay with Cash', style: TextStyle(color: Colors.white)),
                 onTap: () {
-                  Navigator.of(context).pop(); // Close payment method dialog
+                  Navigator.of(context).pop();
                   _handleCashPayment(planDetails);
                 },
               ),
@@ -380,7 +373,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 leading: Icon(Icons.credit_card, color: Color(0xFFB29BFF)),
                 title: Text('Pay with Visa', style: TextStyle(color: Colors.white)),
                 onTap: () {
-                  Navigator.of(context).pop(); // Close payment method dialog
+                  Navigator.of(context).pop();
                   _handleVisaPayment(planDetails);
                 },
               ),
@@ -406,19 +399,18 @@ class _ProfilePageState extends State<ProfilePage> {
           const SnackBar(content: Text('You need to be logged in.')));
       return;
     }
-
     try {
       await _firestore.collection('users').doc(currentUser.uid).update({
         'membershipType': planDetails['typeKey'],
         'membershipPrice': planDetails['price'],
         'membershipPaymentType': 'cash',
-        'membershipStatus': 'pending_approval', // Admin needs to approve
+        'membershipStatus': 'pending_approval',
         'updatedAt': FieldValue.serverTimestamp(),
       });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Cash payment request submitted. Admin will review.')),
       );
-      _fetchUserData(); // Refresh user data
+      _fetchUserData();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to process cash payment: $e')),
@@ -433,22 +425,12 @@ class _ProfilePageState extends State<ProfilePage> {
           const SnackBar(content: Text('You need to be logged in.')));
       return;
     }
-
     // Placeholder for Visa payment integration
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Initiating Visa payment for ${planDetails['name']}. Integration with a payment gateway is required here.')),
     );
     print("Visa payment for ${planDetails['typeKey']} selected. Implement payment gateway.");
-    // After successful payment via a gateway, you would update Firestore:
-    // await _firestore.collection('users').doc(currentUser.uid).update({
-    // 'membershipType': planDetails['typeKey'],
-    // 'membershipPrice': planDetails['price'],
-    // 'membershipPaymentType': 'visa',
-    // 'membershipStatus': 'active',
-    // 'paymentIntentId': 'your_payment_intent_id_from_gateway', // Optional
-    // 'updatedAt': FieldValue.serverTimestamp(),
-    // });
-    // _fetchUserData(); // Refresh user data
+    // After successful payment via a gateway, you would update Firestore...
   }
 
   @override
@@ -457,15 +439,21 @@ class _ProfilePageState extends State<ProfilePage> {
       return Scaffold(
         backgroundColor: const Color(0xFF1E1E1E),
         appBar: AppBar(
-            backgroundColor: const Color(0xFFB29BFF),
-            elevation: 0,
-            title: const Text("My Profile",
-                style: TextStyle(
-                    color: Colors.white, fontWeight: FontWeight.w500)),
-            leading: IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.white),
-                onPressed: () => Navigator.of(context).pop()),
-            centerTitle: true),
+          backgroundColor: const Color(0xFFB29BFF),
+          elevation: 0,
+          title: const Text("My Profile",
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () {
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (context) => const HomePage()),
+                    (route) => false,
+              );
+            },
+          ),
+          centerTitle: true,
+        ),
         body: const Center(
             child: CircularProgressIndicator(
                 valueColor: AlwaysStoppedAnimation(Color(0xFF9D7BFF)))),
@@ -476,15 +464,21 @@ class _ProfilePageState extends State<ProfilePage> {
       return Scaffold(
         backgroundColor: const Color(0xFF1E1E1E),
         appBar: AppBar(
-            backgroundColor: const Color(0xFFB29BFF),
-            elevation: 0,
-            title: const Text("My Profile",
-                style: TextStyle(
-                    color: Colors.white, fontWeight: FontWeight.w500)),
-            leading: IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.white),
-                onPressed: () => Navigator.of(context).pop()),
-            centerTitle: true),
+          backgroundColor: const Color(0xFFB29BFF),
+          elevation: 0,
+          title: const Text("My Profile",
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () {
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (context) => const HomePage()),
+                    (route) => false,
+              );
+            },
+          ),
+          centerTitle: true,
+        ),
         body: Center(
             child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -501,13 +495,12 @@ class _ProfilePageState extends State<ProfilePage> {
         : "${userData['height'] ?? 'N/A'} ${userData['heightUnit'] ?? 'M'}";
     String ageDisplay = _calculateAge();
     String birthdayDisplay = _formatBirthday();
-    // *** MODIFICATION START ***
+
     String userRole = userData['role'] as String? ?? '';
     String membershipStatus = userData['membershipStatus'] as String? ?? 'none';
     String membershipTitle = (membershipStatus == 'active' || membershipStatus == 'pending_approval')
         ? 'Manage Membership'
         : 'Join Membership';
-    // *** MODIFICATION END ***
 
     return Scaffold(
       backgroundColor: const Color(0xFF1E1E1E),
@@ -515,11 +508,16 @@ class _ProfilePageState extends State<ProfilePage> {
         backgroundColor: const Color(0xFFB29BFF),
         elevation: 0,
         title: const Text("My Profile",
-            style:
-            TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
         leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
-            onPressed: () => Navigator.of(context).pop()),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () {
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (context) => const HomePage()),
+                  (route) => false,
+            );
+          },
+        ),
         centerTitle: true,
       ),
       body: Column(
@@ -532,13 +530,13 @@ class _ProfilePageState extends State<ProfilePage> {
               children: [
                 const SizedBox(height: 10),
                 CircleAvatar(
-                    radius: 45,
-                    backgroundImage: userData['profileImageUrl'] != null &&
-                        (userData['profileImageUrl'] as String).isNotEmpty
-                        ? NetworkImage(userData['profileImageUrl'] as String)
-                        : const AssetImage('assets/profile.png')
-                    as ImageProvider,
-                    backgroundColor: Colors.grey[300]),
+                  radius: 45,
+                  backgroundImage: userData['profileImageUrl'] != null &&
+                      (userData['profileImageUrl'] as String).isNotEmpty
+                      ? NetworkImage(userData['profileImageUrl'] as String)
+                      : const AssetImage('assets/profile.png') as ImageProvider,
+                  backgroundColor: Colors.grey[300],
+                ),
                 const SizedBox(height: 12),
                 Text(
                     userData['firstName'] != null
@@ -550,16 +548,13 @@ class _ProfilePageState extends State<ProfilePage> {
                         color: Colors.white)),
                 const SizedBox(height: 4),
                 Text(userData['email'] ?? 'user@example.com',
-                    style:
-                    const TextStyle(color: Colors.white70, fontSize: 12)),
+                    style: const TextStyle(color: Colors.white70, fontSize: 12)),
                 const SizedBox(height: 4),
                 Text('Birthday: $birthdayDisplay',
-                    style:
-                    const TextStyle(color: Colors.white70, fontSize: 12)),
+                    style: const TextStyle(color: Colors.white70, fontSize: 12)),
                 const SizedBox(height: 4),
                 Text('Membership: ${userData['membershipType'] ?? 'None'} (${userData['membershipStatus'] ?? 'N/A'})',
-                    style:
-                    const TextStyle(color: Colors.white70, fontSize: 12)),
+                    style: const TextStyle(color: Colors.white70, fontSize: 12)),
                 const SizedBox(height: 20),
                 Container(
                   margin: const EdgeInsets.symmetric(horizontal: 20),
@@ -597,14 +592,12 @@ class _ProfilePageState extends State<ProfilePage> {
                     );
                   },
                 ),
-                // *** MODIFICATION START ***
-                if (userRole != 'Trainer') // Conditionally show membership item
+                if (userRole != 'Trainer')
                   _buildProfileMenuItem(
                     icon: Icons.card_membership,
-                    title: membershipTitle, // Dynamic title
+                    title: membershipTitle,
                     onTap: _showMembershipDialog,
                   ),
-                // *** MODIFICATION END ***
                 _buildRoleSpecificMenuItems(),
                 _buildProfileMenuItem(
                   icon: Icons.star_outline,
@@ -615,16 +608,15 @@ class _ProfilePageState extends State<ProfilePage> {
                         context,
                         MaterialPageRoute(
                             builder: (context) =>
-                                FavoritesPage(favoriteRecipes: [])), // Ensure FavoritesPage is correctly defined
+                                FavoritesPage(favoriteRecipes: [])),
                       );
                     } catch (e) {
                       print("Error navigating to Favorites: $e");
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text(
-                                "Could not open Favorites. Check class name."),
-                            backgroundColor: Colors.red),
-                      );
+                          const SnackBar(
+                              content: Text(
+                                  "Could not open Favorites. Check class name."),
+                              backgroundColor: Colors.red));
                     }
                   },
                 ),
@@ -633,14 +625,14 @@ class _ProfilePageState extends State<ProfilePage> {
                   title: 'My Plan',
                   onTap: () {
                     print("Navigate to My Plan");
-                  }, // Placeholder
+                  },
                 ),
                 _buildProfileMenuItem(
                   icon: Icons.settings_outlined,
                   title: 'Settings',
                   onTap: () {
                     print("Navigate to Settings");
-                  }, // Placeholder
+                  },
                 ),
                 _buildProfileMenuItem(
                   icon: Icons.support_agent_outlined,
@@ -650,17 +642,15 @@ class _ProfilePageState extends State<ProfilePage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const ChatPage(), // Ensure ChatPage is correctly defined
-                        ),
+                            builder: (context) => const ChatPage()),
                       );
                     } catch (e) {
                       print("Error navigating to Chatbot: $e");
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text(
-                                "Could not open Chatbot. Check class name."),
-                            backgroundColor: Colors.red),
-                      );
+                          const SnackBar(
+                              content: Text(
+                                  "Could not open Chatbot. Check class name."),
+                              backgroundColor: Colors.red));
                     }
                   },
                 ),
