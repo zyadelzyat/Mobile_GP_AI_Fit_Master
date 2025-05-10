@@ -7,9 +7,10 @@ import 'CalorieCalculator.dart';
 import 'Store.dart';
 import 'trainer_trainees_page.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:untitled/Home__Page/NutritionMainPage.dart';
 import 'package:untitled/rating/AddRatingPage.dart';
 import 'assigned_exercises_page.dart';
+import 'package:untitled/meal/trainee_meal_plans_page.dart';
+import 'package:untitled/Home__Page/NutritionMainPage.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -50,8 +51,10 @@ class _HomePageState extends State<HomePage> {
 
   List<Map<String, dynamic>> get _filteredCategories {
     List<Map<String, dynamic>> categories = List.from(_baseCategories);
+
     if (_userData.containsKey('role')) {
       final String userRole = _userData['role'] as String? ?? '';
+
       if (userRole == 'Self-Trainee') {
         categories.removeWhere((category) => category['label'] == 'Nutrition');
         categories = categories.map((category) {
@@ -64,13 +67,11 @@ class _HomePageState extends State<HomePage> {
           }
           return category;
         }).toList();
-      } else {
-        categories.removeWhere((category) => category['label'] == 'Nutrition');
       }
     }
+
     return categories;
   }
-
   List<Map<String, dynamic>> _workouts = [
     {
       'title': '3 Tips For Beginners',
@@ -202,6 +203,7 @@ class _HomePageState extends State<HomePage> {
 
   void _navigateToFeature(String? routeName) {
     if (routeName == null || !mounted) return;
+
     switch (routeName) {
       case 'Workout':
         if (_userData['role'] == 'Trainee') {
@@ -214,7 +216,14 @@ class _HomePageState extends State<HomePage> {
         }
         break;
       case 'Nutrition':
-        Navigator.push(context, MaterialPageRoute(builder: (context) => NutritionPage()));
+        if (_userData['role'] == 'Trainee') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const TraineeMealPlansPage()),
+          );
+        } else {
+          Navigator.push(context, MaterialPageRoute(builder: (context) => NutritionPage()));
+        }
         break;
       case 'ChatBot':
         Navigator.push(context, MaterialPageRoute(builder: (context) => const ChatPage()));

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:untitled/Home__Page/NutritionMainPage.dart';
 
 class FavoritesPage extends StatelessWidget {
   final List<Map<String, String>> favoriteRecipes;

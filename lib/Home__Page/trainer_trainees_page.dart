@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'assign_workout_page.dart';
 import 'trainee_workouts_page.dart';
+import 'package:untitled/meal/view_meal_plans_page.dart';
 
 class TrainerTraineesPage extends StatelessWidget {
   const TrainerTraineesPage({super.key});
@@ -76,6 +77,23 @@ class TrainerTraineesPage extends StatelessWidget {
                     context,
                     MaterialPageRoute(
                       builder: (context) => TraineeWorkoutsPage(
+                        traineeId: traineeId,
+                        traineeName: name.isEmpty ? "Unnamed Trainee" : name,
+                      ),
+                    ),
+                  );
+                },
+              ),
+              _buildOptionTile(
+                context,
+                icon: Icons.restaurant_menu,
+                title: 'Meal Plans',
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ViewMealPlansPage(
                         traineeId: traineeId,
                         traineeName: name.isEmpty ? "Unnamed Trainee" : name,
                       ),
@@ -197,18 +215,15 @@ class TrainerTraineesPage extends StatelessWidget {
                       final name =
                       "${trainee['firstName'] ?? ''} ${trainee['lastName'] ?? ''}"
                           .trim();
-
                       String initials = '';
                       if (trainee['firstName'] != null &&
                           (trainee['firstName'] as String).isNotEmpty) {
                         initials += (trainee['firstName'] as String)[0];
                       }
-
                       if (trainee['lastName'] != null &&
                           (trainee['lastName'] as String).isNotEmpty) {
                         initials += (trainee['lastName'] as String)[0];
                       }
-
                       initials = initials.toUpperCase();
                       if (initials.isEmpty) initials = "NA";
 

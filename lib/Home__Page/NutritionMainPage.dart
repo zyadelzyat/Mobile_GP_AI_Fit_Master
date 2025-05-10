@@ -1,22 +1,96 @@
 import 'package:flutter/material.dart';
 import 'package:untitled/Home__Page/00_home_page.dart';
-import 'package:untitled/Meal_Plan/MealPlansPage.dart';
 import 'package:untitled/Home__Page/favorite_page.dart';
-import 'package:untitled/Home__Page/00_home_page.dart';
-import 'package:untitled/Home__Page/favorite_page.dart';
-import 'package:untitled/Meal_Plan/MealPlansPage.dart';
-import 'package:untitled/Meal_Plan/Mealpreferences.dart'; // عدل الاسم حسب اسم الملف لو مختلف
-import 'package:untitled/Meal_Plan/MealIdeaPage.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:untitled/Home__Page/NutritionMainPage.dart';
 
+import '../meal/trainee_meal_plans_page.dart';
 
-class NutritionPage extends StatelessWidget {
+class NutritionPage extends StatefulWidget {
+  @override
+  _NutritionPageState createState() => _NutritionPageState();
+}
+
+class _NutritionPageState extends State<NutritionPage> {
   final Color background = Color(0xFF1D1A33);
   final Color primary = Color(0xFFB28DFF);
   final Color yellow = Color(0xFFE5FF70);
   final Color darkCard = Color(0xFF2B2B40);
 
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  bool _isLoading = true;
+  Map<String, dynamic> _userData = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      User? currentUser = _auth.currentUser;
+      if (currentUser != null) {
+        DocumentSnapshot userDoc = await _firestore
+            .collection('users')
+            .doc(currentUser.uid)
+            .get();
+
+        if (userDoc.exists) {
+          setState(() {
+            _userData = userDoc.data() as Map<String, dynamic>;
+          });
+
+          // If user is a trainee, redirect to trainee meal plans page
+          if (_userData['role'] == 'Trainee') {
+            Future.microtask(() {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => TraineeMealPlansPage()),
+              );
+            });
+          }
+        }
+      }
+    } catch (e) {
+      print('Error loading user data: $e');
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: background,
+        body: Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(primary),
+          ),
+        ),
+      );
+    }
+
+    // If user is a trainee, we'll redirect in initState, but return a loading screen here
+    if (_userData['role'] == 'Trainee') {
+      Future.microtask(() {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => TraineeMealPlansPage()),
+        );
+      });
+    }
+
     return Scaffold(
       backgroundColor: background,
       appBar: AppBar(
@@ -91,7 +165,7 @@ class NutritionPage extends StatelessWidget {
                           borderRadius: BorderRadius.circular(25),
                         ),
                         alignment: Alignment.center,
-                        child: Text('Meal Plans',
+                        child: Text('Meal Ideas',
                             style: TextStyle(
                                 color: Colors.black, fontWeight: FontWeight.bold)),
                       ),
@@ -219,7 +293,7 @@ class NutritionPage extends StatelessWidget {
           } else if (index == 1) {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => FavoritesPage(favoriteRecipes: [],)),
+              MaterialPageRoute(builder: (context) => FavoritesPage(favoriteRecipes: [])),
             );
           }
         },
@@ -284,6 +358,39 @@ class NutritionPage extends StatelessWidget {
             TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         subtitle: Text(subtitle, style: TextStyle(color: Colors.white70)),
         trailing: Icon(Icons.star_border, color: Colors.white),
+      ),
+    );
+  }
+}
+
+// Placeholder classes for the imports that are commented out
+class MealPlansPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Color(0xFF1D1A33),
+      appBar: AppBar(
+        title: Text('Meal Plans'),
+        backgroundColor: Color(0xFFB28DFF),
+      ),
+      body: Center(
+        child: Text('Meal Plans Page', style: TextStyle(color: Colors.white)),
+      ),
+    );
+  }
+}
+
+class MealIdeaPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Color(0xFF1D1A33),
+      appBar: AppBar(
+        title: Text('Meal Ideas'),
+        backgroundColor: Color(0xFFB28DFF),
+      ),
+      body: Center(
+        child: Text('Meal Ideas Page', style: TextStyle(color: Colors.white)),
       ),
     );
   }
