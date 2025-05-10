@@ -139,12 +139,7 @@ class _TraineeMealPlansPageState extends State<TraineeMealPlansPage> {
                     // Duration & Calories
                     Row(
                       children: [
-                        const Icon(Icons.timer_outlined, color: Colors.grey, size: 16),
                         const SizedBox(width: 4),
-                        Text(
-                          duration.isNotEmpty ? duration : 'Time N/A',
-                          style: const TextStyle(color: Colors.grey, fontSize: 13),
-                        ),
                         const SizedBox(width: 12),
                         const Icon(Icons.local_fire_department_outlined,
                             color: Colors.orangeAccent, size: 16),
