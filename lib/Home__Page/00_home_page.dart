@@ -51,25 +51,26 @@ class _HomePageState extends State<HomePage> {
 
   List<Map<String, dynamic>> get _filteredCategories {
     List<Map<String, dynamic>> categories = List.from(_baseCategories);
-
     if (_userData.containsKey('role')) {
       final String userRole = _userData['role'] as String? ?? '';
-
-      if (userRole == 'Self-Trainee') {
+      if (userRole == 'Self-Trainee' || userRole == 'Trainer') {
         categories.removeWhere((category) => category['label'] == 'Nutrition');
-        categories = categories.map((category) {
-          if (category['label'] == 'Workout') {
-            return {
-              'iconAsset': 'assets/icons/youtube.png',
-              'label': 'YT_Workout',
-              'route': 'YT_Channel',
-            };
-          }
-          return category;
-        }).toList();
+        // ...rest of your logic for Self-Trainee (e.g. YT_Workout)
+        if (userRole == 'Self-Trainee') {
+          categories = categories.map((category) {
+            if (category['label'] == 'Workout') {
+              return {
+                'iconAsset': 'assets/icons/youtube.png',
+                'label': 'YT_Workout',
+                'route': 'YT_Channel',
+              };
+            }
+            return category;
+          }).toList();
+        }
       }
+      // For Trainee, do not remove Nutrition
     }
-
     return categories;
   }
   List<Map<String, dynamic>> _workouts = [

@@ -3,8 +3,6 @@ import 'package:untitled/Home__Page/00_home_page.dart';
 import 'package:untitled/Home__Page/favorite_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:untitled/Home__Page/NutritionMainPage.dart';
-
 import '../meal/trainee_meal_plans_page.dart';
 
 class NutritionPage extends StatefulWidget {
@@ -22,7 +20,8 @@ class _NutritionPageState extends State<NutritionPage> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   bool _isLoading = true;
-  Map<String, dynamic> _userData = {};
+  Map _userData = {};
+  int _currentNavIndex = 2; // Nutrition tab
 
   @override
   void initState() {
@@ -30,11 +29,10 @@ class _NutritionPageState extends State<NutritionPage> {
     _loadUserData();
   }
 
-  Future<void> _loadUserData() async {
+  Future _loadUserData() async {
     setState(() {
       _isLoading = true;
     });
-
     try {
       User? currentUser = _auth.currentUser;
       if (currentUser != null) {
@@ -42,21 +40,10 @@ class _NutritionPageState extends State<NutritionPage> {
             .collection('users')
             .doc(currentUser.uid)
             .get();
-
         if (userDoc.exists) {
           setState(() {
-            _userData = userDoc.data() as Map<String, dynamic>;
+            _userData = userDoc.data() as Map;
           });
-
-          // If user is a trainee, redirect to trainee meal plans page
-          if (_userData['role'] == 'Trainee') {
-            Future.microtask(() {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => TraineeMealPlansPage()),
-              );
-            });
-          }
         }
       }
     } catch (e) {
@@ -68,6 +55,32 @@ class _NutritionPageState extends State<NutritionPage> {
     }
   }
 
+  void _onNavBarTap(int index) {
+    if (!mounted) return;
+    if (index == _currentNavIndex) return;
+    setState(() {
+      _currentNavIndex = index;
+    });
+    switch (index) {
+      case 0:
+        Navigator.pushReplacement(
+            context, MaterialPageRoute(builder: (context) => HomePage()));
+        break;
+      case 1:
+        Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+                builder: (context) =>
+                    FavoritesPage(favoriteRecipes: [])));
+        break;
+      case 2:
+      // Already on Nutrition
+        break;
+      default:
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -75,21 +88,14 @@ class _NutritionPageState extends State<NutritionPage> {
         backgroundColor: background,
         body: Center(
           child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(primary),
+            valueColor: AlwaysStoppedAnimation(primary),
           ),
         ),
       );
     }
 
-    // If user is a trainee, we'll redirect in initState, but return a loading screen here
-    if (_userData['role'] == 'Trainee') {
-      Future.microtask(() {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => TraineeMealPlansPage()),
-        );
-      });
-    }
+    // Only Trainee sees bottom nav bar
+    final bool isTrainee = _userData['role'] == 'Trainee';
 
     return Scaffold(
       backgroundColor: background,
@@ -174,9 +180,7 @@ class _NutritionPageState extends State<NutritionPage> {
                 ],
               ),
             ),
-
             SizedBox(height: 16),
-
             // Recipe of the Day
             Center(
               child: Container(
@@ -199,8 +203,7 @@ class _NutritionPageState extends State<NutritionPage> {
                         top: 12,
                         right: 12,
                         child: Container(
-                          padding:
-                          EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
                             color: yellow,
                             borderRadius: BorderRadius.circular(12),
@@ -238,15 +241,13 @@ class _NutritionPageState extends State<NutritionPage> {
                             ),
                           ],
                         ),
-                      )
+                      ),
                     ],
                   ),
                 ),
               ),
             ),
-
             SizedBox(height: 24),
-
             // Recommended section
             Text('Recommended',
                 style: TextStyle(
@@ -261,9 +262,7 @@ class _NutritionPageState extends State<NutritionPage> {
                     'assets/images/quinoa_salad.png'),
               ],
             ),
-
             SizedBox(height: 24),
-
             // Recipes For You section
             Text('Recipes For You',
                 style: TextStyle(
@@ -277,32 +276,48 @@ class _NutritionPageState extends State<NutritionPage> {
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: background,
-        selectedItemColor: primary,
-        unselectedItemColor: Colors.white,
-        showSelectedLabels: false,
-        showUnselectedLabels: false,
-        currentIndex: 2,
-        onTap: (index) {
-          if (index == 0) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => HomePage()),
-            );
-          } else if (index == 1) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => FavoritesPage(favoriteRecipes: [])),
-            );
-          }
-        },
-        items: [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.star), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.restaurant_menu), label: ''),
-        ],
-      ),
+      bottomNavigationBar: isTrainee
+          ? Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFF2A2A2A),
+          borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(20), topRight: Radius.circular(20)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 10,
+              spreadRadius: 1,
+            ),
+          ],
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _currentNavIndex,
+          onTap: _onNavBarTap,
+          backgroundColor: Colors.transparent,
+          selectedItemColor: const Color(0xFF8E7AFE),
+          unselectedItemColor: Colors.grey[600],
+          type: BottomNavigationBarType.fixed,
+          showSelectedLabels: false,
+          showUnselectedLabels: false,
+          elevation: 0,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home_outlined),
+              activeIcon: Icon(Icons.home),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.star),
+              label: 'Favorites',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.restaurant_menu),
+              label: 'Nutrition',
+            ),
+          ],
+        ),
+      )
+          : null,
     );
   }
 
@@ -350,8 +365,7 @@ class _NutritionPageState extends State<NutritionPage> {
       child: ListTile(
         leading: ClipRRect(
           borderRadius: BorderRadius.circular(12),
-          child:
-          Image.asset(imagePath, width: 60, height: 60, fit: BoxFit.cover),
+          child: Image.asset(imagePath, width: 60, height: 60, fit: BoxFit.cover),
         ),
         title: Text(title,
             style:
