@@ -11,6 +11,7 @@ import 'package:untitled/rating/AddRatingPage.dart';
 import 'assigned_exercises_page.dart';
 import 'package:untitled/meal/trainee_meal_plans_page.dart';
 import 'package:untitled/Home__Page/NutritionMainPage.dart';
+import 'favorite_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -734,8 +735,11 @@ class _HomePageState extends State<HomePage> {
       body: SafeArea(child: mainContent),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFF2A2A2A),
-          borderRadius: const BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20)),
+          color: const Color(0xFFB29BFF),
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.3),
@@ -749,37 +753,54 @@ class _HomePageState extends State<HomePage> {
           onTap: (index) {
             if (!mounted) return;
             if (index == 1) {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const SupplementsStorePage()));
+              // Get favorite workouts from the current state
+              List<Map<String, dynamic>> favoriteWorkouts = _workouts
+                  .where((workout) => workout['isFavorite'] == true)
+                  .toList();
+
+              // Use push instead of pushReplacement to maintain navigation stack
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => FavoritesPage(favoriteRecipes: favoriteWorkouts)
+                  )
+              ).then((_) {
+                // When returning from favorites page, ensure we're on the home tab
+                if (mounted) {
+                  setState(() {
+                    _currentNavIndex = 0;
+                  });
+                }
+              });
             } else {
-              setState(() { _currentNavIndex = index; });
+              setState(() {
+                _currentNavIndex = index;
+              });
             }
           },
+
           backgroundColor: Colors.transparent,
-          selectedItemColor: const Color(0xFF8E7AFE),
-          unselectedItemColor: Colors.grey[600],
+          selectedItemColor: Colors.white,
+          unselectedItemColor: Colors.white70,
           type: BottomNavigationBarType.fixed,
           showSelectedLabels: false,
           showUnselectedLabels: false,
           elevation: 0,
           items: const [
             BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined),
-              activeIcon: Icon(Icons.home),
+              icon: ImageIcon(AssetImage('assets/icons/home.png')),
               label: 'Home',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.shopping_bag_outlined),
-              activeIcon: Icon(Icons.shopping_bag),
-              label: 'Store',
+              icon: ImageIcon(AssetImage('assets/icons/fav.png')), // Update this asset
+              label: 'Favorites',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.chat_bubble_outline),
-              activeIcon: Icon(Icons.chat_bubble),
+              icon: ImageIcon(AssetImage('assets/icons/chat.png')),
               label: 'Chat',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline),
-              activeIcon: Icon(Icons.person),
+              icon: ImageIcon(AssetImage('assets/icons/User.png')),
               label: 'Profile',
             ),
           ],

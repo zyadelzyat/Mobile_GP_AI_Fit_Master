@@ -123,6 +123,12 @@ flutter:
     - assets/icons/products_icon.png
     - assets/workout1.jpg
     - assets/work.jpg
+    - assets/icons/User.png
+    - assets/icons/home.png
+    - assets/icons/store.png
+    - assets/icons/Stars.png
+    - assets/icons/chat.png
+    - assets/icons/fav.png
 
       #   - images/a_dot_ham.jpeg
 
