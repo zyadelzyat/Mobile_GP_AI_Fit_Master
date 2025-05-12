@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:untitled/Home__Page/00_home_page.dart';
 import 'package:untitled/theme_provider.dart';
+import 'package:untitled/ui/onboarding_screen.dart';
 
 class ActivityLevelScreen extends StatefulWidget {
   const ActivityLevelScreen({super.key});
@@ -33,7 +34,7 @@ class _ActivityLevelScreenState extends State<ActivityLevelScreen> {
 
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const HomePage()),
+        MaterialPageRoute(builder: (context) => const OnboardingScreen()),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(

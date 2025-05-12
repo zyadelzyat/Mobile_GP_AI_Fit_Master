@@ -3,7 +3,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:untitled/Home__Page/CalorieCalculator.dart';
 import 'package:untitled/Login___Signup/01_signin_screen.dart';
+import 'package:untitled/ui/onboarding_screen.dart';
 import 'Home__Page/admin_dashboard.dart';
 import 'theme.dart';
 import 'theme_provider.dart';
@@ -12,8 +14,7 @@ import 'Set Up/03 GenderSelectionScreen.dart';
 import 'Home__Page/Store.dart';
 import 'Home__Page/00_home_page.dart';
 import 'package:untitled/rating/AddRatingPage.dart';
-import 'ui/onboarding_screen.dart';
-import 'Home__Page/Store.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
@@ -58,9 +59,7 @@ class _GenderSelectionAppState extends State<GenderSelectionApp> {
       theme: lightTheme,
       darkTheme: darkTheme,
       themeMode: themeProvider.themeMode,
-      home: const SignInScreen(),
-      // home: const SupplementsStorePage(),
-      // home: OnboardingScreen(),
+      home: const OnboardingScreen(),
       // home: const WeightSelectionScreen();
       // home: const GenderSelectionScreen(),
       // home:  SupplementsStorePage(),

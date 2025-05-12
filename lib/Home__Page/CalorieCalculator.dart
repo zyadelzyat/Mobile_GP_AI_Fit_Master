@@ -447,7 +447,7 @@ class _CalorieCalculatorState extends State<CalorieCalculator> {
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFF2A2A2A),
+          color: const Color(0xFFB29BFF),
           borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(20),
             topRight: Radius.circular(20),
@@ -464,31 +464,27 @@ class _CalorieCalculatorState extends State<CalorieCalculator> {
           currentIndex: _selectedIndex,
           onTap: _onItemTapped,
           backgroundColor: Colors.transparent,
-          selectedItemColor: const Color(0xFF8E7AFE), // purple for selected
-          unselectedItemColor: Colors.grey[600],      // grey for unselected
+          selectedItemColor: Colors.white,
+          unselectedItemColor: Colors.white70,
           type: BottomNavigationBarType.fixed,
           showSelectedLabels: false,
           showUnselectedLabels: false,
           elevation: 0,
           items: const [
             BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined),
-              activeIcon: Icon(Icons.home),
+              icon: ImageIcon(AssetImage('assets/icons/home.png')),
               label: 'Home',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.shopping_bag_outlined),
-              activeIcon: Icon(Icons.shopping_bag),
+              icon: ImageIcon(AssetImage('assets/icons/store.png')),
               label: 'Store',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.chat_bubble_outline),
-              activeIcon: Icon(Icons.chat_bubble),
+              icon: ImageIcon(AssetImage('assets/icons/chat.png')),
               label: 'Chat',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline),
-              activeIcon: Icon(Icons.person),
+              icon: ImageIcon(AssetImage('assets/icons/profile.png')),
               label: 'Profile',
             ),
           ],

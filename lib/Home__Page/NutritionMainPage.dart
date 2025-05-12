@@ -279,7 +279,7 @@ class _NutritionPageState extends State<NutritionPage> {
       bottomNavigationBar: isTrainee
           ? Container(
         decoration: BoxDecoration(
-          color: const Color(0xFF2A2A2A),
+          color: const Color(0xFFB29BFF),
           borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(20), topRight: Radius.circular(20)),
           boxShadow: [
@@ -294,25 +294,28 @@ class _NutritionPageState extends State<NutritionPage> {
           currentIndex: _currentNavIndex,
           onTap: _onNavBarTap,
           backgroundColor: Colors.transparent,
-          selectedItemColor: const Color(0xFF8E7AFE),
-          unselectedItemColor: Colors.grey[600],
+          selectedItemColor: Colors.white,
+          unselectedItemColor: Colors.white70,
           type: BottomNavigationBarType.fixed,
           showSelectedLabels: false,
           showUnselectedLabels: false,
           elevation: 0,
           items: const [
             BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined),
-              activeIcon: Icon(Icons.home),
+              icon: ImageIcon(AssetImage('assets/icons/home.png')),
               label: 'Home',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.star),
-              label: 'Favorites',
+              icon: ImageIcon(AssetImage('assets/icons/store.png')),
+              label: 'Store',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.restaurant_menu),
-              label: 'Nutrition',
+              icon: ImageIcon(AssetImage('assets/icons/chat.png')),
+              label: 'Chat',
+            ),
+            BottomNavigationBarItem(
+              icon: ImageIcon(AssetImage('assets/icons/profile.png')),
+              label: 'Profile',
             ),
           ],
         ),

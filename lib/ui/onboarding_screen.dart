@@ -24,7 +24,6 @@ class MyApp extends StatelessWidget {
   }
 }
 
-// --- Onboarding Model ---
 class OnboardingModel {
   final String title;
   final String subtitle;
@@ -43,7 +42,6 @@ class OnboardingModel {
   });
 }
 
-// --- Onboarding Screen Widget ---
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
 
@@ -54,12 +52,13 @@ class OnboardingScreen extends StatefulWidget {
 class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
+
   final List<OnboardingModel> _pages = [
     const OnboardingModel(
       title: "Welcome to",
-      subtitle: "AI FIT MASTER",
+      subtitle: "",
       image: "assets/onboarding1.jpg",
-      buttonText: "Next",
+      buttonText: "",
       backgroundColor: Colors.transparent,
     ),
     const OnboardingModel(
@@ -94,6 +93,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       systemNavigationBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.light,
     ));
+
+    // ⏱️ التايمر لتحويل الصفحة الأولى تلقائيًا
+    Future.delayed(const Duration(seconds: 5), () {
+      if (_currentPage == 0 && _pageController.hasClients) {
+        _pageController.nextPage(
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
   }
 
   Future<void> _completeOnboarding() async {
@@ -138,34 +147,23 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       color: Colors.black,
       child: Stack(
         children: [
-          // Full-screen image
           Positioned.fill(
             child: Image.asset(
               model.image,
               fit: BoxFit.cover,
             ),
           ),
-
-          // Dark overlay
           Positioned.fill(
             child: Container(
               color: Colors.black.withOpacity(0.5),
             ),
           ),
-
-          // Skip button (not on first or last page)
           if (!isFirstPage && !isLastPage)
             Positioned(
               top: 40,
               right: 20,
               child: TextButton(
-                onPressed: () {
-                  _pageController.animateToPage(
-                    _pages.length - 1,
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeInOut,
-                  );
-                },
+                onPressed: _completeOnboarding,
                 child: Row(
                   children: [
                     Text(
@@ -184,37 +182,29 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ),
               ),
             ),
-
-          // Content - Centered in the screen
           Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 if (isFirstPage)
-                // First page layout
                   Column(
                     children: [
-                      Text(
-                        model.title,
+                      const Text(
+                        "Welcome to",
                         style: TextStyle(
-                          color: Colors.yellow[300],
-                          fontSize: 20,
+                          color: Colors.yellow,
+                          fontSize: 40,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        model.subtitle,
-                        style: const TextStyle(
-                          color: Color(0xFFB3A0FF),
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      const SizedBox(height: 30),
+                      Image.asset(
+                        'assets/logo.png',
+                        width: 250,
                       ),
                     ],
                   )
                 else
-                // Other pages layout - Purple box with content
                   Container(
                     width: MediaQuery.of(context).size.width * 0.85,
                     padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
@@ -225,7 +215,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Icon
                         if (model.icon != null)
                           Container(
                             width: 32,
@@ -240,10 +229,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               size: 18,
                             ),
                           ),
-
                         const SizedBox(height: 16),
-
-                        // Title
                         Text(
                           model.title,
                           textAlign: TextAlign.center,
@@ -253,10 +239,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-
                         const SizedBox(height: 16),
-
-                        // Indicator dots
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: List.generate(
@@ -277,39 +260,37 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       ],
                     ),
                   ),
-
                 const SizedBox(height: 40),
-
-                // Button - Positioned below the content
-                Container(
-                  width: 200,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.5),
-                    borderRadius: BorderRadius.circular(25),
-                    border: Border.all(color: Colors.white.withOpacity(0.3), width: 1),
-                  ),
-                  child: TextButton(
-                    onPressed: () {
-                      if (isLastPage) {
-                        _completeOnboarding();
-                      } else {
-                        _pageController.nextPage(
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeInOut,
-                        );
-                      }
-                    },
-                    child: Text(
-                      model.buttonText,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
+                if (!isFirstPage)
+                  Container(
+                    width: 200,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(25),
+                      border: Border.all(color: Colors.white.withOpacity(0.3), width: 1),
+                    ),
+                    child: TextButton(
+                      onPressed: () {
+                        if (isLastPage) {
+                          _completeOnboarding();
+                        } else {
+                          _pageController.nextPage(
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOut,
+                          );
+                        }
+                      },
+                      child: Text(
+                        model.buttonText,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
                   ),
-                ),
               ],
             ),
           ),
