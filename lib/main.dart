@@ -4,16 +4,16 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:untitled/Login___Signup/01_signin_screen.dart';
-import 'Home__Page/admin_dashboard.dart';
+import 'Admin/admin_dashboard.dart';
 import 'theme.dart';
 import 'theme_provider.dart';
 import 'Set Up/06 WeightSelectionScreen.dart';
 import 'Set Up/03 GenderSelectionScreen.dart';
-import 'Home__Page/Store.dart';
+import 'Store/Store.dart';
 import 'Home__Page/00_home_page.dart';
 import 'package:untitled/rating/AddRatingPage.dart';
 import 'ui/onboarding_screen.dart';
-import 'Home__Page/Store.dart';
+import 'Store/Store.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
@@ -58,7 +58,7 @@ class _GenderSelectionAppState extends State<GenderSelectionApp> {
       theme: lightTheme,
       darkTheme: darkTheme,
       themeMode: themeProvider.themeMode,
-      // home: const SignInScreen(),
+      home: const SignInScreen(),
       // home: const SupplementsStorePage(),
       // home: OnboardingScreen(),
       // home: const WeightSelectionScreen();
@@ -66,7 +66,7 @@ class _GenderSelectionAppState extends State<GenderSelectionApp> {
       // home:  SupplementsStorePage(),
       //  home: const SignInScreen(),
       // home : AdminDashboard(),
-      home : const HomePage(),
+      // home : const HomePage(),
       // home : const AddRatingPage(),
 
       debugShowCheckedModeBanner: false,
