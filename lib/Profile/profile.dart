@@ -5,9 +5,9 @@ import 'package:intl/intl.dart';
 import 'package:untitled/Login___Signup/01_signin_screen.dart';
 import 'detailed_profile_page.dart';
 import 'package:untitled/AI/chatbot.dart';
-import 'favorite_page.dart';
+import '../Home__Page/favorite_page.dart';
 import '../rating/trainer_ratings_page.dart';
-import 'trainer_trainees_page.dart';
+import '../Home__Page/trainer_trainees_page.dart';
 import '../Home__Page/00_home_page.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -618,13 +618,6 @@ class _ProfilePageState extends State<ProfilePage> {
                                   "Could not open Favorites. Check class name."),
                               backgroundColor: Colors.red));
                     }
-                  },
-                ),
-                _buildProfileMenuItem(
-                  icon: Icons.list_alt_outlined,
-                  title: 'My Plan',
-                  onTap: () {
-                    print("Navigate to My Plan");
                   },
                 ),
                 _buildProfileMenuItem(

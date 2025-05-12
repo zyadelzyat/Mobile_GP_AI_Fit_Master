@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:untitled/AI/chatbot.dart'; // For ChatPage
-import 'Store.dart'; // For SupplementsStorePage
+import '../Store/Store.dart'; // For SupplementsStorePage
 
 class AssignedExercisesPage extends StatefulWidget {
   const AssignedExercisesPage({Key? key}) : super(key: key);

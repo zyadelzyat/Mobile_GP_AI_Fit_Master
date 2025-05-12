@@ -7,7 +7,7 @@ import 'forgotton_password.dart';
 import '../fitness_screen.dart';
 import 'package:untitled/theme_provider.dart';
 import 'package:untitled/Home__Page/00_home_page.dart';
-import 'package:untitled/Home__Page/admin_dashboard.dart';
+import 'package:untitled/Admin/admin_dashboard.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});

@@ -193,14 +193,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         "Welcome to",
                         style: TextStyle(
                           color: Colors.yellow,
-                          fontSize: 40,
+                          fontSize: 20,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
-                      const SizedBox(height: 30),
+                      const SizedBox(height: 20),
                       Image.asset(
                         'assets/logo.png',
-                        width: 250,
+                        width: 180,
                       ),
                     ],
                   )

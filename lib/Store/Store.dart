@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:async';
-import '00_home_page.dart';
+import '../Home__Page/00_home_page.dart';
 
 // Product model with overridden == and hashCode for correct Map functionality
 class Product {
