@@ -14,6 +14,8 @@ import 'Home__Page/00_home_page.dart';
 import 'package:untitled/rating/AddRatingPage.dart';
 import 'ui/onboarding_screen.dart';
 import 'Store/Store.dart';
+import 'package:untitled/Home__Page/favorite_page.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
@@ -68,7 +70,7 @@ class _GenderSelectionAppState extends State<GenderSelectionApp> {
       // home : AdminDashboard(),
       // home : const HomePage(),
       // home : const AddRatingPage(),
-
+      // home: FavoritesPage(favoriteRecipes: [],),
       debugShowCheckedModeBanner: false,
     );
   }
