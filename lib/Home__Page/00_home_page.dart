@@ -732,80 +732,88 @@ class _HomePageState extends State<HomePage> {
 
     return Scaffold(
       backgroundColor: const Color(0xFF1E1E1E),
+      extendBody: true,
       body: SafeArea(child: mainContent),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: const Color(0xFFB29BFF),
           borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
+            topLeft: Radius.circular(30),
+            topRight: Radius.circular(30),
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.3),
-              blurRadius: 10,
-              spreadRadius: 1,
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 8,
+              spreadRadius: 0,
+              offset: const Offset(0, -2),
             ),
           ],
         ),
-        child: BottomNavigationBar(
-          currentIndex: _currentNavIndex,
-          onTap: (index) {
-            if (!mounted) return;
-            if (index == 1) {
-              // Get favorite workouts from the current state
-              List<Map<String, dynamic>> favoriteWorkouts = _workouts
-                  .where((workout) => workout['isFavorite'] == true)
-                  .toList();
-
-              // Use push instead of pushReplacement to maintain navigation stack
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => FavoritesPage(favoriteRecipes: favoriteWorkouts)
-                  )
-              ).then((_) {
-                // When returning from favorites page, ensure we're on the home tab
-                if (mounted) {
-                  setState(() {
-                    _currentNavIndex = 0;
-                  });
-                }
-              });
-            } else {
-              setState(() {
-                _currentNavIndex = index;
-              });
-            }
-          },
-
-          backgroundColor: Colors.transparent,
-          selectedItemColor: Colors.white,
-          unselectedItemColor: Colors.white70,
-          type: BottomNavigationBarType.fixed,
-          showSelectedLabels: false,
-          showUnselectedLabels: false,
-          elevation: 0,
-          items: const [
-            BottomNavigationBarItem(
-              icon: ImageIcon(AssetImage('assets/icons/home.png')),
-              label: 'Home',
-            ),
-            BottomNavigationBarItem(
-              icon: ImageIcon(AssetImage('assets/icons/fav.png')), // Update this asset
-              label: 'Favorites',
-            ),
-            BottomNavigationBarItem(
-              icon: ImageIcon(AssetImage('assets/icons/chat.png')),
-              label: 'Chat',
-            ),
-            BottomNavigationBarItem(
-              icon: ImageIcon(AssetImage('assets/icons/User.png')),
-              label: 'Profile',
-            ),
-          ],
+        child: ClipRRect(
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(30),
+            topRight: Radius.circular(30),
+          ),
+          child: BottomNavigationBar(
+            currentIndex: _currentNavIndex,
+            onTap: (index) {
+              if (!mounted) return;
+              if (index == 1) {
+                // Get favorite workouts from the current state
+                List<Map<String, dynamic>> favoriteWorkouts = _workouts
+                    .where((workout) => workout['isFavorite'] == true)
+                    .toList();
+                // Use push instead of pushReplacement to maintain navigation stack
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => FavoritesPage(favoriteRecipes: favoriteWorkouts)
+                    )
+                ).then((_) {
+                  // When returning from favorites page, ensure we're on the home tab
+                  if (mounted) {
+                    setState(() {
+                      _currentNavIndex = 0;
+                    });
+                  }
+                });
+              } else {
+                setState(() {
+                  _currentNavIndex = index;
+                });
+              }
+            },
+            backgroundColor: Colors.transparent,
+            selectedItemColor: Colors.white,
+            unselectedItemColor: Colors.white70,
+            type: BottomNavigationBarType.fixed,
+            showSelectedLabels: false,
+            showUnselectedLabels: false,
+            elevation: 0,
+            iconSize: 26,
+            items: const [
+              BottomNavigationBarItem(
+                icon: ImageIcon(AssetImage('assets/icons/home.png')),
+                label: 'Home',
+              ),
+              BottomNavigationBarItem(
+                icon: ImageIcon(AssetImage('assets/icons/fav.png')),
+                label: 'Favorites',
+              ),
+              BottomNavigationBarItem(
+                icon: ImageIcon(AssetImage('assets/icons/chat.png')),
+                label: 'Chat',
+              ),
+              BottomNavigationBarItem(
+                icon: ImageIcon(AssetImage('assets/icons/User.png')),
+                label: 'Profile',
+              ),
+            ],
+          ),
         ),
       ),
     );
+
   }
 }

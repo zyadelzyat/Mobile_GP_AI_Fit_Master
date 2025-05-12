@@ -621,13 +621,6 @@ class _ProfilePageState extends State<ProfilePage> {
                   },
                 ),
                 _buildProfileMenuItem(
-                  icon: Icons.list_alt_outlined,
-                  title: 'My Plan',
-                  onTap: () {
-                    print("Navigate to My Plan");
-                  },
-                ),
-                _buildProfileMenuItem(
                   icon: Icons.settings_outlined,
                   title: 'Settings',
                   onTap: () {
