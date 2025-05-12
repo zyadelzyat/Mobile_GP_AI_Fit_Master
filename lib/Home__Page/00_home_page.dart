@@ -736,8 +736,8 @@ class _HomePageState extends State<HomePage> {
       body: SafeArea(child: mainContent),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFFB29BFF),
-          borderRadius: const BorderRadius.only(
+          color: Color(0xFFB29BFF),
+          borderRadius: BorderRadius.only(
             topLeft: Radius.circular(30),
             topRight: Radius.circular(30),
           ),
@@ -746,12 +746,12 @@ class _HomePageState extends State<HomePage> {
               color: Colors.black.withOpacity(0.2),
               blurRadius: 8,
               spreadRadius: 0,
-              offset: const Offset(0, -2),
+              offset: Offset(0, -2),
             ),
           ],
         ),
         child: ClipRRect(
-          borderRadius: const BorderRadius.only(
+          borderRadius: BorderRadius.only(
             topLeft: Radius.circular(30),
             topRight: Radius.circular(30),
           ),
@@ -764,14 +764,13 @@ class _HomePageState extends State<HomePage> {
                 List<Map<String, dynamic>> favoriteWorkouts = _workouts
                     .where((workout) => workout['isFavorite'] == true)
                     .toList();
-                // Use push instead of pushReplacement to maintain navigation stack
+
                 Navigator.push(
                     context,
                     MaterialPageRoute(
                         builder: (context) => FavoritesPage(favoriteRecipes: favoriteWorkouts)
                     )
                 ).then((_) {
-                  // When returning from favorites page, ensure we're on the home tab
                   if (mounted) {
                     setState(() {
                       _currentNavIndex = 0;
@@ -784,7 +783,7 @@ class _HomePageState extends State<HomePage> {
                 });
               }
             },
-            backgroundColor: Colors.transparent,
+            backgroundColor: const Color(0xFFB29BFF),
             selectedItemColor: Colors.white,
             unselectedItemColor: Colors.white70,
             type: BottomNavigationBarType.fixed,
