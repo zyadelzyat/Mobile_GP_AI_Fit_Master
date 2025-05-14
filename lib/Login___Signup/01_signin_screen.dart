@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
+
 import 'signup_screen.dart';
 import 'forgotton_password.dart';
 import '../fitness_screen.dart';
@@ -101,6 +104,203 @@ class _SignInScreenState extends State<SignInScreen> {
     }
   }
 
+  // Google Sign In method
+  Future<void> _signInWithGoogle() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // Trigger the authentication flow
+      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+
+      // If user cancels the sign-in process
+      if (googleUser == null) {
+        setState(() {
+          _isLoading = false;
+        });
+        return;
+      }
+
+      // Obtain the auth details from the request
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+
+      // Create a new credential
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      // Sign in with Firebase using the Google credential
+      final userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+
+      // Check if user exists in Firestore, if not create a new user document
+      User? user = userCredential.user;
+      if (user != null) {
+        DocumentSnapshot userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
+
+        if (!userDoc.exists) {
+          // Create new user document with basic info
+          await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+            'email': user.email,
+            'firstName': user.displayName?.split(' ').first ?? '',
+            'lastName': user.displayName?.split(' ').last ?? '',
+            'createdAt': FieldValue.serverTimestamp(),
+            'role': 'Self-Trainee', // Default role for social sign-ins
+          });
+        }
+
+        // Check user role after successful login
+        DocumentSnapshot updatedUserDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
+
+        if (updatedUserDoc.exists) {
+          Map<String, dynamic>? userData = updatedUserDoc.data() as Map<String, dynamic>?;
+
+          // Check if user is an Admin
+          if (userData != null && userData['role'] == 'Admin') {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const AdminDashboard(),
+              ),
+            );
+            return;
+          }
+
+          // Otherwise handle regular user flow
+          bool isProfileComplete = false;
+          if (userData != null) {
+            isProfileComplete = userData['gender'] != null &&
+                userData['height'] != null &&
+                userData['weight'] != null &&
+                userData['goal'] != null &&
+                userData['activityLevel'] != null;
+          }
+
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+              isProfileComplete ? const HomePage() : const FitnessScreen(),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      _showSnackBar("Google Sign In failed: ${e.toString()}");
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  // Facebook Sign In method
+  Future<void> _signInWithFacebook() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // Trigger the sign-in flow
+      final LoginResult loginResult = await FacebookAuth.instance.login();
+
+      // Check if login was successful
+      if (loginResult.status != LoginStatus.success) {
+        _showSnackBar("Facebook login canceled or failed");
+        setState(() {
+          _isLoading = false;
+        });
+        return;
+      }
+
+      // Create a credential from the access token
+      final OAuthCredential facebookAuthCredential =
+      FacebookAuthProvider.credential(loginResult.accessToken!.tokenString);
+
+      // Sign in with Firebase using the Facebook credential
+      final userCredential = await FirebaseAuth.instance.signInWithCredential(facebookAuthCredential);
+
+      // Check if user exists in Firestore, if not create a new user document
+      User? user = userCredential.user;
+      if (user != null) {
+        DocumentSnapshot userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
+
+        if (!userDoc.exists) {
+          // Get additional user info from Facebook
+          final userData = await FacebookAuth.instance.getUserData();
+
+          // Create new user document with basic info
+          await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+            'email': user.email,
+            'firstName': userData['name']?.split(' ').first ?? '',
+            'lastName': userData['name']?.split(' ').last ?? '',
+            'createdAt': FieldValue.serverTimestamp(),
+            'role': 'Self-Trainee', // Default role for social sign-ins
+          });
+        }
+
+        // Check user role after successful login
+        DocumentSnapshot updatedUserDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
+
+        if (updatedUserDoc.exists) {
+          Map<String, dynamic>? userData = updatedUserDoc.data() as Map<String, dynamic>?;
+
+          // Check if user is an Admin
+          if (userData != null && userData['role'] == 'Admin') {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const AdminDashboard(),
+              ),
+            );
+            return;
+          }
+
+          // Otherwise handle regular user flow
+          bool isProfileComplete = false;
+          if (userData != null) {
+            isProfileComplete = userData['gender'] != null &&
+                userData['height'] != null &&
+                userData['weight'] != null &&
+                userData['goal'] != null &&
+                userData['activityLevel'] != null;
+          }
+
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+              isProfileComplete ? const HomePage() : const FitnessScreen(),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      _showSnackBar("Facebook Sign In failed: ${e.toString()}");
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -113,7 +313,6 @@ class _SignInScreenState extends State<SignInScreen> {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
-
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Padding(
@@ -121,7 +320,7 @@ class _SignInScreenState extends State<SignInScreen> {
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
-            children: <Widget>[
+            children: [
               const SizedBox(height: 50),
               Align(
                 alignment: Alignment.topRight,
@@ -205,6 +404,36 @@ class _SignInScreenState extends State<SignInScreen> {
                 ),
               ),
               const SizedBox(height: 20),
+              Text(
+                'Or sign in with',
+                style: TextStyle(
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Google Sign In Button
+                  _buildSocialButton(
+                    onPressed: _signInWithGoogle,
+                    icon: 'assets/google_logo.png', // Add this image to your assets
+                    backgroundColor: Colors.white,
+                    text: 'Google',
+                    textColor: Colors.black,
+                  ),
+                  const SizedBox(width: 20),
+                  // Facebook Sign In Button
+                  _buildSocialButton(
+                    onPressed: _signInWithFacebook,
+                    icon: 'assets/facebook_logo.png', // Add this image to your assets
+                    backgroundColor: const Color(0xFF1877F2),
+                    text: 'Facebook',
+                    textColor: Colors.white,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -266,6 +495,40 @@ class _SignInScreenState extends State<SignInScreen> {
           prefixIcon: Icon(icon, color: Colors.grey),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 10),
+        ),
+      ),
+    );
+  }
+
+  // Helper method to build social sign-in buttons
+  Widget _buildSocialButton({
+    required VoidCallback onPressed,
+    required String icon,
+    required Color backgroundColor,
+    required String text,
+    required Color textColor,
+  }) {
+    return ElevatedButton.icon(
+      onPressed: onPressed,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: backgroundColor,
+        foregroundColor: textColor,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(30),
+        ),
+      ),
+      icon: Image.asset(
+        icon,
+        height: 24,
+        width: 24,
+      ),
+      label: Text(
+        text,
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          color: textColor,
         ),
       ),
     );
