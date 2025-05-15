@@ -26,7 +26,6 @@ class _TrainerRatingsPageState extends State<TrainerRatingsPage> {
 
   Future<void> _fetchRatings() async {
     if (!mounted) return;
-
     setState(() {
       _isLoading = true;
     });
@@ -74,6 +73,7 @@ class _TrainerRatingsPageState extends State<TrainerRatingsPage> {
               if (data.containsKey('traineeFirstName')) {
                 traineeName = data['traineeFirstName'];
               }
+
               if (data.containsKey('traineeProfilePicUrl')) {
                 traineePhotoUrl = data['traineeProfilePicUrl'];
               }
@@ -85,6 +85,7 @@ class _TrainerRatingsPageState extends State<TrainerRatingsPage> {
           if (data.containsKey('traineeFirstName')) {
             traineeName = data['traineeFirstName'];
           }
+
           if (data.containsKey('traineeProfilePicUrl')) {
             traineePhotoUrl = data['traineeProfilePicUrl'];
           }
@@ -197,6 +198,7 @@ class _TrainerRatingsPageState extends State<TrainerRatingsPage> {
               ],
             ),
           ),
+
           // Ratings list
           Expanded(
             child: _ratings.isEmpty

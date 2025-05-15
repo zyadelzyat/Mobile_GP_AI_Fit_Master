@@ -417,19 +417,15 @@ class _SignInScreenState extends State<SignInScreen> {
                   // Google Sign In Button
                   _buildSocialButton(
                     onPressed: _signInWithGoogle,
-                    icon: 'assets/google_logo.png', // Add this image to your assets
+                    icon: 'assets/google_logo.png',
                     backgroundColor: Colors.white,
-                    text: 'Google',
-                    textColor: Colors.black,
                   ),
                   const SizedBox(width: 20),
                   // Facebook Sign In Button
                   _buildSocialButton(
                     onPressed: _signInWithFacebook,
-                    icon: 'assets/facebook_logo.png', // Add this image to your assets
-                    backgroundColor: const Color(0xFF1877F2),
-                    text: 'Facebook',
-                    textColor: Colors.white,
+                    icon: 'assets/facebook_logo.png',
+                    backgroundColor: Colors.white,
                   ),
                 ],
               ),
@@ -500,36 +496,23 @@ class _SignInScreenState extends State<SignInScreen> {
     );
   }
 
-  // Helper method to build social sign-in buttons
   Widget _buildSocialButton({
     required VoidCallback onPressed,
     required String icon,
     required Color backgroundColor,
-    required String text,
-    required Color textColor,
   }) {
-    return ElevatedButton.icon(
+    return ElevatedButton(
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
         backgroundColor: backgroundColor,
-        foregroundColor: textColor,
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(30),
-        ),
+        shape: const CircleBorder(),
+        padding: const EdgeInsets.all(12),
+        elevation: 2,
       ),
-      icon: Image.asset(
+      child: Image.asset(
         icon,
         height: 24,
         width: 24,
-      ),
-      label: Text(
-        text,
-        style: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.bold,
-          color: textColor,
-        ),
       ),
     );
   }
