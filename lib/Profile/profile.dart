@@ -29,7 +29,6 @@ class _ProfilePageState extends State<ProfilePage> {
 
   // Membership plans
   final List<Map<String, dynamic>> _membershipPlans = [
-    {'name': 'Basic Plan', 'price': 20.0, 'typeKey': 'basic'},
     {'name': 'Standard Plan', 'price': 30.0, 'typeKey': 'standard'},
     {'name': 'Premium Plan', 'price': 50.0, 'typeKey': 'premium'},
   ];
@@ -269,7 +268,9 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildRoleSpecificMenuItems() {
-    if (userData['role'] == 'Trainer') {
+    String userRole = userData['role'] as String? ?? '';
+
+    if (userRole == 'Trainer') {
       return Column(
         children: [
           _buildProfileMenuItem(
@@ -295,6 +296,7 @@ class _ProfilePageState extends State<ProfilePage> {
         ],
       );
     }
+
     return const SizedBox.shrink();
   }
 
@@ -352,12 +354,16 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   void _showPaymentMethodDialog(Map planDetails) {
+    String userRole = userData['role'] as String? ?? '';
+    bool isTraineeRole = userRole == 'Self Trainee' || userRole == 'Trainee';
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           backgroundColor: const Color(0xFF2A2A2A),
-          title: Text('Choose Payment Method for ${planDetails['name']}', style: TextStyle(color: Color(0xFFB29BFF))),
+          title: Text('Choose Payment Method for ${planDetails['name']}',
+              style: TextStyle(color: Color(0xFFB29BFF))),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -369,14 +375,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   _handleCashPayment(planDetails);
                 },
               ),
-              ListTile(
-                leading: Icon(Icons.credit_card, color: Color(0xFFB29BFF)),
-                title: Text('Pay with Visa', style: TextStyle(color: Colors.white)),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  _handleVisaPayment(planDetails);
-                },
-              ),
+              // Only show card payment option for non-trainee roles
             ],
           ),
           actions: [
@@ -418,20 +417,7 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  void _handleVisaPayment(Map planDetails) {
-    User? currentUser = _auth.currentUser;
-    if (currentUser == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('You need to be logged in.')));
-      return;
-    }
-    // Placeholder for Visa payment integration
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Initiating Visa payment for ${planDetails['name']}. Integration with a payment gateway is required here.')),
-    );
-    print("Visa payment for ${planDetails['typeKey']} selected. Implement payment gateway.");
-    // After successful payment via a gateway, you would update Firestore...
-  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -495,12 +481,12 @@ class _ProfilePageState extends State<ProfilePage> {
         : "${userData['height'] ?? 'N/A'} ${userData['heightUnit'] ?? 'M'}";
     String ageDisplay = _calculateAge();
     String birthdayDisplay = _formatBirthday();
-
     String userRole = userData['role'] as String? ?? '';
     String membershipStatus = userData['membershipStatus'] as String? ?? 'none';
     String membershipTitle = (membershipStatus == 'active' || membershipStatus == 'pending_approval')
-        ? 'Manage Membership'
+        ? 'View Membership'
         : 'Join Membership';
+    bool isTraineeRole = userRole == 'Self Trainee' || userRole == 'Trainee';
 
     return Scaffold(
       backgroundColor: const Color(0xFF1E1E1E),
@@ -592,7 +578,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     );
                   },
                 ),
-                if (userRole != 'Trainer')
+                if (userRole != 'Trainer' && (!isTraineeRole || membershipStatus != 'active'))
                   _buildProfileMenuItem(
                     icon: Icons.card_membership,
                     title: membershipTitle,

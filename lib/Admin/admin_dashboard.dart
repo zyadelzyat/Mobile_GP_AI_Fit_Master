@@ -1,5 +1,3 @@
-// [File: admin_dashboard.dart]
-
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -345,27 +343,14 @@ class _AdminDashboardState extends State {
 // Helper to get the title for the current page
 
   String _getPageTitle() {
-// ... (getPageTitle logic remains the same)
     switch (_currentPageIndex) {
-
       case 1:
-
         return 'User Management';
-
       case 2:
-
-        return 'Product Payment'; // Placeholder title
-
-      case 3:
-
-        return 'Products';
-
+        return 'Products'; // Changed from index 3 to 2
       case 0:
-
       default:
-
         return 'Admin Dashboard';
-
     }
   }
 
@@ -478,29 +463,15 @@ class _AdminDashboardState extends State {
 // Horizontal Navigation Buttons
 
           Container(
-
             padding: const EdgeInsets.symmetric(vertical: 16.0),
-
             child: Row(
-
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-
               children: [
-
                 _buildNavButton('User Management', Icons.people, 1),
-
                 Container(height: 20, width: 1, color: Colors.grey[700]),
-
-                _buildNavButton('Product Payment', Icons.payment, 2), // Placeholder
-
-                Container(height: 20, width: 1, color: Colors.grey[700]),
-
-                _buildNavButton('Products', Icons.shopping_bag, 3),
-
+                _buildNavButton('Products', Icons.shopping_bag, 2), // Changed index from 3 to 2
               ],
-
             ),
-
           ),
 
 // Stats Cards - Only show on Home Page (_currentPageIndex == 0)
@@ -544,63 +515,38 @@ class _AdminDashboardState extends State {
       ),
 
       bottomNavigationBar: BottomNavigationBar(
-
         backgroundColor: purpleColor.withOpacity(0.8),
-
         selectedItemColor: Colors.white,
-
         unselectedItemColor: Colors.white70,
-
-        currentIndex: _currentPageIndex == 0 ? 0 : (_currentPageIndex == 1 ? 2 : 1), // Basic logic to highlight a relevant icon
-
+        currentIndex: _currentPageIndex == 0 ? 0 : (_currentPageIndex == 1 ? 2 : 1), // Updated logic
         items: const [
-
           BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-
-          BottomNavigationBarItem(icon: Icon(Icons.menu), label: "Menu"), // Generic menu
-
+          BottomNavigationBarItem(icon: Icon(Icons.shopping_bag), label: "Products"), // Changed from Menu to Products
           BottomNavigationBarItem(icon: Icon(Icons.people), label: "Users"),
-
         ],
-
         onTap: (index) {
-
           if (index == 0) { // Home icon
-
             setState(() {
-
               _currentPageIndex = 0;
-
             });
-
-          } else if (index == 2) { // Users icon navigates to User Management
-// ... (rest of bottomNavigationBar onTap logic remains the same)
+          } else if (index == 1) { // Products icon
             setState(() {
-
-              _currentPageIndex = 1;
-
+              _currentPageIndex = 2; // Changed to match new index
             });
-
+          } else if (index == 2) { // Users icon
+            setState(() {
+              _currentPageIndex = 1;
+            });
           }
-
-// Add logic for other bottom nav items if needed
-
         },
-
       ),
 
-      floatingActionButton: _currentPageIndex == 3 // Show FAB only on Products page
-
+      floatingActionButton: _currentPageIndex == 2 // Changed from 3 to 2
           ? FloatingActionButton(
-
         onPressed: _showAddProductDialog,
-
         backgroundColor: yellowColor,
-
         child: Icon(Icons.add, color: darkColor),
-
       )
-
           : null,
 
     );
@@ -608,65 +554,34 @@ class _AdminDashboardState extends State {
   }
 
   Widget _getContentBasedOnIndex() {
-
     if (_currentPageIndex == 0) { // Home Page
-
       return Column(
-
         crossAxisAlignment: CrossAxisAlignment.start,
-
         children: [
-
           Padding(
-
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-
             child: Text(
-
-              "Overview", // Title for the user table on home page
-
+              "Overview",
               style: TextStyle(
-
-                color: yellowColor, // Use yellow for standout titles
-
+                color: yellowColor,
                 fontSize: 24,
-
                 fontWeight: FontWeight.bold,
-
               ),
-
             ),
-
           ),
-
           Expanded(
-
-            child: _buildUsersTable(showFullDetails: false), // Show summarized table
-
+            child: _buildUsersTable(showFullDetails: false),
           ),
-
         ],
-
       );
-
     } else if (_currentPageIndex == 1) { // User Management
-
-      return _buildUsersTable(showFullDetails: true); // Show detailed table
-// ... (rest of _getContentBasedOnIndex logic remains the same)
-    } else if (_currentPageIndex == 2) { // Product Payment
-
-      return _buildPaymentsSection(); // Placeholder
-
-    } else if (_currentPageIndex == 3) { // Products
-
+      return _buildUsersTable(showFullDetails: true);
+    } else if (_currentPageIndex == 2) { // Products (changed from index 3)
       return _buildProductsSection();
-
     }
 
-// Fallback for any other index
-
+    // Fallback for any other index
     return Container();
-
   }
 
   Widget _buildNavButton(String title, IconData icon, int index) {
@@ -1267,24 +1182,6 @@ class _AdminDashboardState extends State {
           },
 
         ),
-
-      ),
-
-    );
-
-  }
-
-  Widget _buildPaymentsSection() {
-
-// Placeholder for Product Payment section
-
-    return Center(
-
-      child: Text(
-
-        'Product Payment Section',
-
-        style: TextStyle(color: Colors.white, fontSize: 20),
 
       ),
 
@@ -2457,81 +2354,45 @@ class _AdminDashboardState extends State {
 // Method to approve cash membership
 
   Future<void> _approveCashMembership(String userId) async {
-
     final bool confirmApprove = await showDialog<bool>(
-
       context: context,
-
       builder: (context) => AlertDialog(
-
         backgroundColor: darkColor,
-
         title: Text('Confirm Approval', style: TextStyle(color: purpleColor)),
         content: const Text(
-
           'Are you sure you want to approve this cash membership?',
-
           style: TextStyle(color: Colors.white70),
-
         ),
-
         actions: [
-
           TextButton(
-
             onPressed: () => Navigator.pop(context, false),
-
             child: Text('Cancel', style: TextStyle(color: purpleColor)),
-
           ),
-
           ElevatedButton(
-
             onPressed: () => Navigator.pop(context, true),
-
             style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-
             child: const Text('Approve', style: TextStyle(color: Colors.white)),
-
           ),
-
         ],
-
       ),
-
     ) ?? false;
 
     if (confirmApprove) {
-
       try {
-
         await _firestore.collection('users').doc(userId).update({
-
           'membershipStatus': 'active', // Status changed to active
-
           'updatedAt': FieldValue.serverTimestamp(),
-
         });
-
         if (mounted) {
-
           ScaffoldMessenger.of(context).showSnackBar(
-
             const SnackBar(content: Text('Membership approved successfully!')),
-
           );
-
         }
       } catch (e) {
-
         if (mounted) {
-
           ScaffoldMessenger.of(context).showSnackBar(
-
             SnackBar(content: Text('Failed to approve membership: $e')),
-
           );
-
         }
       }
     }

@@ -6,25 +6,22 @@ import 'package:cloud_firestore/cloud_firestore.dart'; // Needed for FieldValue
 
 class DetailedProfilePage extends StatefulWidget {
   // Receive user data from the previous page
-  final Map<String, dynamic> userData; // Use specific type if possible
-
+  final Map userData; // Use specific type if possible
   const DetailedProfilePage({super.key, required this.userData});
 
   @override
-  State<DetailedProfilePage> createState() => _DetailedProfilePageState();
+  State createState() => _DetailedProfilePageState();
 }
 
 class _DetailedProfilePageState extends State<DetailedProfilePage> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // --- Helper Methods (_formatDOB, _buildTextField, _buildLabel, etc. remain the same) ---
   String _formatDOB() {
-    // ... (no changes needed here)
     final dob = widget.userData['dob'];
     if (dob == null || dob.isEmpty) return "N/A";
     try {
       // Assuming YYYY-MM-DD format from signup
-      List<String> parts = (dob as String).split('-');
+      List parts = (dob as String).split('-');
       if (parts.length != 3) return dob; // Return original if format is wrong
       // Convert to DD / MM / YYYY
       return "${parts[2]} / ${parts[1]} / ${parts[0]}";
@@ -36,7 +33,6 @@ class _DetailedProfilePageState extends State<DetailedProfilePage> {
   }
 
   Widget _buildTextField(String value) {
-    // ... (no changes needed here)
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
@@ -56,7 +52,6 @@ class _DetailedProfilePageState extends State<DetailedProfilePage> {
   }
 
   Widget _buildLabel(String label) {
-    // ... (no changes needed here)
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8), // Adjust top padding if needed
       child: Text(
@@ -67,13 +62,17 @@ class _DetailedProfilePageState extends State<DetailedProfilePage> {
   }
 
   bool _canViewMembership() {
-    // ... (no changes needed here)
     final role = widget.userData['role']?.toString().toLowerCase() ?? '';
     return role == 'self-trainee' || role == 'trainee';
   }
 
+  bool _canEditMembership() {
+    final role = widget.userData['role']?.toString() ?? '';
+    // Prevent trainees from editing their membership
+    return role != 'Self Trainee' && role != 'Trainee';
+  }
+
   Widget _buildMembershipDetail(String label, String value) {
-    // ... (no changes needed here)
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
@@ -87,7 +86,6 @@ class _DetailedProfilePageState extends State<DetailedProfilePage> {
   }
 
   void _showMembershipModal() {
-    // ... (no changes needed here)
     if (!mounted) return;
     showDialog(
       context: context,
@@ -95,10 +93,8 @@ class _DetailedProfilePageState extends State<DetailedProfilePage> {
         // Format dates for display inside the modal
         String startDate = widget.userData['membershipStart'] ?? "N/A";
         String endDate = widget.userData['membershipEnd'] ?? "N/A";
-
         // Basic price formatting example (could be improved)
         String price = widget.userData['membershipPrice'] ?? "N/A";
-
         return AlertDialog(
           backgroundColor: const Color(0xFF232323),
           title: const Text("Membership Details", style: TextStyle(color: Colors.white), textAlign: TextAlign.center),
@@ -125,17 +121,13 @@ class _DetailedProfilePageState extends State<DetailedProfilePage> {
   }
 
   void _showAddMembershipForm() {
-    // ... (implementation remains the same as provided in the file)
-    // Ensure date parsing and formatting logic inside is correct
     if (!mounted) return;
-
     final emailController = TextEditingController(text: widget.userData['email'] ?? '');
     String selectedMembershipType = widget.userData['membershipType'] ?? 'Silver'; // Default to existing or Silver
     final priceController = TextEditingController(text: widget.userData['membershipPrice']?.replaceAll('\$', '') ?? (selectedMembershipType == 'Gold' ? '29.99' : '19.99'));
     String selectedPaymentType = widget.userData['paymentType'] ?? 'Cash';
     DateTime startDate = DateTime.now(); // Default start date
     DateTime endDate = DateTime.now().add(Duration(days: selectedMembershipType == 'Gold' ? 365 : 30)); // Default end date
-
     bool isLoading = false;
     final DateFormat displayFormat = DateFormat('dd / MM / yyyy');
 
@@ -182,7 +174,6 @@ class _DetailedProfilePageState extends State<DetailedProfilePage> {
                         )
                     ),
                     const SizedBox(height: 16),
-
                     // Membership Type Dropdown
                     _buildLabel("Membership Type"),
                     Container(
@@ -221,7 +212,6 @@ class _DetailedProfilePageState extends State<DetailedProfilePage> {
                       ),
                     ),
                     const SizedBox(height: 16),
-
                     // Price (Readonly)
                     _buildLabel("Price"),
                     TextField(
@@ -242,7 +232,6 @@ class _DetailedProfilePageState extends State<DetailedProfilePage> {
                         )
                     ),
                     const SizedBox(height: 16),
-
                     // Payment Type Dropdown
                     _buildLabel("Payment Type"),
                     Container(
@@ -274,7 +263,6 @@ class _DetailedProfilePageState extends State<DetailedProfilePage> {
                       ),
                     ),
                     const SizedBox(height: 16),
-
                     // Start Date Picker
                     _buildLabel("Start Date"),
                     GestureDetector(
@@ -322,7 +310,6 @@ class _DetailedProfilePageState extends State<DetailedProfilePage> {
                       ),
                     ),
                     const SizedBox(height: 16),
-
                     // End Date Picker
                     _buildLabel("End Date"),
                     GestureDetector(
@@ -363,7 +350,6 @@ class _DetailedProfilePageState extends State<DetailedProfilePage> {
                           child: Text(displayFormat.format(endDate), style: const TextStyle(color: Colors.white))
                       ),
                     ),
-
                   ],
                 ),
               ),
@@ -382,7 +368,6 @@ class _DetailedProfilePageState extends State<DetailedProfilePage> {
                   child: const Text("Save", style: TextStyle(color: Color(0xFF6A48F6))),
                   onPressed: () async {
                     setStateDialog(() { isLoading = true; });
-
                     // Get userId from the passed userData map
                     final String? userId = widget.userData['userId']; // Ensure userId was added in profile.dart
                     if (userId == null || userId.isEmpty) {
@@ -410,7 +395,6 @@ class _DetailedProfilePageState extends State<DetailedProfilePage> {
                       await _firestore.collection('users').doc(userId).update(membershipData);
 
                       if (!mounted) return; // Check mounted status AFTER async operation
-
                       Navigator.of(context).pop(); // Close the dialog on success
 
                       // *** IMPORTANT: Update local state to reflect changes immediately ***
@@ -423,7 +407,6 @@ class _DetailedProfilePageState extends State<DetailedProfilePage> {
                       });
 
                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Membership updated successfully!'), backgroundColor: Colors.green));
-
                     } catch (e) {
                       print("Error updating membership: $e");
                       if (!mounted) return; // Check mounted status
@@ -445,7 +428,6 @@ class _DetailedProfilePageState extends State<DetailedProfilePage> {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
     // Extract data safely, providing defaults or 'N/A'
@@ -458,18 +440,13 @@ class _DetailedProfilePageState extends State<DetailedProfilePage> {
     String weight = widget.userData['weight']?.toString() ?? 'N/A';
     String weightUnit = widget.userData['weightUnit'] ?? 'Kg';
     String weightDisplay = weight == 'N/A' ? 'N/A' : '$weight $weightUnit';
-
     String height = widget.userData['height']?.toString() ?? 'N/A';
     String heightUnit = widget.userData['heightUnit'] ?? ''; // Default to empty if null
     String heightDisplay = height == 'N/A' ? 'N/A' : '$height ${heightUnit.toUpperCase()}'.trim(); // Ensure unit is uppercase and trim space if no unit
-
     String gender = widget.userData['gender'] ?? 'N/A';
     // Check both potential casings for diseases if unsure, prioritizing 'Diseases'
     String diseases = widget.userData['Diseases'] ?? widget.userData['disease'] ?? 'None';
     String role = widget.userData['role'] ?? 'N/A';
-
-    // *** THE FIX IS HERE ***
-    // Read from 'coachName' as saved during signup
     String coach = widget.userData['coachName'] ?? 'Not assigned'; // Changed 'coach' to 'coachName'
 
     return Scaffold(
@@ -496,38 +473,27 @@ class _DetailedProfilePageState extends State<DetailedProfilePage> {
             children: [
               _buildLabel('Full name'),
               _buildTextField(fullName),
-
               _buildLabel('Email'),
               _buildTextField(email),
-
               _buildLabel('Mobile Number'),
               _buildTextField(phone),
-
               _buildLabel('Date of birth'),
               _buildTextField(dob),
-
               _buildLabel('Weight'),
               _buildTextField(weightDisplay),
-
               _buildLabel('Height'),
               _buildTextField(heightDisplay),
-
               _buildLabel('Gender'),
               _buildTextField(gender),
-
               _buildLabel('Diseases'), // Label can remain 'Diseases'
               _buildTextField(diseases), // Display the disease info
-
               _buildLabel('Role'),
               _buildTextField(role),
-
               // Display Coach only if the user is a Trainee
               if (widget.userData['role'] == 'Trainee') ...[
                 _buildLabel('Coach'), // Keep the UI label as 'Coach'
                 _buildTextField(coach), // Display the fetched coach name
               ],
-
-
               // Membership Section (conditionally shown)
               if (_canViewMembership()) ...[
                 Padding(
@@ -535,45 +501,47 @@ class _DetailedProfilePageState extends State<DetailedProfilePage> {
                   child: GestureDetector(
                     onTap: _showMembershipModal,
                     child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 15),
-                        decoration: BoxDecoration(
-                            color: const Color(0xFF6A48F6), // Purple button
-                            borderRadius: BorderRadius.circular(8)
-                        ),
-                        child: const Text(
-                            "View Membership Details",
-                            style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
-                            textAlign: TextAlign.center
-                        )
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: GestureDetector(
-                    onTap: _showAddMembershipForm,
-                    child: Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(vertical: 15),
                       decoration: BoxDecoration(
-                          color: const Color(0xFFDFF233), // Yellow button
+                          color: const Color(0xFF6A48F6), // Purple button
                           borderRadius: BorderRadius.circular(8)
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          Icon(Icons.add, color: Colors.black87, size: 20),
-                          SizedBox(width: 8),
-                          Text(
-                              "Add / Update Membership",
-                              style: TextStyle(color: Colors.black87, fontSize: 16, fontWeight: FontWeight.w600)
-                          )
-                        ],
+                      child: const Text(
+                          "View Membership Details",
+                          style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
+                          textAlign: TextAlign.center
                       ),
                     ),
                   ),
                 ),
+                // Only show Add/Update button if user can edit membership
+                if (_canEditMembership())
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: GestureDetector(
+                      onTap: _showAddMembershipForm,
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                        decoration: BoxDecoration(
+                            color: const Color(0xFFDFF233), // Yellow button
+                            borderRadius: BorderRadius.circular(8)
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: const [
+                            Icon(Icons.add, color: Colors.black87, size: 20),
+                            SizedBox(width: 8),
+                            Text(
+                                "Add / Update Membership",
+                                style: TextStyle(color: Colors.black87, fontSize: 16, fontWeight: FontWeight.w600)
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
               ],
             ],
           ),
