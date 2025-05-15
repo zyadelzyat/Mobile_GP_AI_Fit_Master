@@ -12,7 +12,6 @@ import '../Home__Page/00_home_page.dart';
 
 class ProfilePage extends StatefulWidget {
   final String userId;
-
   const ProfilePage({required this.userId, super.key});
 
   @override
@@ -22,7 +21,6 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
-
   bool _isLoading = true;
   Map userData = {};
   String? errorMessage;
@@ -39,19 +37,21 @@ class _ProfilePageState extends State<ProfilePage> {
     _fetchUserData();
   }
 
-  Future _fetchUserData() async {
+  Future<void> _fetchUserData() async {
     if (!mounted) return;
     setState(() {
       _isLoading = true;
       errorMessage = null;
     });
+
     try {
       DocumentSnapshot userDoc =
       await _firestore.collection('users').doc(widget.userId).get();
+
       if (userDoc.exists) {
         if (!mounted) return;
         setState(() {
-          userData = userDoc.data() as Map;
+          userData = userDoc.data() as Map<String, dynamic>;
           userData['userId'] = widget.userId;
           _isLoading = false;
         });
@@ -74,6 +74,7 @@ class _ProfilePageState extends State<ProfilePage> {
   String _calculateAge() {
     if (userData['dob'] == null ||
         (userData['dob'] is String && (userData['dob'] as String).isEmpty)) return "N/A";
+
     DateTime? birthDate;
     if (userData['dob'] is Timestamp) {
       birthDate = (userData['dob'] as Timestamp).toDate();
@@ -81,7 +82,7 @@ class _ProfilePageState extends State<ProfilePage> {
       try {
         birthDate = DateTime.parse(userData['dob'] as String);
       } catch (e) {
-        List parts = (userData['dob'] as String).split('-');
+        List<String> parts = (userData['dob'] as String).split('-');
         if (parts.length == 3) {
           try {
             birthDate = DateTime(int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
@@ -95,6 +96,7 @@ class _ProfilePageState extends State<ProfilePage> {
     } else {
       return "N/A";
     }
+
     if (birthDate == null) return "N/A";
     DateTime today = DateTime.now();
     int age = today.year - birthDate.year;
@@ -108,6 +110,7 @@ class _ProfilePageState extends State<ProfilePage> {
   String _formatBirthday() {
     if (userData['dob'] == null ||
         (userData['dob'] is String && (userData['dob'] as String).isEmpty)) return "N/A";
+
     DateTime? birthDate;
     if (userData['dob'] is Timestamp) {
       birthDate = (userData['dob'] as Timestamp).toDate();
@@ -115,7 +118,7 @@ class _ProfilePageState extends State<ProfilePage> {
       try {
         birthDate = DateTime.parse(userData['dob'] as String);
       } catch (e) {
-        List parts = (userData['dob'] as String).split('-');
+        List<String> parts = (userData['dob'] as String).split('-');
         if (parts.length == 3) {
           try {
             birthDate = DateTime(int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
@@ -129,6 +132,7 @@ class _ProfilePageState extends State<ProfilePage> {
     } else {
       return "N/A";
     }
+
     if (birthDate == null) return "N/A";
     String day = DateFormat('d').format(birthDate);
     String suffix = 'th';
@@ -301,23 +305,26 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   void _showMembershipDialog() {
+    String userRole = userData['role'] as String? ?? '';
+
+    // Show membership plans dialog for all users
     showDialog(
       context: context,
       builder: (BuildContext context) {
         String? selectedPlanKey;
-        Map? selectedPlanDetails;
+        Map<String, dynamic>? selectedPlanDetails;
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
               backgroundColor: const Color(0xFF2A2A2A),
-              title: Text('Select Membership Plan',
+              title: const Text('Select Membership Plan',
                   style: TextStyle(color: Color(0xFFB29BFF))),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: _membershipPlans.map((plan) {
-                  return RadioListTile(
+                  return RadioListTile<String>(
                     title: Text('${plan['name']} - \$${plan['price'].toStringAsFixed(2)}',
-                        style: TextStyle(color: Colors.white)),
+                        style: const TextStyle(color: Colors.white)),
                     value: plan['typeKey'] as String,
                     groupValue: selectedPlanKey,
                     onChanged: (String? value) {
@@ -326,24 +333,31 @@ class _ProfilePageState extends State<ProfilePage> {
                         selectedPlanDetails = plan;
                       });
                     },
-                    activeColor: Color(0xFFB29BFF),
+                    activeColor: const Color(0xFFB29BFF),
                     controlAffinity: ListTileControlAffinity.trailing,
                   );
                 }).toList(),
               ),
               actions: [
                 TextButton(
-                  child: Text('Cancel', style: TextStyle(color: Color(0xFFB29BFF))),
+                  child: const Text('Cancel', style: TextStyle(color: Color(0xFFB29BFF))),
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
                 ),
                 ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: Color(0xFFB29BFF)),
-                  child: Text('Next', style: TextStyle(color: Colors.white)),
+                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFB29BFF)),
+                  child: const Text('Next', style: TextStyle(color: Colors.white)),
                   onPressed: selectedPlanKey == null ? null : () {
                     Navigator.of(context).pop();
-                    _showPaymentMethodDialog(selectedPlanDetails!);
+
+                    // For Self Trainee, skip payment method selection and go directly to cash payment
+                    if (userRole == 'Self Trainee') {
+                      _showCashPaymentDialog(selectedPlanDetails!);
+                    } else {
+                      // For other roles, show payment method options
+                      _showPaymentMethodDialog(selectedPlanDetails!);
+                    }
                   },
                 ),
               ],
@@ -354,23 +368,23 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  void _showPaymentMethodDialog(Map planDetails) {
+  void _showCashPaymentDialog(Map<String, dynamic> planDetails) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           backgroundColor: const Color(0xFF2A2A2A),
           title: Text('Confirm Cash Payment for ${planDetails['name']}',
-              style: TextStyle(color: Color(0xFFB29BFF))),
+              style: const TextStyle(color: Color(0xFFB29BFF))),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 'You will pay \$${planDetails['price'].toStringAsFixed(2)} in cash. Your membership will be pending until payment is confirmed.',
-                style: TextStyle(color: Colors.white),
+                style: const TextStyle(color: Colors.white),
               ),
-              SizedBox(height: 20),
-              Icon(
+              const SizedBox(height: 20),
+              const Icon(
                 Icons.money,
                 color: Color(0xFFB29BFF),
                 size: 48,
@@ -379,14 +393,14 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
           actions: [
             TextButton(
-              child: Text('Cancel', style: TextStyle(color: Color(0xFFB29BFF))),
+              child: const Text('Cancel', style: TextStyle(color: Color(0xFFB29BFF))),
               onPressed: () {
                 Navigator.of(context).pop();
               },
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: Color(0xFFB29BFF)),
-              child: Text('Confirm', style: TextStyle(color: Colors.white)),
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFB29BFF)),
+              child: const Text('Confirm', style: TextStyle(color: Colors.white)),
               onPressed: () {
                 Navigator.of(context).pop();
                 _handleCashPayment(planDetails);
@@ -398,7 +412,42 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Future _handleCashPayment(Map planDetails) async {
+  void _showPaymentMethodDialog(Map<String, dynamic> planDetails) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF2A2A2A),
+          title: Text('Select Payment Method for ${planDetails['name']}',
+              style: const TextStyle(color: Color(0xFFB29BFF))),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.money, color: Color(0xFFB29BFF)),
+                title: const Text('Cash', style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _showCashPaymentDialog(planDetails);
+                },
+              ),
+              // Other payment methods would go here for regular users
+            ],
+          ),
+          actions: [
+            TextButton(
+              child: const Text('Cancel', style: TextStyle(color: Color(0xFFB29BFF))),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _handleCashPayment(Map<String, dynamic> planDetails) async {
     User? currentUser = _auth.currentUser;
     if (currentUser == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -410,8 +459,8 @@ class _ProfilePageState extends State<ProfilePage> {
       // Calculate membership dates
       DateTime now = DateTime.now();
       DateTime endDate = planDetails['typeKey'] == 'premium'
-          ? now.add(Duration(days: 365))  // 1 year for premium
-          : now.add(Duration(days: 30));  // 1 month for standard
+          ? now.add(const Duration(days: 365)) // 1 year for premium
+          : now.add(const Duration(days: 30)); // 1 month for standard
 
       // Format dates for Firestore
       String startDateFormatted = DateFormat('dd / MM / yyyy').format(now);
@@ -436,7 +485,6 @@ class _ProfilePageState extends State<ProfilePage> {
 
       // Refresh user data to show updated membership status
       _fetchUserData();
-
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -446,8 +494,6 @@ class _ProfilePageState extends State<ProfilePage> {
       );
     }
   }
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -516,7 +562,6 @@ class _ProfilePageState extends State<ProfilePage> {
     String membershipTitle = (membershipStatus == 'active' || membershipStatus == 'pending_approval')
         ? 'View Membership'
         : 'Join Membership';
-    bool isTraineeRole = userRole == 'Self Trainee' || userRole == 'Trainee';
 
     return Scaffold(
       backgroundColor: const Color(0xFF1E1E1E),
@@ -608,7 +653,9 @@ class _ProfilePageState extends State<ProfilePage> {
                     );
                   },
                 ),
-                if (userRole != 'Trainer' && (userRole == 'Trainee' || membershipStatus != 'active'))                  _buildProfileMenuItem(
+                // Show membership option only for Trainee, not for Self Trainee
+                if (userRole == 'Trainee')
+                  _buildProfileMenuItem(
                     icon: Icons.card_membership,
                     title: membershipTitle,
                     onTap: _showMembershipDialog,
@@ -635,6 +682,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     }
                   },
                 ),
+                // Rest of the menu items remain unchanged
                 _buildProfileMenuItem(
                   icon: Icons.settings_outlined,
                   title: 'Settings',

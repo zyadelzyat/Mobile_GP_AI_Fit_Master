@@ -63,7 +63,8 @@ class _DetailedProfilePageState extends State<DetailedProfilePage> {
 
   bool _canViewMembership() {
     final role = widget.userData['role']?.toString().toLowerCase() ?? '';
-    return role == 'self-trainee' || role == 'trainee';
+    // Only return true for 'trainee', not for 'self-trainee'
+    return role == 'trainee';
   }
 
   bool _canEditMembership() {
@@ -494,7 +495,6 @@ class _DetailedProfilePageState extends State<DetailedProfilePage> {
                 _buildLabel('Coach'), // Keep the UI label as 'Coach'
                 _buildTextField(coach), // Display the fetched coach name
               ],
-              // Membership Section (conditionally shown)
               if (_canViewMembership()) ...[
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 24, 16, 8), // Add space before buttons
@@ -504,13 +504,13 @@ class _DetailedProfilePageState extends State<DetailedProfilePage> {
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(vertical: 15),
                       decoration: BoxDecoration(
-                          color: const Color(0xFF6A48F6), // Purple button
-                          borderRadius: BorderRadius.circular(8)
+                        color: const Color(0xFF6A48F6), // Purple button
+                        borderRadius: BorderRadius.circular(8)
                       ),
                       child: const Text(
-                          "View Membership Details",
-                          style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
-                          textAlign: TextAlign.center
+                        "View Membership Details",
+                        style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
+                        textAlign: TextAlign.center
                       ),
                     ),
                   ),
@@ -525,8 +525,8 @@ class _DetailedProfilePageState extends State<DetailedProfilePage> {
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(vertical: 15),
                         decoration: BoxDecoration(
-                            color: const Color(0xFFDFF233), // Yellow button
-                            borderRadius: BorderRadius.circular(8)
+                          color: const Color(0xFFDFF233), // Yellow button
+                          borderRadius: BorderRadius.circular(8)
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -534,8 +534,8 @@ class _DetailedProfilePageState extends State<DetailedProfilePage> {
                             Icon(Icons.add, color: Colors.black87, size: 20),
                             SizedBox(width: 8),
                             Text(
-                                "Add / Update Membership",
-                                style: TextStyle(color: Colors.black87, fontSize: 16, fontWeight: FontWeight.w600)
+                              "Add / Update Membership",
+                              style: TextStyle(color: Colors.black87, fontSize: 16, fontWeight: FontWeight.w600)
                             ),
                           ],
                         ),
