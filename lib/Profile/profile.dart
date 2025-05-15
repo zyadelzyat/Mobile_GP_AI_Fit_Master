@@ -310,7 +310,8 @@ class _ProfilePageState extends State<ProfilePage> {
           builder: (context, setDialogState) {
             return AlertDialog(
               backgroundColor: const Color(0xFF2A2A2A),
-              title: Text('Select Membership Plan', style: TextStyle(color: Color(0xFFB29BFF))),
+              title: Text('Select Membership Plan',
+                  style: TextStyle(color: Color(0xFFB29BFF))),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: _membershipPlans.map((plan) {
@@ -354,28 +355,26 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   void _showPaymentMethodDialog(Map planDetails) {
-    String userRole = userData['role'] as String? ?? '';
-    bool isTraineeRole = userRole == 'Self Trainee' || userRole == 'Trainee';
-
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           backgroundColor: const Color(0xFF2A2A2A),
-          title: Text('Choose Payment Method for ${planDetails['name']}',
+          title: Text('Confirm Cash Payment for ${planDetails['name']}',
               style: TextStyle(color: Color(0xFFB29BFF))),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              ListTile(
-                leading: Icon(Icons.money, color: Color(0xFFB29BFF)),
-                title: Text('Pay with Cash', style: TextStyle(color: Colors.white)),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  _handleCashPayment(planDetails);
-                },
+              Text(
+                'You will pay \$${planDetails['price'].toStringAsFixed(2)} in cash. Your membership will be pending until payment is confirmed.',
+                style: TextStyle(color: Colors.white),
               ),
-              // Only show card payment option for non-trainee roles
+              SizedBox(height: 20),
+              Icon(
+                Icons.money,
+                color: Color(0xFFB29BFF),
+                size: 48,
+              ),
             ],
           ),
           actions: [
@@ -383,6 +382,14 @@ class _ProfilePageState extends State<ProfilePage> {
               child: Text('Cancel', style: TextStyle(color: Color(0xFFB29BFF))),
               onPressed: () {
                 Navigator.of(context).pop();
+              },
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Color(0xFFB29BFF)),
+              child: Text('Confirm', style: TextStyle(color: Colors.white)),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _handleCashPayment(planDetails);
               },
             ),
           ],
@@ -398,21 +405,44 @@ class _ProfilePageState extends State<ProfilePage> {
           const SnackBar(content: Text('You need to be logged in.')));
       return;
     }
+
     try {
+      // Calculate membership dates
+      DateTime now = DateTime.now();
+      DateTime endDate = planDetails['typeKey'] == 'premium'
+          ? now.add(Duration(days: 365))  // 1 year for premium
+          : now.add(Duration(days: 30));  // 1 month for standard
+
+      // Format dates for Firestore
+      String startDateFormatted = DateFormat('dd / MM / yyyy').format(now);
+      String endDateFormatted = DateFormat('dd / MM / yyyy').format(endDate);
+
       await _firestore.collection('users').doc(currentUser.uid).update({
         'membershipType': planDetails['typeKey'],
-        'membershipPrice': planDetails['price'],
-        'membershipPaymentType': 'cash',
+        'membershipPrice': '\$${planDetails['price'].toStringAsFixed(2)}',
+        'paymentType': 'cash',
+        'membershipStart': startDateFormatted,
+        'membershipEnd': endDateFormatted,
         'membershipStatus': 'pending_approval',
-        'updatedAt': FieldValue.serverTimestamp(),
+        'membershipUpdatedAt': FieldValue.serverTimestamp(),
       });
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Cash payment request submitted. Admin will review.')),
+        const SnackBar(
+          content: Text('Cash payment request submitted. Admin will review.'),
+          backgroundColor: Colors.green,
+        ),
       );
+
+      // Refresh user data to show updated membership status
       _fetchUserData();
+
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to process cash payment: $e')),
+        SnackBar(
+          content: Text('Failed to process cash payment: $e'),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }
@@ -578,8 +608,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     );
                   },
                 ),
-                if (userRole != 'Trainer' && (!isTraineeRole || membershipStatus != 'active'))
-                  _buildProfileMenuItem(
+                if (userRole != 'Trainer' && (userRole == 'Trainee' || membershipStatus != 'active'))                  _buildProfileMenuItem(
                     icon: Icons.card_membership,
                     title: membershipTitle,
                     onTap: _showMembershipDialog,
