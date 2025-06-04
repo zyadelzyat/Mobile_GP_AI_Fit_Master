@@ -48,32 +48,30 @@ class _HomePageState extends State<HomePage> {
       'label': 'Products',
       'route': 'SupplementsStore',
     },
+    {
+      'iconAsset': 'assets/icons/youtube.png',
+      'label': 'YouTube Workout',
+      'route': 'YT_Channel',
+    },
   ];
 
   List<Map<String, dynamic>> get _filteredCategories {
     List<Map<String, dynamic>> categories = List.from(_baseCategories);
     if (_userData.containsKey('role')) {
       final String userRole = _userData['role'] as String? ?? '';
-      if (userRole == 'Self-Trainee' || userRole == 'Trainer') {
+      if (userRole == 'Self-Trainee') {
+        // Remove both Workout and Nutrition categories for Self-Trainee
+        categories.removeWhere((category) =>
+        category['label'] == 'Nutrition' || category['label'] == 'Workout');
+      } else if (userRole == 'Trainer') {
+        // Remove only Nutrition category for Trainer
         categories.removeWhere((category) => category['label'] == 'Nutrition');
-        // ...rest of your logic for Self-Trainee (e.g. YT_Workout)
-        if (userRole == 'Self-Trainee') {
-          categories = categories.map((category) {
-            if (category['label'] == 'Workout') {
-              return {
-                'iconAsset': 'assets/icons/youtube.png',
-                'label': 'YT_Workout',
-                'route': 'YT_Channel',
-              };
-            }
-            return category;
-          }).toList();
-        }
       }
-      // For Trainee, do not remove Nutrition
+      // For Trainee, keep all categories including both Workout and YouTube Workout
     }
     return categories;
   }
+
   List<Map<String, dynamic>> _workouts = [
     {
       'title': '3 Tips For Beginners',
@@ -289,7 +287,14 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildCategoryIcon(String iconAsset, String label, int index) {
-    String displayLabel = (label == 'YT_Workout') ? 'Workout' : label;
+    String displayLabel = label;
+    // Handle display labels for different workout types
+    if (label == 'YT_Workout') {
+      displayLabel = 'Workout';
+    } else if (label == 'YouTube Workout') {
+      displayLabel = 'YouTube Workout';
+    }
+
     return GestureDetector(
       onTap: () {
         if (!mounted) return;
@@ -319,6 +324,8 @@ class _HomePageState extends State<HomePage> {
             displayLabel,
             style: const TextStyle(color: Colors.white70, fontSize: 12),
             textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
@@ -616,8 +623,10 @@ class _HomePageState extends State<HomePage> {
             if (_filteredCategories.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-                child: Row(
-                  mainAxisAlignment: _filteredCategories.length > 3 ? MainAxisAlignment.spaceBetween : MainAxisAlignment.spaceAround,
+                child: Wrap(
+                  spacing: 16,
+                  runSpacing: 16,
+                  alignment: WrapAlignment.spaceEvenly,
                   children: List.generate(_filteredCategories.length, (index) {
                     final category = _filteredCategories[index];
                     return _buildCategoryIcon(category['iconAsset'] as String, category['label'] as String, index);
