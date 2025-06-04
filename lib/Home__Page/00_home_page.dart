@@ -736,82 +736,84 @@ class _HomePageState extends State<HomePage> {
       body: SafeArea(child: mainContent),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: Color(0xFFB29BFF),
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(30),
-            topRight: Radius.circular(30),
-          ),
+          color: const Color(0xFFB29BFF),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.2),
-              blurRadius: 8,
-              spreadRadius: 0,
-              offset: Offset(0, -2),
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 15,
+              spreadRadius: 2,
+              offset: const Offset(0, -5),
             ),
           ],
         ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(30),
-            topRight: Radius.circular(30),
-          ),
-          child: BottomNavigationBar(
-            currentIndex: _currentNavIndex,
-            onTap: (index) {
-              if (!mounted) return;
-              if (index == 1) {
-                // Get favorite workouts from the current state
-                List<Map<String, dynamic>> favoriteWorkouts = _workouts
-                    .where((workout) => workout['isFavorite'] == true)
-                    .toList();
-
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => FavoritesPage(favoriteRecipes: favoriteWorkouts)
-                    )
-                ).then((_) {
-                  if (mounted) {
-                    setState(() {
-                      _currentNavIndex = 0;
-                    });
-                  }
-                });
-              } else {
-                setState(() {
-                  _currentNavIndex = index;
-                });
-              }
-            },
-            backgroundColor: const Color(0xFFB29BFF),
-            selectedItemColor: Colors.white,
-            unselectedItemColor: Colors.white70,
-            type: BottomNavigationBarType.fixed,
-            showSelectedLabels: false,
-            showUnselectedLabels: false,
-            elevation: 0,
-            iconSize: 26,
-            items: const [
-              BottomNavigationBarItem(
-                icon: ImageIcon(AssetImage('assets/icons/home.png')),
-                label: 'Home',
+        child: BottomNavigationBar(
+          currentIndex: _currentNavIndex,
+          onTap: (index) {
+            if (!mounted) return;
+            if (index == 1) {
+              List<Map<String, dynamic>> favoriteWorkouts = _workouts
+                  .where((workout) => workout['isFavorite'] == true)
+                  .toList();
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => FavoritesPage(favoriteRecipes: favoriteWorkouts),
+                ),
+              ).then((_) {
+                if (mounted) {
+                  setState(() {
+                    _currentNavIndex = 0;
+                  });
+                }
+              });
+            } else {
+              setState(() {
+                _currentNavIndex = index;
+              });
+            }
+          },
+          backgroundColor: Colors.transparent,
+          selectedItemColor: Colors.white,
+          unselectedItemColor: Colors.white60,
+          type: BottomNavigationBarType.fixed,
+          showSelectedLabels: false,
+          showUnselectedLabels: false,
+          elevation: 0,
+          iconSize: 28,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: ImageIcon(AssetImage('assets/icons/home.png')),
               ),
-              BottomNavigationBarItem(
-                icon: ImageIcon(AssetImage('assets/icons/fav.png')),
-                label: 'Favorites',
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: ImageIcon(AssetImage('assets/icons/fav.png')),
               ),
-              BottomNavigationBarItem(
-                icon: ImageIcon(AssetImage('assets/icons/chat.png')),
-                label: 'Chat',
+              label: 'Favorites',
+            ),
+            BottomNavigationBarItem(
+              icon: Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: ImageIcon(AssetImage('assets/icons/chat.png')),
               ),
-              BottomNavigationBarItem(
-                icon: ImageIcon(AssetImage('assets/icons/User.png')),
-                label: 'Profile',
+              label: 'Chat',
+            ),
+            BottomNavigationBarItem(
+              icon: Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: ImageIcon(AssetImage('assets/icons/User.png')),
               ),
-            ],
-          ),
+              label: 'Profile',
+            ),
+          ],
         ),
       ),
+
+
     );
 
   }
