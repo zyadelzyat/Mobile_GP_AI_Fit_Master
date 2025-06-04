@@ -1,17 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:untitled/Profile/profile.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:untitled/Profile/profile.dart';
+import 'package:untitled/AI/chatbot.dart';
+import '00_home_page.dart';
 
-class FavoritesPage extends StatelessWidget {
+class FavoritesPage extends StatefulWidget {
   final List<Map<String, dynamic>> favoriteRecipes;
+  const FavoritesPage({required this.favoriteRecipes, Key? key}) : super(key: key);
 
-  FavoritesPage({required this.favoriteRecipes});
+  @override
+  _FavoritesPageState createState() => _FavoritesPageState();
+}
 
+class _FavoritesPageState extends State<FavoritesPage> {
+  int _currentNavIndex = 1; // Set to 1 since this is the Favorites tab
   final Color darkBackground = const Color(0xFF1E1E1E);
   final Color darkCard = const Color(0xFF2A2A2A);
   final Color accentColor = const Color(0xFF896CFE);
   final Color yellowAccent = const Color(0xFFE2F163);
+
+  Future<void> _launchVideo(String url) async {
+    final Uri uri = Uri.parse(url);
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      }
+    } catch (e) {
+      print('Could not launch $url: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,28 +47,27 @@ class FavoritesPage extends StatelessWidget {
           ),
         ),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
             Navigator.pop(context);
           },
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.search, color: Colors.white),
+            icon: const Icon(Icons.search, color: Colors.white),
             onPressed: () {
-              // Implement search functionality
+              // Implement search functionality if needed
             },
           ),
           IconButton(
-            icon: Icon(Icons.notifications_outlined, color: Colors.white),
+            icon: const Icon(Icons.notifications_outlined, color: Colors.white),
             onPressed: () {
-              // Implement notification functionality
+              // Implement notification functionality if needed
             },
           ),
           IconButton(
-            icon: Icon(Icons.person_outline, color: Colors.white),
+            icon: const Icon(Icons.person_outline, color: Colors.white),
             onPressed: () {
-              // Navigate to profile page
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -63,7 +80,7 @@ class FavoritesPage extends StatelessWidget {
           ),
         ],
       ),
-      body: favoriteRecipes.isEmpty
+      body: widget.favoriteRecipes.isEmpty
           ? Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -73,8 +90,8 @@ class FavoritesPage extends StatelessWidget {
               size: 80,
               color: Colors.grey[700],
             ),
-            SizedBox(height: 16),
-            Text(
+            const SizedBox(height: 16),
+            const Text(
               "No favorites yet!",
               style: TextStyle(
                 color: Colors.white70,
@@ -82,8 +99,8 @@ class FavoritesPage extends StatelessWidget {
                 fontWeight: FontWeight.w500,
               ),
             ),
-            SizedBox(height: 8),
-            Text(
+            const SizedBox(height: 8),
+            const Text(
               "Add workouts to your favorites to see them here",
               style: TextStyle(color: Colors.grey, fontSize: 14),
               textAlign: TextAlign.center,
@@ -93,9 +110,9 @@ class FavoritesPage extends StatelessWidget {
       )
           : ListView.builder(
         padding: const EdgeInsets.all(16),
-        itemCount: favoriteRecipes.length,
+        itemCount: widget.favoriteRecipes.length,
         itemBuilder: (context, index) {
-          final recipe = favoriteRecipes[index];
+          final recipe = widget.favoriteRecipes[index];
           return Container(
             margin: const EdgeInsets.only(bottom: 16),
             decoration: BoxDecoration(
@@ -171,7 +188,7 @@ class FavoritesPage extends StatelessWidget {
                         padding: const EdgeInsets.all(4),
                         child: Icon(
                           Icons.star_rounded,
-                          color: Colors.yellowAccent,
+                          color: yellowAccent,
                           size: 20,
                         ),
                       ),
@@ -259,17 +276,99 @@ class FavoritesPage extends StatelessWidget {
           );
         },
       ),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFFB29BFF),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 15,
+              spreadRadius: 2,
+              offset: const Offset(0, -5),
+            ),
+          ],
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _currentNavIndex,
+          onTap: (index) {
+            if (!mounted) return;
+            if (index == _currentNavIndex) return;
+            switch (index) {
+              case 0:
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const HomePage()),
+                );
+                break;
+              case 1:
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => FavoritesPage(favoriteRecipes: widget.favoriteRecipes),
+                  ),
+                );
+                break;
+              case 2:
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ChatPage()),
+                );
+                break;
+              case 3:
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ProfilePage(
+                      userId: FirebaseAuth.instance.currentUser?.uid ?? '',
+                    ),
+                  ),
+                );
+                break;
+            }
+            setState(() {
+              _currentNavIndex = index;
+            });
+          },
+          backgroundColor: Colors.transparent,
+          selectedItemColor: Colors.white,
+          unselectedItemColor: Colors.white60,
+          type: BottomNavigationBarType.fixed,
+          showSelectedLabels: false,
+          showUnselectedLabels: false,
+          elevation: 0,
+          iconSize: 28,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: ImageIcon(AssetImage('assets/icons/home.png')),
+              ),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: ImageIcon(AssetImage('assets/icons/fav.png')),
+              ),
+              label: 'Favorites',
+            ),
+            BottomNavigationBarItem(
+              icon: Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: ImageIcon(AssetImage('assets/icons/chat.png')),
+              ),
+              label: 'Chat',
+            ),
+            BottomNavigationBarItem(
+              icon: Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: ImageIcon(AssetImage('assets/icons/User.png')),
+              ),
+              label: 'Profile',
+            ),
+          ],
+        ),
+      ),
     );
-  }
-
-  Future<void> _launchVideo(String url) async {
-    final Uri uri = Uri.parse(url);
-    try {
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      }
-    } catch (e) {
-      print('Could not launch $url: $e');
-    }
   }
 }
