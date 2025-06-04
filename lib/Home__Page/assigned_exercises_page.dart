@@ -3,7 +3,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:untitled/AI/chatbot.dart'; // For ChatPage
+import '../Profile/profile.dart';
 import '../Store/Store.dart'; // For SupplementsStorePage
+import '00_home_page.dart';
+import 'favorite_page.dart';
 
 class AssignedExercisesPage extends StatefulWidget {
   const AssignedExercisesPage({Key? key}) : super(key: key);
@@ -13,6 +16,7 @@ class AssignedExercisesPage extends StatefulWidget {
 }
 
 class _AssignedExercisesPageState extends State<AssignedExercisesPage> {
+  int _currentNavIndex = 0;
   bool _isRefreshing = false;
   int _selectedWeekIndex = 0; // 0: Week 1, 1: Week 2, 2: Week 3, 3: Week 4
   final List<String> _weekOptions = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
@@ -263,64 +267,100 @@ class _AssignedExercisesPageState extends State<AssignedExercisesPage> {
           ],
         ),
       ),
-        bottomNavigationBar: Container(
-          decoration: BoxDecoration(
-            color: const Color(0xFFB3A0FF),
-            borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(20),
-                topRight: Radius.circular(20)
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFFB29BFF),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 15,
+              spreadRadius: 2,
+              offset: const Offset(0, -5),
             ),
-            boxShadow: [
-              BoxShadow(
-                  color: Colors.black.withOpacity(0.3),
-                  blurRadius: 10,
-                  spreadRadius: 1
-              )
-            ],
-          ),
-          child: BottomNavigationBar(
-            currentIndex: 0,
-            onTap: (index) {
-              if (index == 1) {
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const SupplementsStorePage())
+          ],
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _currentNavIndex,
+          onTap: (index) {
+            if (!mounted) return;
+            if (index == _currentNavIndex) return;
+            switch (index) {
+              case 0:
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const HomePage()),
                 );
-              } else if (index == 0) {
-                Navigator.pop(context); // Return to home page
-              } else if (index == 2) {
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const ChatPage())
+                break;
+              case 1:
+                List<Map<String, dynamic>> favoriteWorkouts = []; // Placeholder
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => FavoritesPage(favoriteRecipes: favoriteWorkouts),
+                  ),
                 );
-              }
-            },
-            backgroundColor: Colors.transparent,
-            selectedItemColor: Colors.white,
-            unselectedItemColor: Colors.white.withOpacity(0.6),
-            type: BottomNavigationBarType.fixed,
-            showSelectedLabels: false,
-            showUnselectedLabels: false,
-            elevation: 0,
-            items: const [
-              BottomNavigationBarItem(
-                  icon: Icon(Icons.home_outlined),
-                  activeIcon: Icon(Icons.home),
-                  label: 'Home'
+                break;
+              case 2:
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ChatPage()),
+                );
+                break;
+              case 3:
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ProfilePage(
+                      userId: FirebaseAuth.instance.currentUser?.uid ?? '',
+                    ),
+                  ),
+                );
+                break;
+            }
+            setState(() {
+              _currentNavIndex = index;
+            });
+          },
+          backgroundColor: Colors.transparent,
+          selectedItemColor: Colors.white,
+          unselectedItemColor: Colors.white60,
+          type: BottomNavigationBarType.fixed,
+          showSelectedLabels: false,
+          showUnselectedLabels: false,
+          elevation: 0,
+          iconSize: 28,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: ImageIcon(AssetImage('assets/icons/home.png')),
               ),
-              BottomNavigationBarItem(
-                  icon: Icon(Icons.shopping_bag_outlined),
-                  activeIcon: Icon(Icons.shopping_bag),
-                  label: 'Store'
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: ImageIcon(AssetImage('assets/icons/fav.png')),
               ),
-              BottomNavigationBarItem(
-                  icon: Icon(Icons.chat_bubble_outline),
-                  activeIcon: Icon(Icons.chat_bubble),
-                  label: 'Chat'
+              label: 'Favorites',
+            ),
+            BottomNavigationBarItem(
+              icon: Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: ImageIcon(AssetImage('assets/icons/chat.png')),
               ),
-            ],
-          ),
-        )
+              label: 'Chat',
+            ),
+            BottomNavigationBarItem(
+              icon: Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: ImageIcon(AssetImage('assets/icons/User.png')),
+              ),
+              label: 'Profile',
+            ),
+          ],
+        ),
+      ),
     );
   }
 
