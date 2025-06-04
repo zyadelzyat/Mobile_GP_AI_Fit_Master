@@ -14,6 +14,7 @@ class CalorieCalculator extends StatefulWidget {
 }
 
 class _CalorieCalculatorState extends State<CalorieCalculator> {
+  int _currentNavIndex = 0;
   final _weightController = TextEditingController(text: "95");
   final _heightController = TextEditingController(text: "166");
   final _ageController = TextEditingController(text: "21");
@@ -448,49 +449,97 @@ class _CalorieCalculatorState extends State<CalorieCalculator> {
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: const Color(0xFFB29BFF),
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
-          ),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.3),
-              blurRadius: 10,
-              spreadRadius: 1,
+              blurRadius: 15,
+              spreadRadius: 2,
+              offset: const Offset(0, -5),
             ),
           ],
         ),
         child: BottomNavigationBar(
-          currentIndex: _selectedIndex,
-          onTap: _onItemTapped,
+          currentIndex: _currentNavIndex,
+          onTap: (index) {
+            if (!mounted) return;
+            if (index == _currentNavIndex) return;
+            switch (index) {
+              case 0:
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const HomePage()),
+                );
+                break;
+              case 1:
+                List<Map<String, dynamic>> favoriteWorkouts = []; // Placeholder, adjust if accessible
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => FavoritesPage(favoriteRecipes: favoriteWorkouts),
+                  ),
+                );
+                break;
+              case 2:
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ChatPage()),
+                );
+                break;
+              case 3:
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ProfilePage(
+                      userId: FirebaseAuth.instance.currentUser?.uid ?? '',
+                    ),
+                  ),
+                );
+                break;
+            }
+            setState(() {
+              _currentNavIndex = index;
+            });
+          },
           backgroundColor: Colors.transparent,
           selectedItemColor: Colors.white,
-          unselectedItemColor: Colors.white70,
+          unselectedItemColor: Colors.white60,
           type: BottomNavigationBarType.fixed,
           showSelectedLabels: false,
           showUnselectedLabels: false,
           elevation: 0,
+          iconSize: 28,
           items: const [
             BottomNavigationBarItem(
-              icon: ImageIcon(AssetImage('assets/icons/home.png')),
+              icon: Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: ImageIcon(AssetImage('assets/icons/home.png')),
+              ),
               label: 'Home',
             ),
             BottomNavigationBarItem(
-              icon: ImageIcon(AssetImage('assets/icons/store.png')),
-              label: 'Store',
+              icon: Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: ImageIcon(AssetImage('assets/icons/fav.png')),
+              ),
+              label: 'Favorites',
             ),
             BottomNavigationBarItem(
-              icon: ImageIcon(AssetImage('assets/icons/chat.png')),
+              icon: Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: ImageIcon(AssetImage('assets/icons/chat.png')),
+              ),
               label: 'Chat',
             ),
             BottomNavigationBarItem(
-              icon: ImageIcon(AssetImage('assets/icons/profile.png')),
+              icon: Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: ImageIcon(AssetImage('assets/icons/User.png')),
+              ),
               label: 'Profile',
             ),
           ],
         ),
       ),
-
     );
   }
 }
