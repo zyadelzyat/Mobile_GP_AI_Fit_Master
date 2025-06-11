@@ -78,8 +78,6 @@ class _HomePageState extends State<HomePage> {
       'image': 'assets/workout1.jpg',
       'color': Colors.purple,
       'videoUrl': 'https://youtube.com/shorts/ajWEUdlbMOA?si=2N01glDn192AaGv6',
-      'duration': '12 Minutes',
-      'calories': '120 Kcal',
       'isFavorite': false,
     },
     {
@@ -87,8 +85,6 @@ class _HomePageState extends State<HomePage> {
       'image': 'assets/workout2.jpg',
       'color': Colors.blue,
       'videoUrl': 'https://www.youtube.com/watch?v=3sH7wbIZjEY',
-      'duration': '12 Minutes',
-      'calories': '120 Kcal',
       'isFavorite': false,
     },
   ];

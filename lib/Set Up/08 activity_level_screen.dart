@@ -38,7 +38,10 @@ class _ActivityLevelScreenState extends State<ActivityLevelScreen> {
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${e.toString()}')),
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
       );
     }
   }
@@ -46,22 +49,26 @@ class _ActivityLevelScreenState extends State<ActivityLevelScreen> {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final theme = Theme.of(context);
     final isDarkMode = themeProvider.themeMode == ThemeMode.dark;
 
     return Scaffold(
-      backgroundColor: isDarkMode ? const Color(0xFF232323) : Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: isDarkMode ? const Color(0xFF232323) : Colors.white,
+        backgroundColor: theme.appBarTheme.backgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: isDarkMode ? Colors.white : Colors.black),
+          icon: Icon(
+            Icons.arrow_back,
+            color: theme.appBarTheme.iconTheme?.color ?? Colors.white,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
           IconButton(
             icon: Icon(
               isDarkMode ? Icons.light_mode : Icons.dark_mode,
-              color: isDarkMode ? Colors.white : Colors.black,
+              color: theme.appBarTheme.iconTheme?.color ?? Colors.white,
             ),
             onPressed: () => themeProvider.toggleTheme(),
           ),
@@ -75,7 +82,7 @@ class _ActivityLevelScreenState extends State<ActivityLevelScreen> {
             Text(
               "Physical Activity Level",
               style: TextStyle(
-                color: isDarkMode ? Colors.white : Colors.black,
+                color: theme.textTheme.headlineLarge?.color,
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),
@@ -84,7 +91,7 @@ class _ActivityLevelScreenState extends State<ActivityLevelScreen> {
             Text(
               "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
               style: TextStyle(
-                color: isDarkMode ? Colors.grey : Colors.black54,
+                color: theme.textTheme.bodyMedium?.color,
                 fontSize: 14,
               ),
             ),
@@ -118,20 +125,33 @@ class _ActivityLevelScreenState extends State<ActivityLevelScreen> {
               child: ElevatedButton(
                 onPressed: _saveActivityLevel,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: isDarkMode ? Colors.grey[800] : Colors.white,
+                  backgroundColor: theme.brightness == Brightness.light
+                      ? Colors.white
+                      : const Color(0xFF232323), // Your requested dark mode color
+                  foregroundColor: theme.textTheme.bodyLarge?.color,
+                  minimumSize: const Size(double.infinity, 48),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(24),
+                    side: BorderSide(
+                      color: theme.brightness == Brightness.light
+                          ? Colors.black12
+                          : Colors.white24,
+                      width: 1,
+                    ),
                   ),
-                  padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 100),
+                  elevation: 0,
                 ),
                 child: Text(
                   "Continue",
                   style: TextStyle(
-                    color: isDarkMode ? Colors.white : Colors.black,
+                    color: theme.brightness == Brightness.light
+                        ? Colors.black
+                        : Colors.white, // White text on dark background
                     fontSize: 16,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-              ),
+              )
             ),
           ],
         ),

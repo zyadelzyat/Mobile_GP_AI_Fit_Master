@@ -20,7 +20,6 @@ class _GoalSelectionScreenState extends State<GoalSelectionScreen> {
   Future<void> _saveGoal() async {
     try {
       if (_selectedGoal == null) throw Exception('Please select a goal');
-
       User? user = _auth.currentUser;
       if (user == null) throw Exception('User not authenticated');
 
@@ -35,7 +34,10 @@ class _GoalSelectionScreenState extends State<GoalSelectionScreen> {
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${e.toString()}')),
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
       );
     }
   }
@@ -43,22 +45,26 @@ class _GoalSelectionScreenState extends State<GoalSelectionScreen> {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final theme = Theme.of(context);
     final isDarkMode = themeProvider.themeMode == ThemeMode.dark;
 
     return Scaffold(
-      backgroundColor: isDarkMode ? const Color(0xFF232323) : Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: isDarkMode ? const Color(0xFF232323) : Colors.white,
+        backgroundColor: theme.appBarTheme.backgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: isDarkMode ? Colors.white : Colors.black),
+          icon: Icon(
+            Icons.arrow_back,
+            color: theme.appBarTheme.iconTheme?.color ?? Colors.white,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
           IconButton(
             icon: Icon(
               isDarkMode ? Icons.light_mode : Icons.dark_mode,
-              color: isDarkMode ? Colors.white : Colors.black,
+              color: theme.appBarTheme.iconTheme?.color ?? Colors.white,
             ),
             onPressed: () => themeProvider.toggleTheme(),
           ),
@@ -72,7 +78,7 @@ class _GoalSelectionScreenState extends State<GoalSelectionScreen> {
             Text(
               "What Is Your Goal?",
               style: TextStyle(
-                color: isDarkMode ? Colors.white : Colors.black,
+                color: theme.textTheme.headlineLarge?.color,
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),
@@ -81,7 +87,7 @@ class _GoalSelectionScreenState extends State<GoalSelectionScreen> {
             Text(
               "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
               style: TextStyle(
-                color: isDarkMode ? Colors.grey : Colors.black54,
+                color: theme.textTheme.bodyMedium?.color,
                 fontSize: 14,
               ),
             ),
@@ -127,17 +133,30 @@ class _GoalSelectionScreenState extends State<GoalSelectionScreen> {
               child: ElevatedButton(
                 onPressed: _saveGoal,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: isDarkMode ? Colors.grey[800] : Colors.white,
+                  backgroundColor: theme.brightness == Brightness.light
+                      ? Colors.white
+                      : const Color(0xFF232323), // Your requested dark mode color
+                  foregroundColor: theme.textTheme.bodyLarge?.color,
+                  minimumSize: const Size(double.infinity, 48),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(24),
+                    side: BorderSide(
+                      color: theme.brightness == Brightness.light
+                          ? Colors.black12
+                          : Colors.white24,
+                      width: 1,
+                    ),
                   ),
-                  padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 100),
+                  elevation: 0,
                 ),
                 child: Text(
                   "Continue",
                   style: TextStyle(
-                    color: isDarkMode ? Colors.white : Colors.black,
+                    color: theme.brightness == Brightness.light
+                        ? Colors.black
+                        : Colors.white, // White text on dark background
                     fontSize: 16,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
@@ -155,7 +174,8 @@ class GoalOption extends StatelessWidget {
   final VoidCallback onTap;
   final bool isDarkMode;
 
-  const GoalOption({super.key,
+  const GoalOption({
+    super.key,
     required this.title,
     required this.isSelected,
     required this.onTap,
@@ -171,7 +191,9 @@ class GoalOption extends StatelessWidget {
         child: Container(
           height: 60,
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFFE2F163) : (isDarkMode ? Colors.grey[800] : Colors.grey[200]),
+            color: isSelected
+                ? const Color(0xFFE2F163)
+                : (isDarkMode ? Colors.grey[800] : Colors.grey[200]),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Center(
@@ -189,3 +211,4 @@ class GoalOption extends StatelessWidget {
     );
   }
 }
+
