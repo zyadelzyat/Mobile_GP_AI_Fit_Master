@@ -155,16 +155,43 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
     });
   }
 
+  void _confirmCashPayment(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Confirm Cash Payment"),
+        content: const Text("Are you sure you want to proceed with cash payment?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context); // إغلاق الديالوج
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Order placed successfully (Cash Payment)")),
+              );
+              clearCart(); // تفريغ السلة
+              Navigator.pop(context); // العودة للشاشة السابقة (اختياري)
+            },
+            child: const Text("Confirm", style: TextStyle(color: Colors.green)),
+
+          ),
+        ],
+      ),
+    );
+  }
   // تفريغ السلة
   void clearCart() {
-    // Optionally restore stock counts for all items in cart
+    // استعادة الكمية للمنتجات (اختياري)
     cart.forEach((product, quantity) {
       _firestore.collection('products').doc(product.id).update({
-        'stock': FieldValue.increment(quantity)
+        'stock': FieldValue.increment(quantity),
       });
     });
 
-    setState(() {
+    setState(() {  // ← هذا يجعل الواجهة تُحدث نفسها
       cart.clear();
     });
   }
@@ -397,28 +424,38 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
                             ),
                             const SizedBox(height: 24),
                             // Submit button
-                            ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFE2F163),
-                                foregroundColor: Colors.black,
-                                minimumSize: const Size(double.infinity, 50),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
-                              onPressed: () {
-                                // Validate and process payment
-                                Navigator.pop(context);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Payment successful!')),
-                                );
-                                clearCart();
-                              },
-                              child: const Text(
-                                'Submit',
-                                style: TextStyle(fontSize: 16),
-                              ),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFE2F163),
+                            foregroundColor: Colors.black,
+                            minimumSize: const Size(double.infinity, 50),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
                             ),
+                          ),
+                          onPressed: () {
+                            // 1. تحقق من صحة بيانات الدفع (يمكن إضافة المزيد من التحقق هنا)
+                            if (cardNumberController.text.isEmpty ||
+                                cardHolderController.text.isEmpty ||
+                                expiryDateController.text.isEmpty ||
+                                cvvController.text.isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Please fill all payment details')),
+                              );
+                              return;
+                            }
+
+                            // 2. إذا كانت البيانات صحيحة، نفذ الدفع
+                            Navigator.pop(context); // أغلق شاشة الدفع
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Payment successful!')),
+                            );
+
+                            // 3. **أضف هذا السطر لتفريغ العربة بعد الدفع**
+                            clearCart(); // ← هذا هو الحل
+                          },
+                          child: const Text('Submit', style: TextStyle(fontSize: 16)),
+                        ),
                           ],
                         ),
                       ),
@@ -426,6 +463,7 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
                   ),
                 ),
               ),
+
               // Bottom navigation
               Container(
                 padding: const EdgeInsets.symmetric(vertical: 12),
@@ -468,6 +506,7 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
       ),
     );
   }
+
 
   // Show product details screen
   void showProductDetails(Product product) {
@@ -924,6 +963,27 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
                           style: TextStyle(fontSize: 18),
                         ),
                       ),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green, // لون مختلف للتمييز
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          minimumSize: const Size(double.infinity, 50),
+                        ),
+                        onPressed: () {
+                          // تأكيد الطلب مع الدفع نقدًا
+                          _confirmCashPayment(context);
+                        },
+                        child: const Text(
+                          'Pay With Cash',
+                          style: TextStyle(fontSize: 18),
+                        ),
+                      ),
+
                       const SizedBox(height: 16),
                       // Total display
                       Container(

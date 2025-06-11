@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:untitled/Login___Signup/01_signin_screen.dart';
+import 'package:untitled/Store/Store.dart';
 import 'theme.dart';
 import 'theme_provider.dart';
 import 'Set Up/06 WeightSelectionScreen.dart';
@@ -63,7 +64,7 @@ class _GenderSelectionAppState extends State<GenderSelectionApp> {
       // home: const WeightSelectionScreen();
       // home: const GenderSelectionScreen(),
       // home:  SupplementsStorePage(),
-       home: const SignInScreen(),
+       home: const SupplementsStorePage(),
       // home : AdminDashboard(),
       // home : const HomePage(),
       // home : const AddRatingPage(),
