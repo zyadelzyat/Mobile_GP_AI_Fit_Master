@@ -514,31 +514,74 @@ class _AdminDashboardState extends State {
 
       ),
 
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: purpleColor.withOpacity(0.8),
-        selectedItemColor: Colors.white,
-        unselectedItemColor: Colors.white70,
-        currentIndex: _currentPageIndex == 0 ? 0 : (_currentPageIndex == 1 ? 2 : 1), // Updated logic
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-          BottomNavigationBarItem(icon: Icon(Icons.shopping_bag), label: "Products"), // Changed from Menu to Products
-          BottomNavigationBarItem(icon: Icon(Icons.people), label: "Users"),
-        ],
-        onTap: (index) {
-          if (index == 0) { // Home icon
-            setState(() {
-              _currentPageIndex = 0;
-            });
-          } else if (index == 1) { // Products icon
-            setState(() {
-              _currentPageIndex = 2; // Changed to match new index
-            });
-          } else if (index == 2) { // Users icon
-            setState(() {
-              _currentPageIndex = 1;
-            });
-          }
-        },
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFFB29BFF),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 15,
+              spreadRadius: 2,
+              offset: const Offset(0, -5),
+            ),
+          ],
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _currentPageIndex == 0 ? 0 : (_currentPageIndex == 1 ? 2 : 1),
+          onTap: (index) {
+            if (!mounted) return;
+            if (index == _currentPageIndex) return;
+
+            switch (index) {
+              case 0: // Home
+                setState(() {
+                  _currentPageIndex = 0;
+                });
+                break;
+              case 1: // Products
+                setState(() {
+                  _currentPageIndex = 2;
+                });
+                break;
+              case 2: // Users
+                setState(() {
+                  _currentPageIndex = 1;
+                });
+                break;
+            }
+          },
+          backgroundColor: Colors.transparent,
+          selectedItemColor: Colors.white,
+          unselectedItemColor: Colors.white60,
+          type: BottomNavigationBarType.fixed,
+          showSelectedLabels: false,
+          showUnselectedLabels: false,
+          elevation: 0,
+          iconSize: 28,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: Icon(Icons.home),
+              ),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: Icon(Icons.shopping_bag),
+              ),
+              label: 'Products',
+            ),
+            BottomNavigationBarItem(
+              icon: Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: Icon(Icons.people),
+              ),
+              label: 'Users',
+            ),
+          ],
+        ),
       ),
 
       floatingActionButton: _currentPageIndex == 2 // Changed from 3 to 2

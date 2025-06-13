@@ -211,4 +211,3 @@ class GoalOption extends StatelessWidget {
     );
   }
 }
-

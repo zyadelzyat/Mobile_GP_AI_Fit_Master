@@ -5,7 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:untitled/theme_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:email_validator/email_validator.dart'; // Add this package
+import 'package:email_validator/email_validator.dart';
 import 'dart:async';
 
 class SignUpScreen extends StatefulWidget {
@@ -45,13 +45,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
     setState(() {
       _loadingTrainers = true;
     });
-
     try {
       final querySnapshot = await FirebaseFirestore.instance
           .collection('users')
           .where('role', isEqualTo: 'Trainer')
           .get();
-
       setState(() {
         _availableTrainers = querySnapshot.docs
             .map((doc) => {
@@ -85,7 +83,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
       firstDate: DateTime(1900),
       lastDate: DateTime.now(),
     );
-
     if (pickedDate != null) {
       setState(() {
         _dobController.text = DateFormat('yyyy-MM-dd').format(pickedDate);
@@ -94,41 +91,30 @@ class _SignUpScreenState extends State<SignUpScreen> {
   }
 
   bool _isValidEmail(String email) {
-    // First check basic email format
     if (!EmailValidator.validate(email)) {
       return false;
     }
-
-    // Then check if it's a Gmail address
     return email.toLowerCase().endsWith('@gmail.com');
   }
 
-  // This function checks if the email exists by attempting to send a verification email
   Future<bool> _checkEmailExists(String email) async {
     try {
       setState(() {
         _isVerifyingEmail = true;
       });
-
-      // This will throw an error if the email doesn't exist in Firebase Auth
-      // We will use signInWithEmailAndPassword with an invalid password to check if email exists
-      // Note: This is a common technique but has limitations
       try {
         await FirebaseAuth.instance.signInWithEmailAndPassword(
           email: email,
           password: 'temporaryInvalidPassword123!',
         );
-        // If we get here, the email exists and the password was somehow correct (extremely unlikely)
         return true;
       } on FirebaseAuthException catch (e) {
         if (e.code == 'user-not-found') {
-          // Email doesn't exist in Firebase
           return false;
         } else if (e.code == 'wrong-password') {
-          // Email exists but password is wrong (which is expected)
           return true;
         }
-        return false; // Other errors
+        return false;
       }
     } finally {
       setState(() {
@@ -167,7 +153,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
       return false;
     }
 
-    // Check if the email exists
     bool emailExists = await _checkEmailExists(_emailController.text);
     if (emailExists) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -221,7 +206,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
       User? user = userCredential.user;
       if (user != null) {
-        // Send email verification
         await user.sendEmailVerification();
 
         await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
@@ -240,7 +224,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
           'createdAt': FieldValue.serverTimestamp(),
         });
 
-        // Sign out the user so they have to verify their email
         await FirebaseAuth.instance.signOut();
 
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -264,6 +247,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       } else if (e.code == 'invalid-email') {
         errorMessage = 'The email address is not valid.';
       }
+
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(errorMessage),
         backgroundColor: Colors.red,
@@ -280,11 +264,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
-
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Padding(
@@ -292,7 +274,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
-            children: <Widget>[
+            children: [
               const SizedBox(height: 20),
               Align(
                 alignment: Alignment.topRight,
@@ -365,7 +347,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         padding: EdgeInsets.all(8.0),
                         child: Text(
                           "No trainers available. Please check back later.",
-                          style: TextStyle(color: Colors.white),
+                          style: TextStyle(color: Colors.white), // White text on purple background
                           textAlign: TextAlign.center,
                         ),
                       )
@@ -457,7 +439,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   Widget _buildEmailField() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.white, // Keep white background
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
@@ -472,10 +454,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
           Expanded(
             child: TextFormField(
               controller: _emailController,
-              style: const TextStyle(color: Colors.black),
+              style: const TextStyle(color: Colors.black), // Always black text on white
               keyboardType: TextInputType.emailAddress,
               onChanged: (value) {
-                // Reset verification state when email changes
                 setState(() {});
               },
               decoration: InputDecoration(
@@ -514,11 +495,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
       }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white, // White background for text fields
-        borderRadius: BorderRadius.circular(15), // Rounded corners (15px radius)
+        color: Colors.white, // Always white background
+        borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1), // Optional: Add a subtle shadow
+            color: Colors.black.withOpacity(0.1),
             blurRadius: 5,
             offset: const Offset(0, 2),
           ),
@@ -527,12 +508,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
       child: TextFormField(
         controller: controller,
         obscureText: obscureText,
-        style: const TextStyle(color: Colors.black), // Black text color for input
+        style: const TextStyle(color: Colors.black), // Always black text on white
         decoration: InputDecoration(
           hintText: label,
-          hintStyle: const TextStyle(color: Colors.grey), // Grey hint text
-          prefixIcon: Icon(icon, color: Colors.grey), // Grey icon
-          border: InputBorder.none, // Remove default border
+          hintStyle: const TextStyle(color: Colors.grey),
+          prefixIcon: Icon(icon, color: Colors.grey),
+          border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 10),
         ),
       ),
@@ -548,11 +529,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white, // White background for dropdown
-        borderRadius: BorderRadius.circular(15), // Rounded corners (15px radius)
+        color: Colors.white, // Always white background
+        borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1), // Optional: Add a subtle shadow
+            color: Colors.black.withOpacity(0.1),
             blurRadius: 5,
             offset: const Offset(0, 2),
           ),
@@ -562,13 +543,25 @@ class _SignUpScreenState extends State<SignUpScreen> {
       child: DropdownButtonFormField<String>(
         decoration: InputDecoration(
           hintText: label,
-          hintStyle: const TextStyle(color: Colors.grey), // Grey hint text
-          prefixIcon: Icon(icon, color: Colors.grey), // Grey icon
-          border: InputBorder.none, // Remove default border
+          hintStyle: const TextStyle(color: Colors.grey),
+          prefixIcon: Icon(icon, color: Colors.grey),
+          border: InputBorder.none,
         ),
         value: value,
+        hint: Text(
+          label,
+          style: const TextStyle(color: Colors.grey),
+        ),
+        dropdownColor: Colors.white, // Always white dropdown background
+        style: const TextStyle(color: Colors.black), // Always black text
         items: items.map((item) {
-          return DropdownMenuItem(value: item, child: Text(item));
+          return DropdownMenuItem<String>(
+            value: item,
+            child: Text(
+              item,
+              style: const TextStyle(color: Colors.black), // Always black text
+            ),
+          );
         }).toList(),
         onChanged: onChanged,
       ),
@@ -578,11 +571,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
   Widget _buildDiseasesDropdown() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white, // White background for dropdown
-        borderRadius: BorderRadius.circular(15), // Rounded corners (15px radius)
+        color: Colors.white, // Always white background
+        borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1), // Optional: Add a subtle shadow
+            color: Colors.black.withOpacity(0.1),
             blurRadius: 5,
             offset: const Offset(0, 2),
           ),
@@ -590,16 +583,26 @@ class _SignUpScreenState extends State<SignUpScreen> {
       ),
       padding: const EdgeInsets.symmetric(horizontal: 15),
       child: DropdownButtonFormField<String>(
-        decoration: const InputDecoration(
+        decoration: InputDecoration(
           hintText: 'Select Disease',
-          hintStyle: TextStyle(color: Colors.grey), // Grey hint text
-          border: InputBorder.none, // Remove default border
+          hintStyle: const TextStyle(color: Colors.grey),
+          prefixIcon: const Icon(Icons.local_hospital, color: Colors.grey),
+          border: InputBorder.none,
         ),
         value: _selectedDisease,
+        hint: const Text(
+          'Select Disease',
+          style: TextStyle(color: Colors.grey),
+        ),
+        dropdownColor: Colors.white, // Always white dropdown background
+        style: const TextStyle(color: Colors.black), // Always black text
         items: _diseases.map((disease) {
-          return DropdownMenuItem(
+          return DropdownMenuItem<String>(
             value: disease,
-            child: Text(disease),
+            child: Text(
+              disease,
+              style: const TextStyle(color: Colors.black), // Always black text
+            ),
           );
         }).toList(),
         onChanged: (value) {
@@ -609,5 +612,4 @@ class _SignUpScreenState extends State<SignUpScreen> {
         },
       ),
     );
-  }
-}
+  }}

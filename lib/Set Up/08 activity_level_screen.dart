@@ -122,36 +122,36 @@ class _ActivityLevelScreenState extends State<ActivityLevelScreen> {
             ),
             const SizedBox(height: 20),
             Center(
-              child: ElevatedButton(
-                onPressed: _saveActivityLevel,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: theme.brightness == Brightness.light
-                      ? Colors.white
-                      : const Color(0xFF232323), // Your requested dark mode color
-                  foregroundColor: theme.textTheme.bodyLarge?.color,
-                  minimumSize: const Size(double.infinity, 48),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
-                    side: BorderSide(
+                child: ElevatedButton(
+                  onPressed: _saveActivityLevel,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: theme.brightness == Brightness.light
+                        ? Colors.white
+                        : const Color(0xFF232323), // Your requested dark mode color
+                    foregroundColor: theme.textTheme.bodyLarge?.color,
+                    minimumSize: const Size(double.infinity, 48),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                      side: BorderSide(
+                        color: theme.brightness == Brightness.light
+                            ? Colors.black12
+                            : Colors.white24,
+                        width: 1,
+                      ),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: Text(
+                    "Continue",
+                    style: TextStyle(
                       color: theme.brightness == Brightness.light
-                          ? Colors.black12
-                          : Colors.white24,
-                      width: 1,
+                          ? Colors.black
+                          : Colors.white, // White text on dark background
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  elevation: 0,
-                ),
-                child: Text(
-                  "Continue",
-                  style: TextStyle(
-                    color: theme.brightness == Brightness.light
-                        ? Colors.black
-                        : Colors.white, // White text on dark background
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              )
+                )
             ),
           ],
         ),

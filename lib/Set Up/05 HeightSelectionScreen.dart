@@ -284,37 +284,37 @@ class _HeightSelectionScreenState extends State<HeightSelectionScreen> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.only(bottom: 30.0, top: 10.0, left: 24.0, right: 24.0),
-              child: ElevatedButton(
-                onPressed: _saveHeight,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: theme.brightness == Brightness.light
-                      ? Colors.white
-                      : const Color(0xFF232323), // Your requested dark mode color
-                  foregroundColor: theme.textTheme.bodyLarge?.color,
-                  minimumSize: const Size(double.infinity, 48),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
-                    side: BorderSide(
+                padding: const EdgeInsets.only(bottom: 30.0, top: 10.0, left: 24.0, right: 24.0),
+                child: ElevatedButton(
+                  onPressed: _saveHeight,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: theme.brightness == Brightness.light
+                        ? Colors.white
+                        : const Color(0xFF232323), // Your requested dark mode color
+                    foregroundColor: theme.textTheme.bodyLarge?.color,
+                    minimumSize: const Size(double.infinity, 48),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                      side: BorderSide(
+                        color: theme.brightness == Brightness.light
+                            ? Colors.black12
+                            : Colors.white24,
+                        width: 1,
+                      ),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: Text(
+                    "Continue",
+                    style: TextStyle(
                       color: theme.brightness == Brightness.light
-                          ? Colors.black12
-                          : Colors.white24,
-                      width: 1,
+                          ? Colors.black
+                          : Colors.white, // White text on dark background
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  elevation: 0,
-                ),
-                child: Text(
-                  "Continue",
-                  style: TextStyle(
-                    color: theme.brightness == Brightness.light
-                        ? Colors.black
-                        : Colors.white, // White text on dark background
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              )
+                )
             ),
           ],
         ),

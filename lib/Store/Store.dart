@@ -195,32 +195,7 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
     });
   }
 
-  void _confirmCashPayment(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Confirm Cash Payment"),
-        content: const Text("Are you sure you want to proceed with cash payment?"),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel"),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context); // إغلاق الديالوج
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Order placed successfully (Cash Payment)")),
-              );
-              clearCart(); // تفريغ السلة
-              Navigator.pop(context); // العودة للشاشة السابقة (اختياري)
-            },
-            child: const Text("Confirm", style: TextStyle(color: Colors.green)),
-          ),
-        ],
-      ),
-    );
-  }
+
 
   // تفريغ السلة
   void clearCart() {
@@ -1033,25 +1008,6 @@ class _SupplementsStorePageState extends State<SupplementsStorePage> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green, // لون مختلف للتمييز
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          minimumSize: const Size(double.infinity, 50),
-                        ),
-                        onPressed: () {
-                          // تأكيد الطلب مع الدفع نقدًا
-                          _confirmCashPayment(context);
-                        },
-                        child: const Text(
-                          'Pay With Cash',
-                          style: TextStyle(fontSize: 18),
-                        ),
-                      ),
                       const SizedBox(height: 16),
                       // Total display
                       Container(

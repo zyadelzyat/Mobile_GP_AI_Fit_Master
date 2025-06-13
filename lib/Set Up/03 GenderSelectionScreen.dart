@@ -116,59 +116,59 @@ class _GenderSelectionScreenState extends State<GenderSelectionScreen> {
             ),
             const Spacer(),
             Padding(
-              padding: const EdgeInsets.all(20),
-              child: ElevatedButton(
-                onPressed: () async {
-                  if (selectedGender != null) {
-                    await saveGenderToFirestore(selectedGender!);
-                    if (!mounted) return;
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => HeightSelectionScreen(gender: selectedGender!),
-                      ),
-                    );
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          "Please select your gender",
-                          style: TextStyle(color: theme.colorScheme.onSurface),
+                padding: const EdgeInsets.all(20),
+                child: ElevatedButton(
+                  onPressed: () async {
+                    if (selectedGender != null) {
+                      await saveGenderToFirestore(selectedGender!);
+                      if (!mounted) return;
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => HeightSelectionScreen(gender: selectedGender!),
                         ),
-                        backgroundColor: theme.colorScheme.surface,
-                        behavior: SnackBarBehavior.floating,
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            "Please select your gender",
+                            style: TextStyle(color: theme.colorScheme.onSurface),
+                          ),
+                          backgroundColor: theme.colorScheme.surface,
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: theme.brightness == Brightness.light
+                        ? Colors.white
+                        : const Color(0xFF232323), // Your requested dark mode color
+                    foregroundColor: theme.textTheme.bodyLarge?.color,
+                    minimumSize: const Size(double.infinity, 48),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                      side: BorderSide(
+                        color: theme.brightness == Brightness.light
+                            ? Colors.black12
+                            : Colors.white24,
+                        width: 1,
                       ),
-                    );
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: theme.brightness == Brightness.light
-                      ? Colors.white
-                      : const Color(0xFF232323), // Your requested dark mode color
-                  foregroundColor: theme.textTheme.bodyLarge?.color,
-                  minimumSize: const Size(double.infinity, 48),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
-                    side: BorderSide(
+                    ),
+                    elevation: 0,
+                  ),
+                  child: Text(
+                    "Continue",
+                    style: TextStyle(
                       color: theme.brightness == Brightness.light
-                          ? Colors.black12
-                          : Colors.white24,
-                      width: 1,
+                          ? Colors.black
+                          : Colors.white, // White text on dark background
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  elevation: 0,
-                ),
-                child: Text(
-                  "Continue",
-                  style: TextStyle(
-                    color: theme.brightness == Brightness.light
-                        ? Colors.black
-                        : Colors.white, // White text on dark background
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              )
+                )
             ),
           ],
         ),
