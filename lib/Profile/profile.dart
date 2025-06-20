@@ -57,6 +57,24 @@ class _ProfilePageState extends State<ProfilePage> {
           userData['userId'] = widget.userId;
           _isLoading = false;
         });
+
+        // ✅ هنا نحدّد الاشتراك لو مش موجود
+        String? role = userData['role'];
+        String? membershipType = userData['membershipType'];
+
+        if (membershipType == null || membershipType.isEmpty) {
+          String newType = (role == 'Trainer') ? 'premium' : 'standard';
+          String newStatus = 'active';
+
+          await _firestore.collection('users').doc(widget.userId).update({
+            'membershipType': newType,
+            'membershipStatus': newStatus,
+            'membershipUpdatedAt': FieldValue.serverTimestamp(),
+          });
+
+          // وبعد التحديث نجيب البيانات تاني
+          _fetchUserData();
+        }
       } else {
         if (!mounted) return;
         setState(() {
@@ -859,7 +877,7 @@ class _ProfilePageState extends State<ProfilePage> {
         'membershipStart': startDateFormatted,
         'membershipEnd': endDateFormatted,
         'membershipDuration': membershipDetails['months'],
-        'membershipStatus': 'pending_approval',
+        'membershipStatus': 'active',
         'membershipUpdatedAt': FieldValue.serverTimestamp(),
       });
 
@@ -1015,7 +1033,7 @@ class _ProfilePageState extends State<ProfilePage> {
     String birthdayDisplay = _formatBirthday();
     String userRole = userData['role'] as String? ?? '';
     String membershipStatus = userData['membershipStatus'] as String? ?? 'none';
-    String membershipTitle = (membershipStatus == 'active' || membershipStatus == 'pending_approval')
+    String membershipTitle = (membershipStatus == 'active' || membershipStatus == 'active')
         ? 'View Membership'
         : 'Join Membership';
 
