@@ -38,8 +38,9 @@ class _TraineeRatingPageState extends State<TraineeRatingPage> {
 
       // Get the most recent rating for this trainee
       final QuerySnapshot ratingSnapshot = await _firestore
+          .collection('trainee_ratings')  // Collection جديدة للتقييمات اللي بتروح للمتدربين
+          .doc(currentUser.uid)  // المتدرب اللي هيتقيم
           .collection('ratings')
-          .where('traineeId', isEqualTo: currentUser.uid)
           .orderBy('timestamp', descending: true)
           .limit(1)
           .get();
@@ -59,8 +60,8 @@ class _TraineeRatingPageState extends State<TraineeRatingPage> {
       final ratingData = ratingDoc.data() as Map<String, dynamic>;
 
       // Get trainer details
-      if (ratingData.containsKey('trainerId')) {
-        final String trainerId = ratingData['trainerId'];
+      if (ratingData.containsKey('raterId')) {
+        final String trainerId = ratingData['raterId'];
         final DocumentSnapshot trainerDoc = await _firestore
             .collection('users')
             .doc(trainerId)

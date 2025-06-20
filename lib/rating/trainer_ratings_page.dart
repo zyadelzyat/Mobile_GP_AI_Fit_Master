@@ -36,12 +36,16 @@ class _TrainerRatingsPageState extends State<TrainerRatingsPage> {
         throw Exception('User not logged in');
       }
 
+      print('Current User ID: ${currentUser.uid}'); // للتأكد من الـ ID
+
       // Get all ratings where trainerId matches the current user's ID
+      // نجيب البيانات الأول وبعدين نرتبها
       final QuerySnapshot ratingSnapshot = await _firestore
           .collection('ratings')
           .where('trainerId', isEqualTo: currentUser.uid)
-          .orderBy('timestamp', descending: true)
           .get();
+
+      print('Found ${ratingSnapshot.docs.length} ratings'); // للتأكد من عدد التقييمات
 
       // Process the ratings
       List<Map<String, dynamic>> ratings = [];
@@ -50,12 +54,26 @@ class _TrainerRatingsPageState extends State<TrainerRatingsPage> {
       for (var doc in ratingSnapshot.docs) {
         Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
 
+        print('Rating data: $data'); // لطباعة بيانات كل تقييم
+
+        // التأكد إن ده تقييم للمدرب الحالي فعلاً
+        if (data['trainerId'] != currentUser.uid) {
+          print('Skipping rating - trainerId mismatch: ${data['trainerId']} != ${currentUser.uid}');
+          continue;
+        }
+
+        // فحص إضافي: لو فيه field يميز نوع التقييم
+        if (data.containsKey('ratingType') && data['ratingType'] != 'trainer') {
+          print('Skipping rating - not a trainer rating: ${data['ratingType']}');
+          continue;
+        }
+
         // Get trainee details
         String traineeName = 'Unknown Trainee';
         String traineePhotoUrl = '';
 
         try {
-          if (data.containsKey('traineeId')) {
+          if (data.containsKey('traineeId') && data['traineeId'] != null) {
             DocumentSnapshot traineeDoc = await _firestore
                 .collection('users')
                 .doc(data['traineeId'])
@@ -91,10 +109,20 @@ class _TrainerRatingsPageState extends State<TrainerRatingsPage> {
           }
         }
 
-        // Add to ratings list
+        // Validate rating value
+        double ratingValue = 0.0;
+        if (data['rating'] != null) {
+          if (data['rating'] is int) {
+            ratingValue = (data['rating'] as int).toDouble();
+          } else if (data['rating'] is double) {
+            ratingValue = data['rating'] as double;
+          }
+        }
+
+        // Add to ratings list only if it's a valid trainer rating
         ratings.add({
           'id': doc.id,
-          'rating': data['rating'] ?? 0.0,
+          'rating': ratingValue,
           'comment': data['comment'] ?? '',
           'timestamp': data['timestamp'] ?? Timestamp.now(),
           'traineeName': traineeName,
@@ -103,12 +131,21 @@ class _TrainerRatingsPageState extends State<TrainerRatingsPage> {
         });
 
         // Add to total for average calculation
-        totalRatingValue += (data['rating'] ?? 0.0);
+        totalRatingValue += ratingValue;
       }
+
+      // Sort ratings by timestamp after fetching
+      ratings.sort((a, b) {
+        Timestamp timeA = a['timestamp'] ?? Timestamp.now();
+        Timestamp timeB = b['timestamp'] ?? Timestamp.now();
+        return timeB.compareTo(timeA); // Descending order
+      });
 
       // Calculate average
       _totalRatings = ratings.length;
       _averageRating = _totalRatings > 0 ? totalRatingValue / _totalRatings : 0.0;
+
+      print('Total ratings: $_totalRatings, Average: $_averageRating'); // للتأكد من الحسابات
 
       if (mounted) {
         setState(() {
@@ -162,6 +199,15 @@ class _TrainerRatingsPageState extends State<TrainerRatingsPage> {
             child: Column(
               children: [
                 const SizedBox(height: 10),
+                Text(
+                  'My Rating as Trainer',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+                const SizedBox(height: 5),
                 Text(
                   '$_totalRatings ${_totalRatings == 1 ? 'Rating' : 'Ratings'}',
                   style: const TextStyle(

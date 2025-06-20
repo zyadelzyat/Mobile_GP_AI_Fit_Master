@@ -3,6 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import 'package:untitled/Login___Signup/01_signin_screen.dart';
+import 'package:untitled/rating/AddRatingPage.dart';
+import 'package:untitled/rating/trainee_ratings_page.dart';
 import 'detailed_profile_page.dart';
 import 'package:untitled/AI/chatbot.dart';
 import '../Home__Page/favorite_page.dart';
@@ -291,12 +293,39 @@ class _ProfilePageState extends State<ProfilePage> {
             },
           ),
           _buildProfileMenuItem(
+            icon: Icons.rate_review_outlined,
+            title: 'Add Rating',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const AddRatingPage()),
+              );
+            },
+          ),
+          _buildProfileMenuItem(
             icon: Icons.group,
             title: 'View My Trainees',
             onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const TrainerTraineesPage()),
+              );
+            },
+          ),
+        ],
+      );
+    }
+    // إضافة هذا الجزء الجديد للمتدربين
+    else if (userRole == 'Trainee') {
+      return Column(
+        children: [
+          _buildProfileMenuItem(
+            icon: Icons.star_outline,
+            title: 'View My Ratings',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => TraineeRatingPage()),
               );
             },
           ),
