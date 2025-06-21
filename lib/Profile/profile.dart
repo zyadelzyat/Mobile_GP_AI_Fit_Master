@@ -348,13 +348,6 @@ class _ProfilePageState extends State<ProfilePage> {
             },
           ),
           // Add debug option temporarily
-          _buildProfileMenuItem(
-            icon: Icons.bug_report,
-            title: 'Debug Ratings',
-            onTap: () async {
-              await _debugCheckRatings();
-            },
-          ),
         ],
       );
     }
@@ -1203,7 +1196,4 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
     );
   }
-}
-
-class _debugCheckRatings {
 }
