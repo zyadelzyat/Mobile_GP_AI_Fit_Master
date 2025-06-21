@@ -72,7 +72,7 @@ class _AddRatingPageState extends State<AddRatingPage> {
           Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
           setState(() {
             _currentUserRole = userData['role'] as String?;
-            // Set rating type based on user role - FIXED LOGIC
+            // Set rating type based on user role
             if (_currentUserRole == 'Trainer') {
               _ratingType = RatingType.trainerToTrainee; // Trainer rates Trainee
             } else if (_currentUserRole == 'Trainee') {
@@ -88,7 +88,7 @@ class _AddRatingPageState extends State<AddRatingPage> {
     }
   }
 
-  // Function to fetch users based on rating type - FIXED TO EXCLUDE CURRENT USER
+  // Function to fetch users based on rating type - EXCLUDES CURRENT USER
   Future<void> _fetchUsers() async {
     if (!mounted) return;
 
@@ -198,6 +198,37 @@ class _AddRatingPageState extends State<AddRatingPage> {
         const SnackBar(content: Text('You cannot rate yourself!')),
       );
       return;
+    }
+
+    // Check if user has already rated this person
+    try {
+      QuerySnapshot existingRating;
+      if (_ratingType == RatingType.traineeToTrainer) {
+        existingRating = await _firestore
+            .collection('ratings')
+            .where('traineeId', isEqualTo: currentUser.uid)
+            .where('trainerId', isEqualTo: _selectedUserId)
+            .where('ratingType', isEqualTo: 'trainee_to_trainer')
+            .limit(1)
+            .get();
+      } else {
+        existingRating = await _firestore
+            .collection('ratings')
+            .where('trainerId', isEqualTo: currentUser.uid)
+            .where('traineeId', isEqualTo: _selectedUserId)
+            .where('ratingType', isEqualTo: 'trainer_to_trainee')
+            .limit(1)
+            .get();
+      }
+
+      if (existingRating.docs.isNotEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('You have already rated this person!')),
+        );
+        return;
+      }
+    } catch (e) {
+      print("Error checking existing rating: $e");
     }
 
     // Show loading indicator
@@ -455,17 +486,17 @@ class _AddRatingPageState extends State<AddRatingPage> {
   }
 }
 
-// RATING UTILITY CLASS - الكلاس ده هيحل مشكلة حساب التقييمات
+// RATING UTILITY CLASS
 class RatingService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // حساب متوسط تقييم المدرب (التقييمات اللي جاتله من المتدربين بس)
+  // Calculate trainer average rating (ratings from trainees only)
   static Future<double> getTrainerAverageRating(String trainerId) async {
     try {
       QuerySnapshot ratingsSnapshot = await _firestore
           .collection('ratings')
           .where('trainerId', isEqualTo: trainerId)
-          .where('ratingType', isEqualTo: 'trainee_to_trainer') // مهم جداً - المتدربين بيقيموا المدرب
+          .where('ratingType', isEqualTo: 'trainee_to_trainer')
           .get();
 
       if (ratingsSnapshot.docs.isEmpty) return 0.0;
@@ -483,13 +514,13 @@ class RatingService {
     }
   }
 
-  // حساب متوسط تقييم المتدرب (التقييمات اللي جاتله من المدربين بس)
+  // Calculate trainee average rating (ratings from trainers only)
   static Future<double> getTraineeAverageRating(String traineeId) async {
     try {
       QuerySnapshot ratingsSnapshot = await _firestore
           .collection('ratings')
           .where('traineeId', isEqualTo: traineeId)
-          .where('ratingType', isEqualTo: 'trainer_to_trainee') // مهم جداً - المدربين بيقيموا المتدرب
+          .where('ratingType', isEqualTo: 'trainer_to_trainee')
           .get();
 
       if (ratingsSnapshot.docs.isEmpty) return 0.0;
@@ -507,7 +538,7 @@ class RatingService {
     }
   }
 
-  // جلب عدد التقييمات لكل مستخدم
+  // Get rating count for a user
   static Future<int> getUserRatingCount(String userId, String userRole) async {
     try {
       QuerySnapshot ratingsSnapshot;
@@ -533,13 +564,13 @@ class RatingService {
     }
   }
 
-  // جلب التقييمات الخاصة بمستخدم معين
+  // Get all ratings for a specific user
   static Future<List<Map<String, dynamic>>> getUserRatings(String userId, String userRole) async {
     try {
       QuerySnapshot ratingsSnapshot;
 
       if (userRole == 'Trainer') {
-        // جلب التقييمات اللي جات للمدرب من المتدربين
+        // Get ratings received by trainer from trainees
         ratingsSnapshot = await _firestore
             .collection('ratings')
             .where('trainerId', isEqualTo: userId)
@@ -547,7 +578,7 @@ class RatingService {
             .orderBy('timestamp', descending: true)
             .get();
       } else {
-        // جلب التقييمات اللي جات للمتدرب من المدربين
+        // Get ratings received by trainee from trainers
         ratingsSnapshot = await _firestore
             .collection('ratings')
             .where('traineeId', isEqualTo: userId)
@@ -570,7 +601,7 @@ class RatingService {
     }
   }
 
-  // دالة للتحقق من وجود تقييم سابق بين مستخدمين
+  // Check if user has already rated another user
   static Future<bool> hasUserRatedBefore(String raterId, String ratedUserId, String ratingType) async {
     try {
       QuerySnapshot existingRating;

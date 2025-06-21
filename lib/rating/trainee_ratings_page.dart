@@ -23,9 +23,8 @@ class _TraineeRatingPageState extends State<TraineeRatingPage> {
     _fetchRating();
   }
 
-  Future<void> _fetchRating() async {
+  Future _fetchRating() async {
     if (!mounted) return;
-
     setState(() {
       _isLoading = true;
     });
@@ -36,17 +35,16 @@ class _TraineeRatingPageState extends State<TraineeRatingPage> {
         throw Exception('User not logged in');
       }
 
-      // Get the most recent rating for this trainee
+      // Query the main ratings collection instead of trainee_ratings subcollection
       final QuerySnapshot ratingSnapshot = await _firestore
-          .collection('trainee_ratings')  // Collection جديدة للتقييمات اللي بتروح للمتدربين
-          .doc(currentUser.uid)  // المتدرب اللي هيتقيم
-          .collection('ratings')
+          .collection('ratings') // Use main ratings collection
+          .where('traineeId', isEqualTo: currentUser.uid) // Current user is the trainee
+          .where('ratingType', isEqualTo: 'trainer_to_trainee') // Trainer rating trainee
           .orderBy('timestamp', descending: true)
           .limit(1)
           .get();
 
       if (ratingSnapshot.docs.isEmpty) {
-        // No rating found
         if (mounted) {
           setState(() {
             _isLoading = false;
@@ -59,9 +57,9 @@ class _TraineeRatingPageState extends State<TraineeRatingPage> {
       final ratingDoc = ratingSnapshot.docs.first;
       final ratingData = ratingDoc.data() as Map<String, dynamic>;
 
-      // Get trainer details
-      if (ratingData.containsKey('raterId')) {
-        final String trainerId = ratingData['raterId'];
+      // Get trainer details using trainerId
+      if (ratingData.containsKey('trainerId')) {
+        final String trainerId = ratingData['trainerId'];
         final DocumentSnapshot trainerDoc = await _firestore
             .collection('users')
             .doc(trainerId)
@@ -69,7 +67,6 @@ class _TraineeRatingPageState extends State<TraineeRatingPage> {
 
         if (trainerDoc.exists) {
           final trainerData = trainerDoc.data() as Map<String, dynamic>;
-
           if (mounted) {
             setState(() {
               _ratingData = ratingData;
@@ -77,22 +74,6 @@ class _TraineeRatingPageState extends State<TraineeRatingPage> {
               _isLoading = false;
             });
           }
-        } else {
-          // Trainer not found
-          if (mounted) {
-            setState(() {
-              _ratingData = ratingData;
-              _isLoading = false;
-            });
-          }
-        }
-      } else {
-        // No trainer ID in rating
-        if (mounted) {
-          setState(() {
-            _ratingData = ratingData;
-            _isLoading = false;
-          });
         }
       }
     } catch (e) {

@@ -339,12 +339,20 @@ class _ProfilePageState extends State<ProfilePage> {
         children: [
           _buildProfileMenuItem(
             icon: Icons.star_outline,
-            title: 'View My Ratings',
+            title: 'View My Rating', // Singular since trainees typically get one rating
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => TraineeRatingPage()),
+                MaterialPageRoute(builder: (context) => const TraineeRatingPage()),
               );
+            },
+          ),
+          // Add debug option temporarily
+          _buildProfileMenuItem(
+            icon: Icons.bug_report,
+            title: 'Debug Ratings',
+            onTap: () async {
+              await _debugCheckRatings();
             },
           ),
         ],
@@ -1195,4 +1203,7 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
     );
   }
+}
+
+class _debugCheckRatings {
 }
