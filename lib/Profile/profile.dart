@@ -11,6 +11,7 @@ import '../Home__Page/favorite_page.dart';
 import '../rating/trainer_ratings_page.dart';
 import '../Home__Page/trainer_trainees_page.dart';
 import '../Home__Page/00_home_page.dart';
+import 'package:untitled/Profile/setting_page.dart';
 
 class ProfilePage extends StatefulWidget {
   final String userId;
@@ -1161,7 +1162,10 @@ class _ProfilePageState extends State<ProfilePage> {
                   icon: Icons.settings_outlined,
                   title: 'Settings',
                   onTap: () {
-                    print("Navigate to Settings");
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => SettingsPage(userId: widget.userId)),  // ✅
+                    );
                   },
                 ),
                 _buildProfileMenuItem(
