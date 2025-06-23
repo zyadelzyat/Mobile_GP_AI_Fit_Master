@@ -1,15 +1,56 @@
 import 'package:flutter/material.dart';
+import 'package:untitled/AI/chatbot.dart';
+import 'package:untitled/Home__Page/00_home_page.dart';
+import 'package:untitled/Home__Page/favorite_page.dart';
 import 'package:untitled/Profile/Notifications_Settings_Page.dart';
 import 'package:untitled/Profile/change_password.dart';
 import 'package:untitled/Profile/profile.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:untitled/Home__Page/favorite_page.dart';
+import 'package:untitled/AI/chatbot.dart';
+import 'package:untitled/Home__Page/00_home_page.dart';
 
-class SettingsPage extends StatelessWidget {
+class SettingsPage extends StatefulWidget {
   final String userId;
 
-  const SettingsPage({super.key, required this.userId});
+  const SettingsPage({Key? key, required this.userId}) : super(key: key);
 
+  @override
+  State<SettingsPage> createState() => _SettingsPageState();
+}
 
+class _SettingsPageState extends State<SettingsPage> {
+  int _currentNavIndex = 3;
+
+  void _onNavTapped(int index) {
+    if (index == _currentNavIndex) return;
+
+    setState(() => _currentNavIndex = index);
+
+    switch (index) {
+      case 0:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const HomePage()),
+        );
+        break;
+      case 1:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+              builder: (_) => FavoritesPage(favoriteRecipes: [])),
+        );
+        break;
+      case 2:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const ChatPage()),
+        );
+        break;
+      case 3:
+      // already in settings
+        break;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,9 +62,11 @@ class SettingsPage extends StatelessWidget {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.yellow),
           onPressed: () {
-            Navigator.push(
+            Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => ProfilePage(userId: userId)), // ✅
+              MaterialPageRoute(
+                builder: (_) => ProfilePage(userId: widget.userId),
+              ),
             );
           },
         ),
@@ -47,7 +90,8 @@ class SettingsPage extends StatelessWidget {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const NotificationSettingsPage()),
+                  MaterialPageRoute(
+                      builder: (_) => const NotificationSettingsPage()),
                 );
               },
             ),
@@ -58,7 +102,8 @@ class SettingsPage extends StatelessWidget {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const PasswordSettingsPage()),
+                  MaterialPageRoute(
+                      builder: (_) => const PasswordSettingsPage()),
                 );
               },
             ),
@@ -67,30 +112,74 @@ class SettingsPage extends StatelessWidget {
               icon: Icons.person,
               title: "Delete Account",
               onTap: () {
-                // Add navigation when implemented
+                // لسه هتتظبط
               },
             ),
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: const Color(0xFF896CFE),
-        selectedItemColor: Colors.white,
-        unselectedItemColor: Colors.white70,
-        showSelectedLabels: false,
-        showUnselectedLabels: false,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: 'Cart'),
-          BottomNavigationBarItem(icon: Icon(Icons.star), label: 'Favorite'),
-          BottomNavigationBarItem(icon: Icon(Icons.support_agent), label: 'Support'),
-        ],
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFFB29BFF),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 15,
+              spreadRadius: 2,
+              offset: const Offset(0, -5),
+            ),
+          ],
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _currentNavIndex,
+          onTap: _onNavTapped,
+          backgroundColor: Colors.transparent,
+          selectedItemColor: Colors.white,
+          unselectedItemColor: Colors.white60,
+          type: BottomNavigationBarType.fixed,
+          showSelectedLabels: false,
+          showUnselectedLabels: false,
+          elevation: 0,
+          iconSize: 28,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: ImageIcon(AssetImage('assets/icons/home.png')),
+              ),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: ImageIcon(AssetImage('assets/icons/fav.png')),
+              ),
+              label: 'Favorites',
+            ),
+            BottomNavigationBarItem(
+              icon: Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: ImageIcon(AssetImage('assets/icons/chat.png')),
+              ),
+              label: 'Chat',
+            ),
+            BottomNavigationBarItem(
+              icon: Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: ImageIcon(AssetImage('assets/icons/User.png')),
+              ),
+              label: 'Profile',
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget buildSettingTile(BuildContext context,
-      {required IconData icon, required String title, required VoidCallback onTap}) {
+      {required IconData icon,
+        required String title,
+        required VoidCallback onTap}) {
     return Column(
       children: [
         ListTile(
@@ -103,7 +192,7 @@ class SettingsPage extends StatelessWidget {
             title,
             style: const TextStyle(color: Colors.white, fontSize: 16),
           ),
-          trailing: const Icon(Icons.arrow_drop_down, color: Colors.yellow),
+          trailing: const Icon(Icons.arrow_forward_ios, color: Colors.yellow),
           onTap: onTap,
         ),
         const SizedBox(height: 12),

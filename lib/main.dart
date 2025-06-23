@@ -67,7 +67,7 @@ class _GenderSelectionAppState extends State<GenderSelectionApp> {
       // home: const WeightSelectionScreen();
       // home: const GenderSelectionScreen(),
       // home:  SupplementsStorePage(),
-      home: SignInScreen(),
+      home: HomePage(),
       // home : AdminDashboard(),
       // home : const HomePage(),
       // home : const AddRatingPage(),
