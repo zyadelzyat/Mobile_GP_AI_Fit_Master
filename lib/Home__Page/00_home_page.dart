@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
 import 'package:untitled/AI/chatbot.dart';
 import 'package:untitled/Profile/profile.dart';
 import 'CalorieCalculator.dart';
@@ -15,6 +16,7 @@ import 'favorite_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
   @override
   _HomePageState createState() => _HomePageState();
 }
@@ -23,7 +25,6 @@ class _HomePageState extends State<HomePage> {
   int _currentNavIndex = 0;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
-
   Map _userData = {};
   bool _isLoadingUserData = true;
 
@@ -60,14 +61,12 @@ class _HomePageState extends State<HomePage> {
     if (_userData.containsKey('role')) {
       final String userRole = _userData['role'] as String? ?? '';
       if (userRole == 'Self-Trainee') {
-        // Remove both Workout and Nutrition categories for Self-Trainee
         categories.removeWhere((category) =>
-        category['label'] == 'Nutrition' || category['label'] == 'Workout');
+        category['label'] == 'Nutrition' ||
+            category['label'] == 'Workout');
       } else if (userRole == 'Trainer') {
-        // Remove only Nutrition category for Trainer
         categories.removeWhere((category) => category['label'] == 'Nutrition');
       }
-      // For Trainee, keep all categories including both Workout and YouTube Workout
     }
     return categories;
   }
@@ -152,11 +151,9 @@ class _HomePageState extends State<HomePage> {
       DocumentSnapshot favoritesDoc =
       await _firestore.collection('favorites').doc(currentUser.uid).get();
       if (favoritesDoc.exists && mounted) {
-        Map<String, dynamic> favoritesData =
-        favoritesDoc.data() as Map<String, dynamic>;
-        List<dynamic> favoriteWorkoutsTitlesDynamic =
-            favoritesData['workouts'] ?? [];
-        List<String> favoriteWorkoutsTitles =
+        Map favoritesData = favoritesDoc.data() as Map;
+        List favoriteWorkoutsTitlesDynamic = favoritesData['workouts'] ?? [];
+        List favoriteWorkoutsTitles =
         favoriteWorkoutsTitlesDynamic.cast<String>();
         List<Map<String, dynamic>> updatedWorkouts = List.from(_workouts);
         for (int i = 0; i < updatedWorkouts.length; i++) {
@@ -199,7 +196,6 @@ class _HomePageState extends State<HomePage> {
 
   void _navigateToFeature(String? routeName) {
     if (routeName == null || !mounted) return;
-
     switch (routeName) {
       case 'Workout':
         if (_userData['role'] == 'Trainee') {
@@ -208,7 +204,7 @@ class _HomePageState extends State<HomePage> {
             MaterialPageRoute(builder: (context) => const AssignedExercisesPage()),
           );
         } else {
-          print("Workout category tapped (no specific route assigned)");
+          // No specific route
         }
         break;
       case 'Nutrition':
@@ -284,13 +280,11 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildCategoryIcon(String iconAsset, String label, int index) {
     String displayLabel = label;
-    // Handle display labels for different workout types
     if (label == 'YT_Workout') {
       displayLabel = 'Workout';
     } else if (label == 'YouTube Workout') {
       displayLabel = 'YouTube Workout';
     }
-
     return GestureDetector(
       onTap: () {
         if (!mounted) return;
@@ -586,8 +580,8 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     String userName = _isLoadingUserData ? 'User' : (_userData['firstName'] as String? ?? 'User');
-
     Widget mainContent;
+
     if (_isLoadingUserData) {
       mainContent = const Center(child: CircularProgressIndicator(color: Color(0xFF8E7AFE)));
     } else if (_currentNavIndex == 0) {
@@ -619,14 +613,17 @@ class _HomePageState extends State<HomePage> {
             if (_filteredCategories.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-                child: Wrap(
-                  spacing: 16,
-                  runSpacing: 16,
-                  alignment: WrapAlignment.spaceEvenly,
-                  children: List.generate(_filteredCategories.length, (index) {
-                    final category = _filteredCategories[index];
-                    return _buildCategoryIcon(category['iconAsset'] as String, category['label'] as String, index);
-                  }),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: List.generate(_filteredCategories.length, (index) {
+                      final category = _filteredCategories[index];
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 16),
+                        child: _buildCategoryIcon(category['iconAsset'] as String, category['label'] as String, index),
+                      );
+                    }),
+                  ),
                 ),
               ),
             Padding(
@@ -817,9 +814,6 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
       ),
-
-
     );
-
   }
 }

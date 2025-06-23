@@ -1,17 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET"/>
-    <!-- For Android 13+ (API 33+): Granular media permissions -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-    <!-- For Android 12 and lower (API 31 and below): Legacy storage permission -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
 
     <application
         android:label="untitled"
-        android:name="${applicationName}"
-        android:usesCleartextTraffic="true"
         android:icon="@mipmap/ic_launcher"
+        android:usesCleartextTraffic="true"
         android:requestLegacyExternalStorage="true">
 
         <meta-data android:name="com.facebook.sdk.ApplicationId" android:value="@string/facebook_app_id"/>
@@ -61,7 +59,5 @@
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
         </intent>
-        <provider android:authorities="com.facebook.katana.provider.PlatformProvider" />
     </queries>
-
 </manifest>
